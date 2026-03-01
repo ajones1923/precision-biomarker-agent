@@ -1,0 +1,326 @@
+[
+  {
+    "id": "dxi_codeine_cyp2d6",
+    "drug": "Codeine",
+    "gene": "CYP2D6",
+    "interaction_type": "substrate",
+    "severity": "major",
+    "alternative": "Morphine (direct, bypasses CYP2D6), or non-opioid analgesics",
+    "text_chunk": "Codeine is a prodrug metabolized by CYP2D6 to its active metabolite morphine. CYP2D6 poor metabolizers (PM) have severely reduced or absent conversion, leading to therapeutic failure with no analgesic effect. CYP2D6 ultra-rapid metabolizers (UM) produce excessive morphine, risking respiratory depression and death, particularly in children (FDA Black Box Warning). CPIC recommends avoiding codeine in both PMs and UMs. Alternatives include morphine (direct administration) or non-opioid analgesics (NSAIDs, acetaminophen)."
+  },
+  {
+    "id": "dxi_tramadol_cyp2d6",
+    "drug": "Tramadol",
+    "gene": "CYP2D6",
+    "interaction_type": "substrate",
+    "severity": "major",
+    "alternative": "Non-CYP2D6-dependent analgesics (acetaminophen, NSAIDs, morphine)",
+    "text_chunk": "Tramadol requires CYP2D6-mediated O-demethylation to form its active metabolite O-desmethyltramadol (M1), which has 200x greater mu-opioid receptor affinity than the parent compound. CYP2D6 poor metabolizers experience reduced analgesic efficacy. CYP2D6 ultra-rapid metabolizers produce excess M1, risking respiratory depression, seizures, and serotonin syndrome. CPIC recommends avoiding tramadol in PMs (ineffective) and UMs (toxicity risk). Use morphine, non-opioid analgesics, or non-CYP2D6-dependent opioids instead."
+  },
+  {
+    "id": "dxi_tamoxifen_cyp2d6",
+    "drug": "Tamoxifen",
+    "gene": "CYP2D6",
+    "interaction_type": "substrate",
+    "severity": "major",
+    "alternative": "Aromatase inhibitors (anastrozole, letrozole) for postmenopausal; consider higher tamoxifen dose or switch",
+    "text_chunk": "Tamoxifen is bioactivated by CYP2D6 to endoxifen, its primary active metabolite with 100x greater estrogen receptor affinity. CYP2D6 poor metabolizers achieve 75% lower endoxifen levels, associated with higher breast cancer recurrence rates (HR 1.9-2.4 in some studies). CPIC recommends considering alternative endocrine therapy (aromatase inhibitors for postmenopausal women) or CYP2D6 genotype-guided dose adjustment. Concurrent CYP2D6 inhibitors (paroxetine, fluoxetine, bupropion) should be avoided as they phenocopy poor metabolizer status."
+  },
+  {
+    "id": "dxi_metoprolol_cyp2d6",
+    "drug": "Metoprolol",
+    "gene": "CYP2D6",
+    "interaction_type": "substrate",
+    "severity": "moderate",
+    "alternative": "Bisoprolol or atenolol (renally eliminated, CYP2D6-independent)",
+    "text_chunk": "Metoprolol is extensively metabolized by CYP2D6 (alpha-hydroxylation pathway). CYP2D6 poor metabolizers have 3-5x higher plasma concentrations, increasing risk of bradycardia, hypotension, fatigue, and heart block. CYP2D6 ultra-rapid metabolizers may have subtherapeutic levels with standard doses. DPWG guidelines recommend 50% dose reduction in PMs or switch to bisoprolol/atenolol (renally cleared, CYP2D6-independent). Metoprolol is the most commonly prescribed beta-blocker affected by CYP2D6 polymorphism."
+  },
+  {
+    "id": "dxi_fluoxetine_cyp2d6",
+    "drug": "Fluoxetine",
+    "gene": "CYP2D6",
+    "interaction_type": "substrate",
+    "severity": "moderate",
+    "alternative": "Sertraline, citalopram (less CYP2D6-dependent SSRIs)",
+    "text_chunk": "Fluoxetine is metabolized by CYP2D6 to its active metabolite norfluoxetine. CYP2D6 poor metabolizers have prolonged drug exposure with higher steady-state levels, increasing risk of SSRI side effects (insomnia, agitation, GI disturbance, sexual dysfunction, QTc prolongation). Fluoxetine is also a potent CYP2D6 inhibitor, creating drug-drug interactions. CPIC recommends considering alternative SSRIs (sertraline, citalopram/escitalopram) that have less CYP2D6 dependence for PMs, or starting at reduced doses."
+  },
+  {
+    "id": "dxi_paroxetine_cyp2d6",
+    "drug": "Paroxetine",
+    "gene": "CYP2D6",
+    "interaction_type": "substrate",
+    "severity": "moderate",
+    "alternative": "Sertraline, citalopram, or escitalopram",
+    "text_chunk": "Paroxetine is metabolized primarily by CYP2D6 and is also the most potent CYP2D6 inhibitor among SSRIs. CYP2D6 poor metabolizers have significantly elevated paroxetine levels with increased adverse effect risk. Paroxetine also inhibits its own metabolism (auto-inhibition), creating nonlinear pharmacokinetics. Additionally, concurrent use with CYP2D6-dependent prodrugs (codeine, tamoxifen) dramatically reduces their activation. CPIC recommends selecting alternative SSRIs for PMs and avoiding paroxetine co-prescription with CYP2D6 prodrugs."
+  },
+  {
+    "id": "dxi_dextromethorphan_cyp2d6",
+    "drug": "Dextromethorphan",
+    "gene": "CYP2D6",
+    "interaction_type": "substrate",
+    "severity": "moderate",
+    "alternative": "Guaifenesin (expectorant), benzonatate (non-CYP2D6 antitussive)",
+    "text_chunk": "Dextromethorphan (DXM) is O-demethylated by CYP2D6 to dextrorphan. CYP2D6 poor metabolizers accumulate DXM, which at high levels causes dissociative effects, serotonin syndrome risk (especially with SSRIs), and PCP-like symptoms. DXM/quinidine (Nuedexta) deliberately exploits CYP2D6 inhibition for pseudobulbar affect. DXM urinary metabolite ratio (DXM/dextrorphan) is used as a CYP2D6 phenotyping probe. CYP2D6 PMs should use alternative antitussives. CYP2D6 UMs may find DXM ineffective as a cough suppressant."
+  },
+  {
+    "id": "dxi_atomoxetine_cyp2d6",
+    "drug": "Atomoxetine",
+    "gene": "CYP2D6",
+    "interaction_type": "substrate",
+    "severity": "moderate",
+    "alternative": "Methylphenidate or amphetamine (non-CYP2D6 ADHD medications)",
+    "text_chunk": "Atomoxetine is a selective norepinephrine reuptake inhibitor for ADHD, primarily metabolized by CYP2D6 to 4-hydroxyatomoxetine. CYP2D6 poor metabolizers have 10-fold higher AUC and 5-fold higher Cmax, requiring dose reduction to avoid cardiovascular side effects (tachycardia, hypertension) and hepatotoxicity. The FDA label recommends initial dose of 0.5 mg/kg/day in known PMs versus standard 1.2 mg/kg/day. Alternatively, methylphenidate or amphetamine-based medications are CYP2D6-independent ADHD treatments."
+  },
+  {
+    "id": "dxi_clopidogrel_cyp2c19",
+    "drug": "Clopidogrel",
+    "gene": "CYP2C19",
+    "interaction_type": "substrate",
+    "severity": "major",
+    "alternative": "Prasugrel or ticagrelor (CYP2C19-independent antiplatelet agents)",
+    "text_chunk": "Clopidogrel is a prodrug requiring two-step hepatic bioactivation, with CYP2C19 catalyzing the critical first oxidation step. CYP2C19 poor metabolizers (*2/*2, *2/*3, *3/*3) have 75% reduced active metabolite formation, leading to inadequate platelet inhibition and significantly increased risk of stent thrombosis (HR 3.6), myocardial infarction, and cardiovascular death. FDA Black Box Warning recommends CYP2C19 testing. CPIC recommends prasugrel or ticagrelor for CYP2C19 PMs and IMs. This is one of the highest-evidence pharmacogenomic interactions."
+  },
+  {
+    "id": "dxi_omeprazole_cyp2c19",
+    "drug": "Omeprazole",
+    "gene": "CYP2C19",
+    "interaction_type": "substrate",
+    "severity": "moderate",
+    "alternative": "Rabeprazole (less CYP2C19-dependent PPI)",
+    "text_chunk": "Omeprazole is extensively metabolized by CYP2C19 (5-hydroxylation) and CYP3A4 (sulfoxidation). CYP2C19 poor metabolizers have 5-12x higher AUC, resulting in more potent and prolonged acid suppression. CYP2C19 ultra-rapid metabolizers (*17/*17) have reduced omeprazole efficacy, potentially failing H. pylori eradication and GERD treatment. DPWG recommends dose adjustment: increase dose by 50-100% for UMs (or switch to rabeprazole). PMs may benefit from dose reduction to minimize long-term risks (B12 deficiency, hypomagnesemia, fractures)."
+  },
+  {
+    "id": "dxi_pantoprazole_cyp2c19",
+    "drug": "Pantoprazole",
+    "gene": "CYP2C19",
+    "interaction_type": "substrate",
+    "severity": "moderate",
+    "alternative": "Rabeprazole (minimal CYP2C19 dependence)",
+    "text_chunk": "Pantoprazole undergoes CYP2C19-mediated O-demethylation as its primary metabolic pathway. CYP2C19 poor metabolizers show 6-fold higher AUC compared to extensive metabolizers. While this provides enhanced acid suppression in PMs, long-term elevated exposure increases risks of PPI-associated adverse effects: vitamin B12 malabsorption, hypomagnesemia, Clostridium difficile infection, and osteoporotic fractures. CYP2C19 UMs may require higher doses or more frequent dosing. Rabeprazole is the least CYP2C19-dependent PPI and preferred when pharmacogenomic variation is a concern."
+  },
+  {
+    "id": "dxi_escitalopram_cyp2c19",
+    "drug": "Escitalopram",
+    "gene": "CYP2C19",
+    "interaction_type": "substrate",
+    "severity": "moderate",
+    "alternative": "Sertraline or venlafaxine (alternative antidepressants)",
+    "text_chunk": "Escitalopram is primarily metabolized by CYP2C19 (S-demethylation) to S-desmethylcitalopram. CYP2C19 poor metabolizers have approximately 2-fold higher escitalopram plasma concentrations, increasing risk of QTc prolongation, serotonin syndrome, and SSRI-related adverse effects. CPIC recommends 50% dose reduction for CYP2C19 PMs (e.g., 5 mg instead of 10 mg). CYP2C19 ultra-rapid metabolizers may need higher doses for therapeutic effect. Apply same guidance to citalopram, which is the racemic form."
+  },
+  {
+    "id": "dxi_voriconazole_cyp2c19",
+    "drug": "Voriconazole",
+    "gene": "CYP2C19",
+    "interaction_type": "substrate",
+    "severity": "major",
+    "alternative": "Posaconazole or isavuconazole (non-CYP2C19-dependent azoles)",
+    "text_chunk": "Voriconazole exhibits highly variable pharmacokinetics driven primarily by CYP2C19 polymorphism, with additional contributions from CYP3A4 and CYP2C9. CYP2C19 poor metabolizers have 4-fold higher trough concentrations, increasing hepatotoxicity and neurotoxicity risk. CYP2C19 ultra-rapid metabolizers achieve subtherapeutic levels, risking treatment failure for invasive aspergillosis and other life-threatening fungal infections. CPIC and DPWG recommend therapeutic drug monitoring (TDM) with target trough 1-5 mg/L, or switching to posaconazole/isavuconazole for extreme phenotypes."
+  },
+  {
+    "id": "dxi_diazepam_cyp2c19",
+    "drug": "Diazepam",
+    "gene": "CYP2C19",
+    "interaction_type": "substrate",
+    "severity": "moderate",
+    "alternative": "Lorazepam, oxazepam (glucuronidation-dependent, CYP-independent)",
+    "text_chunk": "Diazepam is N-demethylated by CYP2C19 (and CYP3A4) to its active metabolite nordiazepam, which has a 40-200 hour half-life. CYP2C19 poor metabolizers have significantly prolonged diazepam and nordiazepam half-lives, leading to excessive sedation, ataxia, and respiratory depression. DPWG recommends dose reduction by 50% for CYP2C19 PMs or switching to lorazepam or oxazepam, which are eliminated by direct glucuronidation (UGT-dependent) and are not affected by CYP2C19 polymorphism."
+  },
+  {
+    "id": "dxi_simvastatin_slco1b1",
+    "drug": "Simvastatin",
+    "gene": "SLCO1B1",
+    "interaction_type": "substrate",
+    "severity": "major",
+    "alternative": "Pravastatin, rosuvastatin, or pitavastatin (lower SLCO1B1 dependence)",
+    "text_chunk": "Simvastatin acid is a substrate of OATP1B1 (encoded by SLCO1B1), which mediates hepatic uptake. SLCO1B1 rs4149056 CC genotype (*5/*5, poor function) reduces hepatic uptake by 70%, leading to 3-4x higher systemic simvastatin acid exposure and 17-fold increased risk of myopathy. The SEARCH trial identified this variant as the primary genetic risk factor for statin myopathy. CPIC recommends avoiding simvastatin >20 mg/day in SLCO1B1 *5 carriers or switching to pravastatin/rosuvastatin. This is the most clinically validated SLCO1B1 interaction."
+  },
+  {
+    "id": "dxi_atorvastatin_slco1b1",
+    "drug": "Atorvastatin",
+    "gene": "SLCO1B1",
+    "interaction_type": "substrate",
+    "severity": "moderate",
+    "alternative": "Pravastatin, rosuvastatin, or pitavastatin",
+    "text_chunk": "Atorvastatin is transported into hepatocytes by OATP1B1 (SLCO1B1). The rs4149056 TC or CC genotype reduces hepatic uptake, increasing systemic exposure by 1.5-2x and raising myopathy risk. While the effect is less pronounced than for simvastatin, SLCO1B1 poor function still increases atorvastatin-related muscle toxicity. CPIC recommends lower starting doses (10-20 mg) for SLCO1B1 *5 carriers with clinical monitoring for myalgia and CK elevation. Consider pravastatin or rosuvastatin as alternatives with lower myopathy risk."
+  },
+  {
+    "id": "dxi_rosuvastatin_slco1b1",
+    "drug": "Rosuvastatin",
+    "gene": "SLCO1B1",
+    "interaction_type": "substrate",
+    "severity": "minor",
+    "alternative": "Pravastatin or pitavastatin",
+    "text_chunk": "Rosuvastatin is partially transported by OATP1B1 (SLCO1B1) but also uses OATP1B3 and NTCP for hepatic uptake, reducing its dependence on SLCO1B1 compared to simvastatin. SLCO1B1 *5 carriers show modest increases in rosuvastatin exposure (1.3-1.6x), with minor additional myopathy risk. Rosuvastatin is generally considered a safer statin option for SLCO1B1 poor function carriers. FDA label recommends 5 mg starting dose for Asian populations (higher *5 frequency). Monitor CK levels in carriers receiving high-dose rosuvastatin (>20 mg)."
+  },
+  {
+    "id": "dxi_pravastatin_slco1b1",
+    "drug": "Pravastatin",
+    "gene": "SLCO1B1",
+    "interaction_type": "substrate",
+    "severity": "minor",
+    "alternative": "No alternative needed; pravastatin is a preferred option for SLCO1B1 poor function",
+    "text_chunk": "Pravastatin is a hydrophilic statin transported by OATP1B1 (SLCO1B1) into hepatocytes. While SLCO1B1 *5 modestly increases pravastatin systemic exposure, the overall myopathy risk remains very low due to pravastatin's hydrophilic nature (minimal skeletal muscle penetration). Pravastatin is therefore one of the preferred statin choices for SLCO1B1 poor function carriers. It is not metabolized by CYP enzymes, reducing drug-drug interaction potential. CPIC considers pravastatin an acceptable alternative to simvastatin in SLCO1B1 *5 carriers."
+  },
+  {
+    "id": "dxi_pitavastatin_slco1b1",
+    "drug": "Pitavastatin",
+    "gene": "SLCO1B1",
+    "interaction_type": "substrate",
+    "severity": "minor",
+    "alternative": "Pravastatin (if even lower SLCO1B1 dependence desired)",
+    "text_chunk": "Pitavastatin is transported by OATP1B1 (SLCO1B1) into hepatocytes. SLCO1B1 *5 carriers show modestly increased pitavastatin exposure but with low myopathy risk overall. Pitavastatin has minimal CYP metabolism (unlike simvastatin and atorvastatin), reducing drug-drug interaction potential. It is an acceptable statin choice for SLCO1B1 poor function carriers. Clinical data from LIVES study demonstrate good safety profile. Pitavastatin is also unique among statins in not reducing HDL-C or increasing glucose levels."
+  },
+  {
+    "id": "dxi_warfarin_vkorc1",
+    "drug": "Warfarin",
+    "gene": "VKORC1",
+    "interaction_type": "substrate",
+    "severity": "major",
+    "alternative": "Direct oral anticoagulants (DOACs: apixaban, rivarelbaan, edoxaban) if appropriate",
+    "text_chunk": "Warfarin inhibits VKORC1 (vitamin K epoxide reductase complex 1), the target enzyme for its anticoagulant effect. VKORC1 rs9923231 AA genotype confers high sensitivity, requiring 40-50% lower warfarin doses (typical 2-3 mg/day vs 5 mg/day). VKORC1 GG genotype confers relative resistance, requiring higher doses (7-10 mg/day). Combined VKORC1 + CYP2C9 genotyping explains ~40% of dose variability. CPIC provides dosing algorithms incorporating both genes plus clinical factors. DOACs (apixaban, rivarelbaan) offer pharmacogenomic-independent alternatives."
+  },
+  {
+    "id": "dxi_warfarin_cyp2c9",
+    "drug": "Warfarin",
+    "gene": "CYP2C9",
+    "interaction_type": "substrate",
+    "severity": "major",
+    "alternative": "Direct oral anticoagulants (DOACs) that bypass CYP2C9 metabolism",
+    "text_chunk": "Warfarin's S-enantiomer (3x more potent than R-warfarin) is metabolized primarily by CYP2C9. CYP2C9 *2 and *3 alleles reduce S-warfarin clearance by 30-80%, increasing bleeding risk at standard doses. CYP2C9 *3/*3 (poor metabolizer) requires approximately 70% dose reduction. Combined with VKORC1 genotype, CYP2C9 status enables pharmacogenomic dose prediction. CPIC provides validated dosing algorithms. Patients with CYP2C9 PM status and VKORC1 AA genotype require the lowest doses (often 0.5-2 mg/day) and have the highest hemorrhagic risk."
+  },
+  {
+    "id": "dxi_acenocoumarol_vkorc1_cyp2c9",
+    "drug": "Acenocoumarol",
+    "gene": "VKORC1/CYP2C9",
+    "interaction_type": "substrate",
+    "severity": "major",
+    "alternative": "Direct oral anticoagulants (DOACs) where appropriate",
+    "text_chunk": "Acenocoumarol, a coumarin anticoagulant used widely outside the US, shares the same pharmacogenomic interactions as warfarin with VKORC1 (target sensitivity) and CYP2C9 (metabolism). CYP2C9 polymorphisms have an even greater impact on acenocoumarol due to its shorter half-life and more complete CYP2C9-dependent clearance. VKORC1 AA genotype requires 50-60% dose reduction. CYP2C9 *2 and *3 alleles further reduce dose requirements. Genotype-guided dosing algorithms are available and recommended by DPWG guidelines."
+  },
+  {
+    "id": "dxi_azathioprine_tpmt",
+    "drug": "Azathioprine",
+    "gene": "TPMT",
+    "interaction_type": "substrate",
+    "severity": "major",
+    "alternative": "Mycophenolate mofetil or other non-thiopurine immunosuppressants",
+    "text_chunk": "Azathioprine is converted to 6-mercaptopurine (6-MP), then to cytotoxic thioguanine nucleotides (TGN). TPMT methylates 6-MP, diverting it away from TGN accumulation. TPMT poor metabolizers (*3A/*3A, *3C/*3C) accumulate toxic TGN levels, causing severe myelosuppression (pancytopenia), which can be fatal. CPIC recommends: TPMT poor metabolizers receive 10% of standard dose or alternative therapy; intermediate metabolizers receive 50% dose with monitoring. NUDT15 genotyping is also recommended (especially in East Asian populations) as it independently predicts thiopurine toxicity."
+  },
+  {
+    "id": "dxi_mercaptopurine_tpmt",
+    "drug": "Mercaptopurine (6-MP)",
+    "gene": "TPMT",
+    "interaction_type": "substrate",
+    "severity": "major",
+    "alternative": "Non-thiopurine chemotherapy as per oncology protocol",
+    "text_chunk": "Mercaptopurine (6-MP) is used in acute lymphoblastic leukemia (ALL) maintenance therapy. TPMT metabolizes 6-MP via methylation; poor metabolizers accumulate cytotoxic thioguanine nucleotides (TGNs), causing life-threatening myelosuppression. TPMT testing is standard of care before initiating 6-MP. CPIC recommends: PMs start at 10% standard dose (10-15 mg/m2/day instead of 75 mg/m2/day); IMs start at 50% dose. NUDT15 genotyping should also be performed, particularly for patients of East Asian descent. Weekly CBC monitoring is essential during dose titration."
+  },
+  {
+    "id": "dxi_thioguanine_tpmt",
+    "drug": "Thioguanine",
+    "gene": "TPMT",
+    "interaction_type": "substrate",
+    "severity": "major",
+    "alternative": "Non-thiopurine therapy as per disease-specific protocol",
+    "text_chunk": "Thioguanine (6-TG) is directly converted to cytotoxic thioguanine nucleotides more efficiently than azathioprine or 6-MP. TPMT metabolizes thioguanine, and poor metabolizers accumulate excessive TGN, leading to severe myelosuppression and hepatic veno-occlusive disease. CPIC recommends TPMT (and NUDT15) genotyping before thioguanine initiation. Poor metabolizers should receive substantially reduced doses (10% of standard) or alternative therapy. Intermediate metabolizers require 50% dose reduction. Thioguanine also carries unique hepatotoxicity risk (nodular regenerative hyperplasia) requiring liver monitoring."
+  },
+  {
+    "id": "dxi_abacavir_hla_b5701",
+    "drug": "Abacavir",
+    "gene": "HLA-B*57:01",
+    "interaction_type": "substrate",
+    "severity": "major",
+    "alternative": "Tenofovir-based regimens (TDF or TAF)",
+    "text_chunk": "Abacavir, a nucleoside reverse transcriptase inhibitor (NRTI) for HIV, causes potentially fatal hypersensitivity reaction (HSR) in HLA-B*57:01-positive individuals. The reaction involves CD8+ T-cell-mediated immune response to abacavir-modified peptides presented by HLA-B*57:01. HSR manifests as fever, rash, GI symptoms, and respiratory distress, typically within 6 weeks of initiation. Rechallenge after HSR can cause fatal anaphylaxis. FDA label mandates HLA-B*57:01 screening before prescribing. Prevalence: 5-8% Caucasian, 1-2% African American, <1% East Asian. Use tenofovir-based alternatives if positive."
+  },
+  {
+    "id": "dxi_carbamazepine_hla_b5701_1502",
+    "drug": "Carbamazepine",
+    "gene": "HLA-B*57:01/HLA-B*15:02",
+    "interaction_type": "substrate",
+    "severity": "major",
+    "alternative": "Levetiracetam, valproic acid, or lamotrigine (with HLA-A*31:01 testing)",
+    "text_chunk": "Carbamazepine causes severe cutaneous adverse reactions (SCAR) including Stevens-Johnson syndrome (SJS) and toxic epidermal necrolysis (TEN) in carriers of HLA-B*15:02 (prevalent in Southeast Asian populations, 2-15%) and HLA-A*31:01 (prevalent in European, 2-5%). SJS/TEN has 10-30% mortality. FDA mandates HLA-B*15:02 testing before prescribing carbamazepine to patients of Southeast Asian ancestry. CPIC recommends avoiding carbamazepine in HLA-B*15:02 or HLA-A*31:01 carriers. Alternative anticonvulsants include levetiracetam (no HLA associations) and valproic acid."
+  },
+  {
+    "id": "dxi_irinotecan_ugt1a1",
+    "drug": "Irinotecan",
+    "gene": "UGT1A1",
+    "interaction_type": "substrate",
+    "severity": "major",
+    "alternative": "Dose reduction per UGT1A1 genotype; no direct alternative for many indications",
+    "text_chunk": "Irinotecan is converted to its active metabolite SN-38 by carboxylesterases. SN-38 is inactivated by UGT1A1 glucuronidation. UGT1A1*28/*28 (homozygous for 7 TA repeats, i.e., Gilbert syndrome genotype) reduces SN-38 glucuronidation by 70%, causing accumulation and severe toxicity: grade 4 neutropenia (3.5x risk) and severe diarrhea. FDA label recommends reduced starting dose for UGT1A1 *28/*28 patients (25-30% reduction). CPIC recommends: *28/*28 reduce dose by 30% and monitor intensively; *1/*28 standard dose with monitoring."
+  },
+  {
+    "id": "dxi_atazanavir_ugt1a1",
+    "drug": "Atazanavir",
+    "gene": "UGT1A1",
+    "interaction_type": "substrate",
+    "severity": "moderate",
+    "alternative": "Darunavir or other non-UGT1A1-dependent protease inhibitors",
+    "text_chunk": "Atazanavir, an HIV protease inhibitor, is a potent inhibitor of UGT1A1, causing unconjugated hyperbilirubinemia (indirect bilirubin elevation). In UGT1A1*28/*28 carriers (Gilbert syndrome), atazanavir-induced hyperbilirubinemia is more pronounced and frequent, with jaundice occurring in up to 47% of *28/*28 patients versus 17% of *1/*1. While the hyperbilirubinemia is benign and cosmetic (not hepatotoxic), it causes significant patient distress and medication discontinuation. DPWG recommends monitoring bilirubin and counseling patients; consider darunavir if jaundice is unacceptable."
+  },
+  {
+    "id": "dxi_simvastatin_cyp3a4_grapefruit",
+    "drug": "Simvastatin",
+    "gene": "CYP3A4",
+    "interaction_type": "inhibitor",
+    "severity": "major",
+    "alternative": "Pravastatin, rosuvastatin, or pitavastatin (not CYP3A4 substrates)",
+    "text_chunk": "Simvastatin and atorvastatin are CYP3A4 substrates. Grapefruit juice contains furanocoumarins (bergamottin, 6',7'-dihydroxybergamottin) that irreversibly inhibit intestinal CYP3A4, increasing simvastatin bioavailability by 260-1500% depending on quantity consumed. This dramatically increases myopathy and rhabdomyolysis risk. A single glass of grapefruit juice can inhibit intestinal CYP3A4 for 24-72 hours due to mechanism-based (suicide) inhibition requiring de novo enzyme synthesis for recovery. Patients on simvastatin or atorvastatin should avoid grapefruit entirely."
+  },
+  {
+    "id": "dxi_statins_cyp3a4_azoles",
+    "drug": "Statins (simvastatin, atorvastatin)",
+    "gene": "CYP3A4",
+    "interaction_type": "inhibitor",
+    "severity": "major",
+    "alternative": "Pravastatin, rosuvastatin, or pitavastatin during azole therapy; or hold statin",
+    "text_chunk": "Azole antifungals (ketoconazole, itraconazole, voriconazole, posaconazole) are potent CYP3A4 inhibitors that dramatically increase plasma concentrations of CYP3A4-dependent statins (simvastatin, atorvastatin, lovastatin). Ketoconazole increases simvastatin AUC by 10-fold. This interaction has caused multiple cases of fatal rhabdomyolysis. Simvastatin and lovastatin are contraindicated with azole antifungals. Atorvastatin should be limited to 20 mg/day maximum. Pravastatin, rosuvastatin, and pitavastatin are not CYP3A4 substrates and are safe alternatives during azole therapy."
+  },
+  {
+    "id": "dxi_caffeine_cyp1a2",
+    "drug": "Caffeine",
+    "gene": "CYP1A2",
+    "interaction_type": "substrate",
+    "severity": "minor",
+    "alternative": "Reduce caffeine intake; theanine for anxiety-prone slow metabolizers",
+    "text_chunk": "Caffeine is primarily metabolized by CYP1A2 (95% of clearance). CYP1A2 slow metabolizers (e.g., CYP1A2 *1F/*1F non-induced) have prolonged caffeine half-life (8-12 hours vs 4-6 hours in fast metabolizers), increasing risk of insomnia, anxiety, hypertension, and potentially myocardial infarction with high caffeine intake (>3 cups/day). CYP1A2 is also induced by smoking, cruciferous vegetables, and charbroiled meat. The rs762551 AA genotype (with induction) confers fast metabolizer status. Slow metabolizers should limit caffeine to 200 mg/day (approximately 2 cups of coffee)."
+  },
+  {
+    "id": "dxi_theophylline_cyp1a2",
+    "drug": "Theophylline",
+    "gene": "CYP1A2",
+    "interaction_type": "substrate",
+    "severity": "major",
+    "alternative": "Inhaled corticosteroids + long-acting beta-agonists for asthma/COPD",
+    "text_chunk": "Theophylline has a narrow therapeutic index (10-20 mcg/mL) and is primarily metabolized by CYP1A2. CYP1A2 slow metabolizers accumulate theophylline, risking toxicity: nausea, vomiting, seizures, cardiac arrhythmias, and death. Smoking induces CYP1A2, increasing theophylline clearance; smoking cessation can cause rapid theophylline accumulation and toxicity. Concurrent CYP1A2 inhibitors (fluvoxamine, ciprofloxacin, cimetidine) further reduce clearance. Therapeutic drug monitoring (TDM) is essential. Modern asthma/COPD guidelines largely favor inhaled therapies over theophylline."
+  },
+  {
+    "id": "dxi_clozapine_cyp1a2",
+    "drug": "Clozapine",
+    "gene": "CYP1A2",
+    "interaction_type": "substrate",
+    "severity": "major",
+    "alternative": "No direct alternative for treatment-resistant schizophrenia; adjust dose based on CYP1A2 status",
+    "text_chunk": "Clozapine is metabolized primarily by CYP1A2 (with CYP3A4 and CYP2C19 contributions). CYP1A2 slow metabolizers have elevated clozapine levels, increasing risk of seizures, myocarditis, agranulocytosis, metabolic syndrome, and excessive sedation. Smoking induces CYP1A2 and reduces clozapine levels by 30-50%; smoking cessation requires 30-50% dose reduction to prevent toxicity. Fluvoxamine (potent CYP1A2 inhibitor) can increase clozapine levels 5-10x and is contraindicated. TDM with target trough 350-600 ng/mL is recommended. Clozapine has no pharmacogenomic-free alternative for treatment-resistant schizophrenia."
+  },
+  {
+    "id": "dxi_fluorouracil_dpyd",
+    "drug": "Fluorouracil (5-FU)",
+    "gene": "DPYD",
+    "interaction_type": "substrate",
+    "severity": "major",
+    "alternative": "Dose reduction per DPYD genotype; consider alternative chemotherapy regimens",
+    "text_chunk": "Fluorouracil (5-FU) is catabolized by dihydropyrimidine dehydrogenase (DPD, encoded by DPYD). DPYD variants (*2A, *13, rs67376798, HapB3) reduce DPD activity, causing 5-FU accumulation and severe toxicity: mucositis, diarrhea, myelosuppression, hand-foot syndrome, neurotoxicity, and potentially fatal outcomes (mortality rate 5-10% in DPD-deficient patients). CPIC and EMA recommend DPYD genotyping before 5-FU or capecitabine initiation. Complete DPD deficiency: avoid fluoropyrimidines entirely. Partial deficiency: reduce dose by 25-50% with TDM."
+  },
+  {
+    "id": "dxi_capecitabine_dpyd",
+    "drug": "Capecitabine",
+    "gene": "DPYD",
+    "interaction_type": "substrate",
+    "severity": "major",
+    "alternative": "Dose reduction per DPYD genotype; alternative chemotherapy regimens if fully deficient",
+    "text_chunk": "Capecitabine is an oral prodrug of 5-FU, undergoing three enzymatic conversion steps before generating active 5-FU in tumor tissue. DPD (DPYD) deficiency affects capecitabine identically to IV 5-FU since the active metabolite is the same. DPYD *2A (rs3918290) causes complete DPD loss and is contraindicated. DPYD rs67376798 and HapB3 cause partial deficiency, requiring 25-50% dose reduction. The EMA now mandates DPYD testing before all fluoropyrimidine prescriptions in the EU. Pre-treatment testing prevents approximately 30% of severe fluoropyrimidine toxicities."
+  }
+]

@@ -1,0 +1,702 @@
+"""Export Precision Biomarker Agent results to Markdown, JSON, PDF, and FHIR R4.
+
+Provides public functions:
+  - export_markdown()            -- human-readable report with evidence tables
+  - export_json()                -- machine-readable structured data
+  - export_pdf()                 -- styled PDF report via reportlab Platypus
+  - export_fhir_diagnostic_report() -- FHIR R4 DiagnosticReport JSON bundle
+
+Author: Adam Jones
+Date: March 2026
+"""
+
+import io
+import json
+import re
+from datetime import datetime, timezone
+from typing import Any, Dict, List, Optional
+
+from .models import (
+    AnalysisResult,
+    CrossCollectionResult,
+    PatientProfile,
+    SearchHit,
+)
+
+VERSION = "1.0.0"
+
+
+# =====================================================================
+# PUBLIC API
+# =====================================================================
+
+
+def generate_filename(extension: str) -> str:
+    """Generate a timestamped filename for export.
+
+    Args:
+        extension: File extension without dot (e.g. "md", "json")
+
+    Returns:
+        Filename like biomarker_report_20260301T143025Z.md
+    """
+    ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    return f"biomarker_report_{ts}.{extension}"
+
+
+def export_markdown(
+    query: str,
+    response_text: str,
+    evidence: Optional[CrossCollectionResult] = None,
+    analysis: Optional[AnalysisResult] = None,
+    filters_applied: Optional[dict] = None,
+) -> str:
+    """Export a query result as a Markdown report.
+
+    Args:
+        query: The user's original question.
+        response_text: The LLM-generated response.
+        evidence: CrossCollectionResult from retrieval.
+        analysis: Optional AnalysisResult with patient analysis data.
+        filters_applied: Dict of filters that were active.
+
+    Returns:
+        Complete Markdown report as a string.
+    """
+    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+    filters_str = _format_filters(filters_applied)
+
+    lines = [
+        "# Precision Biomarker Intelligence Report",
+        "",
+        f"**Query:** {query}",
+        f"**Generated:** {timestamp}",
+        f"**Filters:** {filters_str}",
+        "",
+        "---",
+        "",
+        "## Response",
+        "",
+        response_text,
+        "",
+        "---",
+        "",
+    ]
+
+    # Analysis summary section
+    if analysis:
+        lines.append("## Patient Analysis Summary")
+        lines.append("")
+        ba = analysis.biological_age
+        lines.append(f"**Biological Age:** {ba.biological_age:.1f} years "
+                      f"(chronological: {ba.chronological_age}, "
+                      f"acceleration: {ba.age_acceleration:+.1f} years)")
+        lines.append("")
+
+        if analysis.critical_alerts:
+            lines.append("### Critical Alerts")
+            lines.append("")
+            for alert in analysis.critical_alerts:
+                lines.append(f"- {alert}")
+            lines.append("")
+
+        if analysis.disease_trajectories:
+            lines.append("### Disease Risk Summary")
+            lines.append("")
+            lines.append("| Disease | Risk Level | Est. Years to Onset |")
+            lines.append("|---------|-----------|-------------------|")
+            for traj in analysis.disease_trajectories:
+                years = f"~{traj.years_to_onset_estimate:.0f}" if traj.years_to_onset_estimate else "N/A"
+                lines.append(f"| {traj.disease.value} | {traj.risk_level.value} | {years} |")
+            lines.append("")
+
+        if analysis.pgx_results:
+            lines.append("### PGx Profile")
+            lines.append("")
+            for pgx in analysis.pgx_results:
+                lines.append(f"- **{pgx.gene}** {pgx.star_alleles}: {pgx.phenotype.value}")
+            lines.append("")
+
+        lines.append("---")
+        lines.append("")
+
+    # Evidence section
+    if evidence and evidence.hit_count > 0:
+        lines.append("## Evidence Sources")
+        lines.append("")
+        lines.extend(_format_evidence_section(evidence))
+
+        if evidence.knowledge_context:
+            lines.append("")
+            lines.append("## Knowledge Graph Context")
+            lines.append("")
+            lines.append(evidence.knowledge_context)
+
+        # Search metrics
+        lines.append("")
+        lines.append("---")
+        lines.append("")
+        lines.append("## Search Metrics")
+        lines.append("")
+        lines.append("| Metric | Value |")
+        lines.append("|--------|-------|")
+        lines.append(f"| Total Results | {evidence.hit_count} |")
+        lines.append(f"| Collections Searched | {evidence.total_collections_searched} |")
+        lines.append(f"| Search Time | {evidence.search_time_ms:.0f}ms |")
+
+    # Footer
+    lines.append("")
+    lines.append("---")
+    lines.append("")
+    lines.append(f"*Generated by HCLS AI Factory -- Precision Biomarker Agent v{VERSION}*")
+    lines.append("")
+
+    return "\n".join(lines)
+
+
+def export_json(
+    analysis_result: Optional[AnalysisResult] = None,
+    query: str = "",
+    response_text: str = "",
+    evidence: Optional[CrossCollectionResult] = None,
+) -> str:
+    """Export analysis result as structured JSON.
+
+    Args:
+        analysis_result: AnalysisResult from patient analysis.
+        query: Original question.
+        response_text: LLM-generated response.
+        evidence: CrossCollectionResult from retrieval.
+
+    Returns:
+        Pretty-printed JSON string.
+    """
+    timestamp = datetime.now(timezone.utc).isoformat()
+
+    data: Dict[str, Any] = {
+        "report_type": "precision_biomarker_analysis",
+        "version": VERSION,
+        "generated_at": timestamp,
+    }
+
+    if query:
+        data["query"] = query
+    if response_text:
+        data["response"] = response_text
+
+    if analysis_result:
+        data["analysis"] = analysis_result.model_dump()
+
+    if evidence:
+        data["evidence"] = evidence.model_dump()
+        data["search_metrics"] = {
+            "total_results": evidence.hit_count,
+            "collections_searched": evidence.total_collections_searched,
+            "search_time_ms": round(evidence.search_time_ms, 1),
+        }
+
+    return json.dumps(data, indent=2, default=str)
+
+
+def export_pdf(report_markdown: str) -> bytes:
+    """Export a markdown report as a styled PDF.
+
+    Uses reportlab Platypus for professional formatting with HCLS AI Factory
+    branding. Falls back to plain-text PDF if reportlab styles fail.
+
+    Args:
+        report_markdown: Complete markdown report string.
+
+    Returns:
+        PDF content as bytes.
+    """
+    try:
+        from reportlab.lib import colors
+        from reportlab.lib.enums import TA_LEFT
+        from reportlab.lib.pagesizes import letter
+        from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+        from reportlab.lib.units import inch
+        from reportlab.platypus import (
+            BaseDocTemplate,
+            Frame,
+            PageBreak,
+            PageTemplate,
+            Paragraph,
+            Spacer,
+            Table,
+            TableStyle,
+        )
+
+        # Color palette
+        NVIDIA_GREEN = colors.HexColor("#76B900")
+        DARK_BG = colors.HexColor("#1B1B2F")
+        WHITE = colors.white
+        TEXT_PRIMARY = colors.HexColor("#1E293B")
+
+        PAGE_W, PAGE_H = letter
+        MARGIN = 0.65 * inch
+
+        buf = io.BytesIO()
+
+        def _first_page(canvas, doc):
+            canvas.saveState()
+            # Header bar
+            canvas.setFillColor(DARK_BG)
+            canvas.rect(0, PAGE_H - 62, PAGE_W, 62, fill=1, stroke=0)
+            canvas.setFillColor(NVIDIA_GREEN)
+            canvas.rect(0, PAGE_H - 65, PAGE_W, 3, fill=1, stroke=0)
+            # Title
+            canvas.setFillColor(WHITE)
+            canvas.setFont("Helvetica-Bold", 18)
+            canvas.drawString(MARGIN, PAGE_H - 42, "Precision Biomarker Intelligence Report")
+            canvas.setFont("Helvetica", 8)
+            canvas.setFillColor(NVIDIA_GREEN)
+            canvas.drawRightString(PAGE_W - MARGIN, PAGE_H - 30, f"v{VERSION}")
+            # Footer
+            canvas.setFillColor(NVIDIA_GREEN)
+            canvas.rect(0, 30, PAGE_W, 2, fill=1, stroke=0)
+            canvas.setFont("Helvetica", 7)
+            canvas.setFillColor(colors.HexColor("#94A3B8"))
+            canvas.drawString(MARGIN, 18, "HCLS AI Factory -- Precision Biomarker Agent")
+            canvas.drawRightString(PAGE_W - MARGIN, 18, f"Page {doc.page}")
+            canvas.restoreState()
+
+        def _later_pages(canvas, doc):
+            canvas.saveState()
+            canvas.setFillColor(DARK_BG)
+            canvas.rect(0, PAGE_H - 28, PAGE_W, 28, fill=1, stroke=0)
+            canvas.setFillColor(NVIDIA_GREEN)
+            canvas.rect(0, PAGE_H - 30, PAGE_W, 2, fill=1, stroke=0)
+            canvas.setFillColor(WHITE)
+            canvas.setFont("Helvetica-Bold", 9)
+            canvas.drawString(MARGIN, PAGE_H - 19, "Precision Biomarker Report")
+            # Footer
+            canvas.setFillColor(NVIDIA_GREEN)
+            canvas.rect(0, 30, PAGE_W, 2, fill=1, stroke=0)
+            canvas.setFont("Helvetica", 7)
+            canvas.setFillColor(colors.HexColor("#94A3B8"))
+            canvas.drawRightString(PAGE_W - MARGIN, 18, f"Page {doc.page}")
+            canvas.restoreState()
+
+        frame_first = Frame(MARGIN, MARGIN + 20, PAGE_W - 2 * MARGIN,
+                            PAGE_H - 2 * MARGIN - 65, id="first")
+        frame_later = Frame(MARGIN, MARGIN + 20, PAGE_W - 2 * MARGIN,
+                            PAGE_H - 2 * MARGIN - 30, id="later")
+
+        doc = BaseDocTemplate(buf, pagesize=letter)
+        doc.addPageTemplates([
+            PageTemplate(id="first", frames=[frame_first], onPage=_first_page),
+            PageTemplate(id="later", frames=[frame_later], onPage=_later_pages),
+        ])
+
+        styles = getSampleStyleSheet()
+        story = []
+
+        # Parse markdown into PDF elements
+        for line in report_markdown.split("\n"):
+            stripped = line.strip()
+            if not stripped:
+                story.append(Spacer(1, 6))
+            elif stripped.startswith("# ") and not stripped.startswith("## "):
+                story.append(Paragraph(stripped[2:], styles["Title"]))
+                story.append(Spacer(1, 12))
+            elif stripped.startswith("## "):
+                story.append(Spacer(1, 8))
+                story.append(Paragraph(stripped[3:], styles["Heading2"]))
+                story.append(Spacer(1, 6))
+            elif stripped.startswith("### "):
+                story.append(Paragraph(stripped[4:], styles["Heading3"]))
+                story.append(Spacer(1, 4))
+            elif stripped.startswith("- ") or stripped.startswith("* "):
+                bullet_text = stripped[2:]
+                # Convert **bold** to <b>bold</b>
+                bullet_text = re.sub(r'\*\*(.+?)\*\*', r'<b>\1</b>', bullet_text)
+                story.append(Paragraph(f"  \u2022 {bullet_text}", styles["BodyText"]))
+            elif stripped.startswith("|") and "---" not in stripped:
+                # Skip markdown table formatting rows
+                pass
+            elif stripped.startswith("---"):
+                story.append(Spacer(1, 12))
+            else:
+                # Regular paragraph -- convert markdown bold
+                text = re.sub(r'\*\*(.+?)\*\*', r'<b>\1</b>', stripped)
+                text = re.sub(r'\*(.+?)\*', r'<i>\1</i>', text)
+                story.append(Paragraph(text, styles["BodyText"]))
+
+        doc.build(story)
+        return buf.getvalue()
+
+    except ImportError:
+        # Fallback: plain text as bytes
+        return report_markdown.encode("utf-8")
+
+
+def export_fhir_diagnostic_report(
+    analysis: AnalysisResult,
+    patient_profile: PatientProfile,
+) -> str:
+    """Export analysis result as a FHIR R4 DiagnosticReport JSON bundle.
+
+    Creates a FHIR Bundle containing:
+    - DiagnosticReport resource (main report)
+    - Observation resources (biological age, disease trajectories, PGx)
+    - Patient resource reference
+
+    Args:
+        analysis: AnalysisResult from patient analysis.
+        patient_profile: PatientProfile with patient demographics.
+
+    Returns:
+        FHIR R4 JSON string (Bundle).
+    """
+    timestamp = datetime.now(timezone.utc).isoformat()
+    report_id = f"biomarker-report-{patient_profile.patient_id}"
+
+    entries = []
+
+    # Patient resource reference
+    patient_ref = f"Patient/{patient_profile.patient_id}"
+
+    # DiagnosticReport resource
+    diagnostic_report = {
+        "resource": {
+            "resourceType": "DiagnosticReport",
+            "id": report_id,
+            "status": "final",
+            "category": [
+                {
+                    "coding": [
+                        {
+                            "system": "http://terminology.hl7.org/CodeSystem/v2-0074",
+                            "code": "GE",
+                            "display": "Genetics",
+                        }
+                    ]
+                }
+            ],
+            "code": {
+                "coding": [
+                    {
+                        "system": "http://loinc.org",
+                        "code": "51969-4",
+                        "display": "Genetic analysis report",
+                    }
+                ],
+                "text": "Precision Biomarker Intelligence Report",
+            },
+            "subject": {"reference": patient_ref},
+            "effectiveDateTime": timestamp,
+            "issued": timestamp,
+            "performer": [
+                {
+                    "display": "HCLS AI Factory - Precision Biomarker Agent",
+                }
+            ],
+            "result": [],
+            "conclusion": "",
+        },
+        "fullUrl": f"urn:uuid:{report_id}",
+    }
+
+    observation_refs = []
+
+    # Observation: Biological Age
+    bio_age_id = f"observation-bio-age-{patient_profile.patient_id}"
+    bio_age_obs = {
+        "resource": {
+            "resourceType": "Observation",
+            "id": bio_age_id,
+            "status": "final",
+            "category": [
+                {
+                    "coding": [
+                        {
+                            "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                            "code": "laboratory",
+                            "display": "Laboratory",
+                        }
+                    ]
+                }
+            ],
+            "code": {
+                "text": "Biological Age (PhenoAge)",
+            },
+            "subject": {"reference": patient_ref},
+            "effectiveDateTime": timestamp,
+            "valueQuantity": {
+                "value": analysis.biological_age.biological_age,
+                "unit": "years",
+                "system": "http://unitsofmeasure.org",
+                "code": "a",
+            },
+            "component": [
+                {
+                    "code": {"text": "Chronological Age"},
+                    "valueQuantity": {
+                        "value": analysis.biological_age.chronological_age,
+                        "unit": "years",
+                    },
+                },
+                {
+                    "code": {"text": "Age Acceleration"},
+                    "valueQuantity": {
+                        "value": analysis.biological_age.age_acceleration,
+                        "unit": "years",
+                    },
+                },
+                {
+                    "code": {"text": "Mortality Risk Score"},
+                    "valueQuantity": {
+                        "value": analysis.biological_age.mortality_risk,
+                    },
+                },
+            ],
+        },
+        "fullUrl": f"urn:uuid:{bio_age_id}",
+    }
+    entries.append(bio_age_obs)
+    observation_refs.append({"reference": f"urn:uuid:{bio_age_id}"})
+
+    # Observations: Disease Trajectories
+    for i, traj in enumerate(analysis.disease_trajectories):
+        traj_id = f"observation-trajectory-{traj.disease.value}-{patient_profile.patient_id}"
+        traj_obs = {
+            "resource": {
+                "resourceType": "Observation",
+                "id": traj_id,
+                "status": "final",
+                "category": [
+                    {
+                        "coding": [
+                            {
+                                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                                "code": "exam",
+                                "display": "Exam",
+                            }
+                        ]
+                    }
+                ],
+                "code": {
+                    "text": f"Disease Risk Assessment - {traj.disease.value}",
+                },
+                "subject": {"reference": patient_ref},
+                "effectiveDateTime": timestamp,
+                "valueString": traj.risk_level.value,
+                "interpretation": [
+                    {
+                        "coding": [
+                            {
+                                "system": "http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation",
+                                "code": "H" if traj.risk_level.value in ("high", "critical") else "N",
+                                "display": "High" if traj.risk_level.value in ("high", "critical") else "Normal",
+                            }
+                        ]
+                    }
+                ],
+            },
+            "fullUrl": f"urn:uuid:{traj_id}",
+        }
+        if traj.years_to_onset_estimate:
+            traj_obs["resource"]["component"] = [
+                {
+                    "code": {"text": "Estimated Years to Clinical Onset"},
+                    "valueQuantity": {
+                        "value": traj.years_to_onset_estimate,
+                        "unit": "years",
+                    },
+                }
+            ]
+        entries.append(traj_obs)
+        observation_refs.append({"reference": f"urn:uuid:{traj_id}"})
+
+    # Observations: PGx Results
+    for pgx in analysis.pgx_results:
+        pgx_id = f"observation-pgx-{pgx.gene}-{patient_profile.patient_id}"
+        pgx_obs = {
+            "resource": {
+                "resourceType": "Observation",
+                "id": pgx_id,
+                "status": "final",
+                "category": [
+                    {
+                        "coding": [
+                            {
+                                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                                "code": "laboratory",
+                                "display": "Laboratory",
+                            }
+                        ]
+                    }
+                ],
+                "code": {
+                    "coding": [
+                        {
+                            "system": "http://loinc.org",
+                            "code": "51963-7",
+                            "display": "Medication assessment",
+                        }
+                    ],
+                    "text": f"Pharmacogenomic Result - {pgx.gene}",
+                },
+                "subject": {"reference": patient_ref},
+                "effectiveDateTime": timestamp,
+                "valueString": f"{pgx.star_alleles} ({pgx.phenotype.value})",
+                "component": [
+                    {
+                        "code": {"text": "Gene"},
+                        "valueString": pgx.gene,
+                    },
+                    {
+                        "code": {"text": "Star Alleles"},
+                        "valueString": pgx.star_alleles,
+                    },
+                    {
+                        "code": {"text": "Metabolizer Phenotype"},
+                        "valueString": pgx.phenotype.value,
+                    },
+                ],
+            },
+            "fullUrl": f"urn:uuid:{pgx_id}",
+        }
+
+        # Add drug-specific recommendations as components
+        for drug_info in pgx.drugs_affected[:5]:
+            pgx_obs["resource"]["component"].append({
+                "code": {"text": f"Drug Recommendation - {drug_info.get('drug', '')}"},
+                "valueString": drug_info.get("recommendation", ""),
+            })
+
+        entries.append(pgx_obs)
+        observation_refs.append({"reference": f"urn:uuid:{pgx_id}"})
+
+    # Set result references and conclusion on DiagnosticReport
+    diagnostic_report["resource"]["result"] = observation_refs
+
+    # Build conclusion from critical alerts
+    conclusion_parts = []
+    if analysis.critical_alerts:
+        conclusion_parts.extend(analysis.critical_alerts)
+    conclusion_parts.append(
+        f"Biological age: {analysis.biological_age.biological_age:.1f} years "
+        f"(acceleration: {analysis.biological_age.age_acceleration:+.1f} years)."
+    )
+    diagnostic_report["resource"]["conclusion"] = " | ".join(conclusion_parts)
+
+    # Insert DiagnosticReport as first entry
+    entries.insert(0, diagnostic_report)
+
+    # Build FHIR Bundle
+    bundle = {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "timestamp": timestamp,
+        "entry": entries,
+    }
+
+    return json.dumps(bundle, indent=2, default=str)
+
+
+# =====================================================================
+# PRIVATE HELPERS
+# =====================================================================
+
+
+def _format_filters(filters_applied: Optional[dict]) -> str:
+    """Format sidebar filters for display."""
+    if not filters_applied:
+        return "None"
+    parts = []
+    for key, value in filters_applied.items():
+        if value:
+            parts.append(f"{key}: {value}")
+    return ", ".join(parts) if parts else "None"
+
+
+def _format_citation_link(collection: str, record_id: str) -> str:
+    """Format a clickable citation link."""
+    if collection == "ClinicalEvidence" and record_id.isdigit():
+        return f"[PMID {record_id}](https://pubmed.ncbi.nlm.nih.gov/{record_id}/)"
+    return record_id
+
+
+def _format_evidence_section(evidence: CrossCollectionResult) -> List[str]:
+    """Format all evidence grouped by collection."""
+    lines = []
+    by_coll = evidence.hits_by_collection()
+    for coll_name, hits in by_coll.items():
+        lines.extend(_format_evidence_table(hits, coll_name))
+        lines.append("")
+    return lines
+
+
+def _format_evidence_table(hits: List[SearchHit], collection_name: str) -> List[str]:
+    """Format a Markdown table for hits from a single collection."""
+    lines = [f"### {collection_name} ({len(hits)} results)", ""]
+
+    if collection_name in ("BiomarkerRef", "AgingMarker", "GenotypeAdj", "Monitoring"):
+        lines.append("| # | ID | Score | Text |")
+        lines.append("|---|-----|-------|------|")
+        for i, hit in enumerate(hits[:10], 1):
+            text = hit.text[:100].replace("|", "\\|")
+            lines.append(f"| {i} | {hit.id} | {hit.score:.3f} | {text} |")
+
+    elif collection_name == "ClinicalEvidence":
+        lines.append("| # | ID | Score | Source | Title | Year | Disease Area |")
+        lines.append("|---|-----|-------|--------|-------|------|-------------|")
+        for i, hit in enumerate(hits[:10], 1):
+            m = hit.metadata
+            link = _format_citation_link(hit.collection, hit.id)
+            title = m.get("title", "")[:60]
+            year = m.get("year", "")
+            area = m.get("disease_area", "")
+            lines.append(f"| {i} | {hit.id} | {hit.score:.3f} | {link} | {title} | {year} | {area} |")
+
+    elif collection_name in ("GeneticVariant", "PGxRule", "DrugInteraction"):
+        lines.append("| # | ID | Score | Gene | Drug/Variant | Text |")
+        lines.append("|---|-----|-------|------|-------------|------|")
+        for i, hit in enumerate(hits[:10], 1):
+            m = hit.metadata
+            gene = m.get("gene", "")
+            drug_var = m.get("drug", m.get("rs_id", ""))
+            text = hit.text[:80].replace("|", "\\|")
+            lines.append(f"| {i} | {hit.id} | {hit.score:.3f} | {gene} | {drug_var} | {text} |")
+
+    elif collection_name == "DiseaseTrajectory":
+        lines.append("| # | ID | Score | Disease | Stage | Text |")
+        lines.append("|---|-----|-------|---------|-------|------|")
+        for i, hit in enumerate(hits[:10], 1):
+            m = hit.metadata
+            disease = m.get("disease", "")
+            stage = m.get("stage", "")
+            text = hit.text[:80].replace("|", "\\|")
+            lines.append(f"| {i} | {hit.id} | {hit.score:.3f} | {disease} | {stage} | {text} |")
+
+    elif collection_name == "Nutrition":
+        lines.append("| # | ID | Score | Nutrient | Genetic Context | Text |")
+        lines.append("|---|-----|-------|----------|-----------------|------|")
+        for i, hit in enumerate(hits[:10], 1):
+            m = hit.metadata
+            nutrient = m.get("nutrient", "")
+            genetic = m.get("genetic_context", "")[:30]
+            text = hit.text[:80].replace("|", "\\|")
+            lines.append(f"| {i} | {hit.id} | {hit.score:.3f} | {nutrient} | {genetic} | {text} |")
+
+    elif collection_name == "Genomic":
+        lines.append("| # | ID | Score | Gene | Consequence | Clinical Significance |")
+        lines.append("|---|-----|-------|------|-------------|----------------------|")
+        for i, hit in enumerate(hits[:10], 1):
+            m = hit.metadata
+            gene = m.get("gene", "")
+            consequence = m.get("consequence", "")[:25]
+            clin_sig = m.get("clinical_significance", "")[:25]
+            lines.append(f"| {i} | {hit.id} | {hit.score:.3f} | {gene} | {consequence} | {clin_sig} |")
+
+    else:
+        # Generic fallback
+        lines.append("| # | ID | Score | Text |")
+        lines.append("|---|-----|-------|------|")
+        for i, hit in enumerate(hits[:10], 1):
+            text = hit.text[:100].replace("|", "\\|")
+            lines.append(f"| {i} | {hit.id} | {hit.score:.3f} | {text} |")
+
+    return lines

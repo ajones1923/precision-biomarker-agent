@@ -1,0 +1,577 @@
+"""Pydantic data models for Precision Biomarker Agent.
+
+Maps to the 10 biomarker Milvus collections + patient analysis models.
+Follows the same Pydantic pattern as:
+  - cart_intelligence_agent/src/models.py
+  - rag-chat-pipeline/src/vcf_parser.py (VariantEvidence)
+
+Author: Adam Jones
+Date: March 2026
+"""
+
+from datetime import datetime, timezone
+from enum import Enum
+from typing import Dict, List, Optional
+
+from pydantic import BaseModel, Field
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# ENUMS
+# ═══════════════════════════════════════════════════════════════════════
+
+
+class RiskLevel(str, Enum):
+    """Patient risk classification levels."""
+    CRITICAL = "critical"
+    HIGH = "high"
+    MODERATE = "moderate"
+    LOW = "low"
+    NORMAL = "normal"
+
+
+class ClockType(str, Enum):
+    """Epigenetic clock algorithms for biological age estimation."""
+    PHENOAGE = "PhenoAge"
+    GRIMAGE = "GrimAge"
+
+
+class DiseaseCategory(str, Enum):
+    """Major disease categories tracked by biomarker trajectories."""
+    DIABETES = "diabetes"
+    CARDIOVASCULAR = "cardiovascular"
+    LIVER = "liver"
+    THYROID = "thyroid"
+    IRON = "iron"
+    NUTRITIONAL = "nutritional"
+
+
+class MetabolizerPhenotype(str, Enum):
+    """CYP enzyme metabolizer phenotype classifications (CPIC)."""
+    ULTRA_RAPID = "ultra_rapid"
+    NORMAL = "normal"
+    INTERMEDIATE = "intermediate"
+    POOR = "poor"
+
+
+class CPICLevel(str, Enum):
+    """CPIC evidence levels for pharmacogenomic guidelines."""
+    LEVEL_1A = "1A"
+    LEVEL_1B = "1B"
+    LEVEL_2A = "2A"
+    LEVEL_2B = "2B"
+    LEVEL_3 = "3"
+
+
+class Zygosity(str, Enum):
+    """Genotype zygosity classifications."""
+    HOMOZYGOUS_REF = "homozygous_ref"
+    HETEROZYGOUS = "heterozygous"
+    HOMOZYGOUS_ALT = "homozygous_alt"
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# COLLECTION MODELS (map to Milvus schemas)
+# ═══════════════════════════════════════════════════════════════════════
+
+
+class BiomarkerReference(BaseModel):
+    """Reference biomarker definition — maps to biomarker_reference collection."""
+    id: str = Field(..., max_length=100, description="Unique biomarker identifier")
+    name: str = Field(..., max_length=100, description="Biomarker display name")
+    unit: str = Field("", max_length=20, description="Measurement unit (e.g., mg/dL)")
+    category: str = Field(
+        "", max_length=30,
+        description="CBC, CMP, Lipids, Thyroid, Inflammation, Nutrients",
+    )
+    ref_range_min: float = Field(0.0, description="Standard reference range lower bound")
+    ref_range_max: float = Field(0.0, description="Standard reference range upper bound")
+    text_chunk: str = Field(..., max_length=3000, description="Text chunk for embedding")
+    clinical_significance: str = Field(
+        "", max_length=2000,
+        description="Clinical interpretation and significance",
+    )
+    epigenetic_clock: Optional[str] = Field(
+        None, max_length=50,
+        description="PhenoAge or GrimAge coefficient if applicable",
+    )
+    genetic_modifiers: str = Field(
+        "", max_length=500,
+        description="Comma-separated genes that modify this biomarker",
+    )
+
+    def to_embedding_text(self) -> str:
+        """Generate text for BGE-small embedding."""
+        parts = [f"{self.name} ({self.unit})" if self.unit else self.name]
+        if self.text_chunk:
+            parts.append(self.text_chunk)
+        if self.clinical_significance:
+            parts.append(f"Significance: {self.clinical_significance}")
+        if self.category:
+            parts.append(f"Category: {self.category}")
+        if self.genetic_modifiers:
+            parts.append(f"Genetic modifiers: {self.genetic_modifiers}")
+        return " ".join(parts)
+
+
+class GeneticVariant(BaseModel):
+    """Genetic variant affecting biomarker levels — maps to biomarker_genetic_variants."""
+    id: str = Field(..., max_length=100, description="Unique variant identifier")
+    gene: str = Field(..., max_length=50, description="Gene symbol (e.g., MTHFR)")
+    rs_id: str = Field(..., max_length=20, description="dbSNP rsID (e.g., rs1801133)")
+    risk_allele: str = Field("", max_length=5, description="Risk allele (e.g., T)")
+    protective_allele: str = Field("", max_length=5, description="Protective allele (e.g., C)")
+    effect_size: str = Field(
+        "", max_length=100,
+        description="Effect size description (e.g., 20-30% reduction in enzyme activity)",
+    )
+    mechanism: str = Field(
+        "", max_length=2000,
+        description="Molecular mechanism of the variant effect",
+    )
+    disease_associations: str = Field(
+        "", max_length=1000,
+        description="Comma-separated disease associations",
+    )
+    text_chunk: str = Field(..., max_length=3000, description="Text chunk for embedding")
+
+    def to_embedding_text(self) -> str:
+        """Generate text for BGE-small embedding."""
+        parts = [f"{self.gene} {self.rs_id}"]
+        if self.text_chunk:
+            parts.append(self.text_chunk)
+        if self.mechanism:
+            parts.append(f"Mechanism: {self.mechanism}")
+        if self.disease_associations:
+            parts.append(f"Diseases: {self.disease_associations}")
+        return " ".join(parts)
+
+
+class PGxRule(BaseModel):
+    """Pharmacogenomic dosing rule — maps to biomarker_pgx_rules collection."""
+    id: str = Field(..., max_length=100, description="Unique PGx rule identifier")
+    gene: str = Field(..., max_length=50, description="Pharmacogene (e.g., CYP2D6)")
+    star_alleles: str = Field(
+        ..., max_length=100,
+        description="Star allele combination (e.g., *1/*2)",
+    )
+    drug: str = Field(..., max_length=100, description="Drug name")
+    phenotype: MetabolizerPhenotype = MetabolizerPhenotype.NORMAL
+    cpic_level: CPICLevel = CPICLevel.LEVEL_1A
+    recommendation: str = Field(
+        "", max_length=2000,
+        description="CPIC dosing recommendation",
+    )
+    evidence_url: str = Field(
+        "", max_length=500,
+        description="URL to CPIC guideline or PharmGKB entry",
+    )
+    text_chunk: str = Field(..., max_length=3000, description="Text chunk for embedding")
+
+    def to_embedding_text(self) -> str:
+        """Generate text for BGE-small embedding."""
+        parts = [f"{self.gene} {self.star_alleles} — {self.drug}"]
+        if self.text_chunk:
+            parts.append(self.text_chunk)
+        if self.recommendation:
+            parts.append(f"Recommendation: {self.recommendation}")
+        parts.append(f"Phenotype: {self.phenotype.value}")
+        parts.append(f"CPIC Level: {self.cpic_level.value}")
+        return " ".join(parts)
+
+
+class DiseaseTrajectory(BaseModel):
+    """Disease progression trajectory — maps to biomarker_disease_trajectories."""
+    id: str = Field(..., max_length=100, description="Unique trajectory identifier")
+    disease: DiseaseCategory = DiseaseCategory.DIABETES
+    stage: str = Field(
+        "", max_length=30,
+        description="Disease stage (e.g., pre-diabetes, early, advanced)",
+    )
+    biomarker_pattern: str = Field(
+        "", max_length=2000,
+        description="JSON string of biomarker thresholds defining this stage",
+    )
+    years_to_diagnosis: float = Field(
+        0.0, description="Estimated years from this stage to clinical diagnosis",
+    )
+    intervention_window: str = Field(
+        "", max_length=500,
+        description="Description of the intervention opportunity",
+    )
+    risk_reduction_pct: float = Field(
+        0.0, description="Potential risk reduction percentage with intervention",
+    )
+    text_chunk: str = Field(..., max_length=3000, description="Text chunk for embedding")
+
+    def to_embedding_text(self) -> str:
+        """Generate text for BGE-small embedding."""
+        parts = [f"{self.disease.value} — stage: {self.stage}"]
+        if self.text_chunk:
+            parts.append(self.text_chunk)
+        if self.intervention_window:
+            parts.append(f"Intervention: {self.intervention_window}")
+        if self.risk_reduction_pct:
+            parts.append(f"Risk reduction: {self.risk_reduction_pct}%")
+        return " ".join(parts)
+
+
+class ClinicalEvidence(BaseModel):
+    """Published clinical evidence — maps to biomarker_clinical_evidence."""
+    id: str = Field(..., max_length=100, description="Unique evidence identifier")
+    pmid: str = Field("", max_length=20, description="PubMed ID")
+    title: str = Field(..., max_length=500, description="Publication title")
+    finding: str = Field(
+        "", max_length=3000,
+        description="Key finding from the publication",
+    )
+    year: int = Field(0, ge=0, le=2030, description="Publication year")
+    disease_area: str = Field("", max_length=100, description="Disease area or specialty")
+    text_chunk: str = Field(..., max_length=3000, description="Text chunk for embedding")
+
+    def to_embedding_text(self) -> str:
+        """Generate text for BGE-small embedding."""
+        parts = [self.title]
+        if self.text_chunk:
+            parts.append(self.text_chunk)
+        if self.finding:
+            parts.append(f"Finding: {self.finding}")
+        if self.disease_area:
+            parts.append(f"Area: {self.disease_area}")
+        return " ".join(parts)
+
+
+class NutritionGuideline(BaseModel):
+    """Genotype-aware nutrition guideline — maps to biomarker_nutrition."""
+    id: str = Field(..., max_length=100, description="Unique guideline identifier")
+    nutrient: str = Field(..., max_length=100, description="Nutrient name (e.g., Folate)")
+    genetic_context: str = Field(
+        "", max_length=200,
+        description="Genetic context (e.g., MTHFR C677T heterozygous)",
+    )
+    recommended_form: str = Field(
+        "", max_length=200,
+        description="Recommended supplement form (e.g., methylfolate)",
+    )
+    dose_range: str = Field(
+        "", max_length=100,
+        description="Dosing range (e.g., 400-800 mcg/day)",
+    )
+    evidence_summary: str = Field(
+        "", max_length=2000,
+        description="Summary of evidence supporting this guideline",
+    )
+    text_chunk: str = Field(..., max_length=3000, description="Text chunk for embedding")
+
+    def to_embedding_text(self) -> str:
+        """Generate text for BGE-small embedding."""
+        parts = [f"{self.nutrient}"]
+        if self.genetic_context:
+            parts.append(f"for {self.genetic_context}")
+        if self.text_chunk:
+            parts.append(self.text_chunk)
+        if self.recommended_form:
+            parts.append(f"Form: {self.recommended_form}")
+        if self.dose_range:
+            parts.append(f"Dose: {self.dose_range}")
+        return " ".join(parts)
+
+
+class DrugInteraction(BaseModel):
+    """Gene-drug interaction — maps to biomarker_drug_interactions."""
+    id: str = Field(..., max_length=100, description="Unique interaction identifier")
+    drug: str = Field(..., max_length=100, description="Drug name")
+    gene: str = Field(..., max_length=50, description="Gene involved (e.g., CYP2C19)")
+    interaction_type: str = Field(
+        "", max_length=50,
+        description="Interaction type (e.g., substrate, inhibitor, inducer)",
+    )
+    severity: str = Field(
+        "", max_length=20,
+        description="Severity (e.g., major, moderate, minor)",
+    )
+    alternative: str = Field(
+        "", max_length=200,
+        description="Alternative drug recommendation",
+    )
+    text_chunk: str = Field(..., max_length=3000, description="Text chunk for embedding")
+
+    def to_embedding_text(self) -> str:
+        """Generate text for BGE-small embedding."""
+        parts = [f"{self.drug} — {self.gene}"]
+        if self.text_chunk:
+            parts.append(self.text_chunk)
+        if self.interaction_type:
+            parts.append(f"Type: {self.interaction_type}")
+        if self.severity:
+            parts.append(f"Severity: {self.severity}")
+        if self.alternative:
+            parts.append(f"Alternative: {self.alternative}")
+        return " ".join(parts)
+
+
+class AgingMarker(BaseModel):
+    """Epigenetic aging marker — maps to biomarker_aging_markers."""
+    id: str = Field(..., max_length=100, description="Unique marker identifier")
+    marker_name: str = Field(..., max_length=100, description="Marker name (e.g., Albumin)")
+    clock_type: ClockType = ClockType.PHENOAGE
+    coefficient: float = Field(
+        0.0, description="Coefficient weight in the aging clock algorithm",
+    )
+    unit: str = Field("", max_length=30, description="Measurement unit")
+    interpretation: str = Field(
+        "", max_length=2000,
+        description="Clinical interpretation of this marker in aging context",
+    )
+    text_chunk: str = Field(..., max_length=3000, description="Text chunk for embedding")
+
+    def to_embedding_text(self) -> str:
+        """Generate text for BGE-small embedding."""
+        parts = [f"{self.marker_name} ({self.clock_type.value} clock)"]
+        if self.text_chunk:
+            parts.append(self.text_chunk)
+        if self.interpretation:
+            parts.append(f"Interpretation: {self.interpretation}")
+        if self.coefficient:
+            parts.append(f"Coefficient: {self.coefficient}")
+        return " ".join(parts)
+
+
+class GenotypeAdjustment(BaseModel):
+    """Genotype-based reference range adjustment — maps to biomarker_genotype_adjustments."""
+    id: str = Field(..., max_length=100, description="Unique adjustment identifier")
+    biomarker: str = Field(..., max_length=100, description="Biomarker name")
+    gene: str = Field(..., max_length=50, description="Gene symbol")
+    rs_id: str = Field("", max_length=20, description="dbSNP rsID")
+    genotype_ref: str = Field(
+        "", max_length=10,
+        description="Reference genotype (e.g., CC)",
+    )
+    genotype_het: str = Field(
+        "", max_length=10,
+        description="Heterozygous genotype (e.g., CT)",
+    )
+    genotype_hom: str = Field(
+        "", max_length=10,
+        description="Homozygous alternate genotype (e.g., TT)",
+    )
+    adjusted_min: float = Field(
+        0.0, description="Adjusted reference range lower bound",
+    )
+    adjusted_max: float = Field(
+        0.0, description="Adjusted reference range upper bound",
+    )
+    rationale: str = Field(
+        "", max_length=2000,
+        description="Rationale for the genotype-based adjustment",
+    )
+    text_chunk: str = Field(..., max_length=3000, description="Text chunk for embedding")
+
+    def to_embedding_text(self) -> str:
+        """Generate text for BGE-small embedding."""
+        parts = [f"{self.biomarker} adjustment for {self.gene} {self.rs_id}"]
+        if self.text_chunk:
+            parts.append(self.text_chunk)
+        if self.rationale:
+            parts.append(f"Rationale: {self.rationale}")
+        return " ".join(parts)
+
+
+class MonitoringProtocol(BaseModel):
+    """Condition-specific monitoring protocol — maps to biomarker_monitoring."""
+    id: str = Field(..., max_length=100, description="Unique protocol identifier")
+    condition: str = Field(..., max_length=100, description="Medical condition")
+    biomarker_panel: str = Field(
+        "", max_length=500,
+        description="Comma-separated biomarker panel",
+    )
+    frequency: str = Field(
+        "", max_length=50,
+        description="Monitoring frequency (e.g., every 3 months)",
+    )
+    trigger_values: str = Field(
+        "", max_length=1000,
+        description="Threshold values that trigger clinical action",
+    )
+    text_chunk: str = Field(..., max_length=3000, description="Text chunk for embedding")
+
+    def to_embedding_text(self) -> str:
+        """Generate text for BGE-small embedding."""
+        parts = [f"Monitoring for {self.condition}"]
+        if self.text_chunk:
+            parts.append(self.text_chunk)
+        if self.biomarker_panel:
+            parts.append(f"Panel: {self.biomarker_panel}")
+        if self.frequency:
+            parts.append(f"Frequency: {self.frequency}")
+        if self.trigger_values:
+            parts.append(f"Triggers: {self.trigger_values}")
+        return " ".join(parts)
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# PATIENT & ANALYSIS MODELS
+# ═══════════════════════════════════════════════════════════════════════
+
+
+class PatientProfile(BaseModel):
+    """Patient input profile with biomarker values and genotype data."""
+    patient_id: str = Field(..., description="Unique patient identifier")
+    age: int = Field(..., ge=0, le=150, description="Patient age in years")
+    sex: str = Field(..., max_length=10, description="Patient sex (M/F)")
+    biomarkers: Dict[str, float] = Field(
+        default_factory=dict,
+        description="Biomarker name -> measured value (e.g., {'HbA1c': 5.7})",
+    )
+    genotypes: Dict[str, str] = Field(
+        default_factory=dict,
+        description="rsID -> genotype mapping (e.g., {'rs1801133': 'CT'})",
+    )
+    star_alleles: Dict[str, str] = Field(
+        default_factory=dict,
+        description="Gene -> star allele mapping (e.g., {'CYP2D6': '*1/*2'})",
+    )
+
+
+class BiologicalAgeResult(BaseModel):
+    """Result of biological age estimation using epigenetic clock biomarkers."""
+    chronological_age: int = Field(..., description="Calendar age")
+    biological_age: float = Field(..., description="Estimated biological age")
+    age_acceleration: float = Field(
+        ..., description="biological_age - chronological_age (positive = accelerated)",
+    )
+    phenoage_score: float = Field(..., description="PhenoAge composite score")
+    grimage_score: Optional[float] = Field(
+        None, description="GrimAge composite score (if available)",
+    )
+    mortality_risk: float = Field(
+        0.0, ge=0.0, le=1.0,
+        description="Relative mortality risk multiplier",
+    )
+    aging_drivers: List[Dict] = Field(
+        default_factory=list,
+        description="List of dicts with marker, value, contribution, direction",
+    )
+
+
+class DiseaseTrajectoryResult(BaseModel):
+    """Result of disease trajectory analysis for a patient."""
+    disease: DiseaseCategory
+    risk_level: RiskLevel = RiskLevel.NORMAL
+    current_markers: Dict[str, float] = Field(
+        default_factory=dict,
+        description="Relevant biomarker name -> current value",
+    )
+    genetic_risk_factors: List[str] = Field(
+        default_factory=list,
+        description="Genetic variants contributing to disease risk",
+    )
+    years_to_onset_estimate: Optional[float] = Field(
+        None, description="Estimated years to clinical onset (if applicable)",
+    )
+    intervention_recommendations: List[str] = Field(
+        default_factory=list,
+        description="Recommended interventions to reduce risk",
+    )
+
+
+class PGxResult(BaseModel):
+    """Pharmacogenomic result for a single gene."""
+    gene: str = Field(..., description="Pharmacogene (e.g., CYP2D6)")
+    star_alleles: str = Field(..., description="Star allele result (e.g., *1/*2)")
+    phenotype: MetabolizerPhenotype = MetabolizerPhenotype.NORMAL
+    drugs_affected: List[Dict] = Field(
+        default_factory=list,
+        description="List of dicts with drug, recommendation, cpic_level",
+    )
+
+
+class GenotypeAdjustmentResult(BaseModel):
+    """Result of genotype-based reference range adjustment for a biomarker."""
+    biomarker: str = Field(..., description="Biomarker name")
+    standard_range: str = Field(
+        ..., description="Standard reference range (e.g., '4.0-5.6%')",
+    )
+    adjusted_range: str = Field(
+        ..., description="Genotype-adjusted range (e.g., '4.2-5.8%')",
+    )
+    genotype: str = Field(..., description="Patient genotype at this locus")
+    gene: str = Field(..., description="Gene symbol")
+    rationale: str = Field(
+        "", description="Explanation for the adjustment",
+    )
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# SEARCH RESULT MODELS
+# ═══════════════════════════════════════════════════════════════════════
+
+
+class SearchHit(BaseModel):
+    """A single search result from any collection."""
+    collection: str
+    id: str
+    score: float = Field(..., ge=0.0)
+    text: str
+    metadata: Dict = Field(default_factory=dict)
+
+
+class CrossCollectionResult(BaseModel):
+    """Merged results from multi-collection search."""
+    query: str
+    hits: List[SearchHit] = Field(default_factory=list)
+    knowledge_context: str = ""
+    total_collections_searched: int = 0
+    search_time_ms: float = 0.0
+
+    @property
+    def hit_count(self) -> int:
+        return len(self.hits)
+
+    def hits_by_collection(self) -> Dict[str, List[SearchHit]]:
+        grouped: Dict[str, List[SearchHit]] = {}
+        for hit in self.hits:
+            grouped.setdefault(hit.collection, []).append(hit)
+        return grouped
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# AGENT MODELS
+# ═══════════════════════════════════════════════════════════════════════
+
+
+class AgentQuery(BaseModel):
+    """Input to the Precision Biomarker Agent."""
+    question: str
+    patient_profile: Optional[PatientProfile] = None
+    include_genomic: bool = True  # Also search genomic_evidence collection
+
+
+class AgentResponse(BaseModel):
+    """Output from the Precision Biomarker Agent."""
+    question: str
+    answer: str
+    evidence: CrossCollectionResult
+    biological_age: Optional[BiologicalAgeResult] = None
+    disease_trajectories: Optional[List[DiseaseTrajectoryResult]] = None
+    pgx_results: Optional[List[PGxResult]] = None
+    genotype_adjustments: Optional[List[GenotypeAdjustmentResult]] = None
+    timestamp: str = Field(
+        default_factory=lambda: datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+    )
+
+
+class AnalysisResult(BaseModel):
+    """Comprehensive analysis result combining all sub-analyses."""
+    patient_profile: PatientProfile
+    biological_age: BiologicalAgeResult
+    disease_trajectories: List[DiseaseTrajectoryResult] = Field(default_factory=list)
+    pgx_results: List[PGxResult] = Field(default_factory=list)
+    genotype_adjustments: List[GenotypeAdjustmentResult] = Field(default_factory=list)
+    critical_alerts: List[str] = Field(
+        default_factory=list,
+        description="Critical findings requiring immediate attention",
+    )
+    timestamp: str = Field(
+        default_factory=lambda: datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+    )

@@ -1,0 +1,302 @@
+[
+  {
+    "id": "dt-t2d-stage1",
+    "disease": "diabetes",
+    "stage": "normal_metabolism",
+    "biomarker_pattern": "{\"homa_ir\": \"<1.4\", \"fasting_insulin\": \"<8 uIU/mL\", \"hba1c\": \"<5.4%\", \"fasting_glucose\": \"<90 mg/dL\", \"triglycerides\": \"<100 mg/dL\"}",
+    "years_to_diagnosis": 10.0,
+    "intervention_window": "Optimal metabolic health. Maintain with lifestyle: Mediterranean diet, 150+ min/week moderate exercise, 7-9 hours sleep, stress management.",
+    "risk_reduction_pct": 0.0,
+    "text_chunk": "Normal metabolism stage: HOMA-IR <1.4, fasting insulin <8, HbA1c <5.4%, glucose <90. No intervention needed beyond healthy lifestyle maintenance. TCF7L2 TT carriers should monitor annually even with normal values due to 2x lifetime T2D risk."
+  },
+  {
+    "id": "dt-t2d-stage2",
+    "disease": "diabetes",
+    "stage": "early_insulin_resistance",
+    "biomarker_pattern": "{\"homa_ir\": \"1.5-2.5\", \"fasting_insulin\": \"8-15 uIU/mL\", \"hba1c\": \"5.4-5.6%\", \"fasting_glucose\": \"90-99 mg/dL\", \"triglycerides\": \"100-150 mg/dL\"}",
+    "years_to_diagnosis": 7.0,
+    "intervention_window": "Early intervention highly effective. Lifestyle modification (diet + exercise) can halt progression in 80%+ of cases. Focus on weight management, carbohydrate quality, and regular exercise.",
+    "risk_reduction_pct": 80.0,
+    "text_chunk": "Early insulin resistance: HOMA-IR 1.5-2.5, fasting insulin rising to 8-15. Glucose and HbA1c still normal range. ~7 years before clinical diagnosis. Lifestyle intervention at this stage prevents progression in >80% of cases. Weight loss of 5-7% has dramatic effect."
+  },
+  {
+    "id": "dt-t2d-stage3",
+    "disease": "diabetes",
+    "stage": "insulin_resistance",
+    "biomarker_pattern": "{\"homa_ir\": \">3.0\", \"fasting_insulin\": \">15 uIU/mL\", \"hba1c\": \"5.5-5.8%\", \"fasting_glucose\": \"95-105 mg/dL\", \"triglycerides\": \"150-200 mg/dL\"}",
+    "years_to_diagnosis": 3.0,
+    "intervention_window": "High intervention potential. Lifestyle modification (diet + exercise) can reduce progression risk by 58% (DPP trial). Metformin may be considered for high-risk individuals (reduces risk 31%).",
+    "risk_reduction_pct": 58.0,
+    "text_chunk": "Insulin resistance stage: HOMA-IR >3.0, elevated fasting insulin >15 with HbA1c 5.5-5.8%. Typically 3 years before clinical diagnosis. Diabetes Prevention Program showed 58% risk reduction with lifestyle intervention, 31% with metformin. TCF7L2 TT carriers respond better to lifestyle than metformin."
+  },
+  {
+    "id": "dt-t2d-stage4",
+    "disease": "diabetes",
+    "stage": "prediabetes",
+    "biomarker_pattern": "{\"homa_ir\": \">4.0\", \"fasting_insulin\": \">20 uIU/mL\", \"hba1c\": \"5.7-6.4%\", \"fasting_glucose\": \"100-125 mg/dL\", \"triglycerides\": \">200 mg/dL\"}",
+    "years_to_diagnosis": 1.0,
+    "intervention_window": "Urgent intervention needed. 15-30% annual conversion rate to diabetes without intervention. Intensive lifestyle + consider metformin. GLP-1 receptor agonists show high prevention efficacy.",
+    "risk_reduction_pct": 58.0,
+    "text_chunk": "Prediabetes stage: HbA1c 5.7-6.4%, fasting glucose 100-125. HOMA-IR >4 with hyperinsulinemia. 15-30% annual conversion to T2D without intervention. ADA recommends intensive lifestyle + metformin consideration. GLP-1 RA (semaglutide) emerging as prevention strategy."
+  },
+  {
+    "id": "dt-t2d-stage5",
+    "disease": "diabetes",
+    "stage": "clinical_diabetes",
+    "biomarker_pattern": "{\"homa_ir\": \">5.0\", \"fasting_insulin\": \"variable (high then declining)\", \"hba1c\": \">=6.5%\", \"fasting_glucose\": \">=126 mg/dL\", \"c_peptide\": \"initially elevated, then declining\"}",
+    "years_to_diagnosis": 0.0,
+    "intervention_window": "Clinical diagnosis. Immediate pharmacotherapy. First-line: metformin + lifestyle. GLP-1 RA or SGLT2i for CV/renal protection. HbA1c target <7% (or <6.5% if safely achievable). Monitor for complications.",
+    "risk_reduction_pct": 0.0,
+    "text_chunk": "Clinical T2D: HbA1c >=6.5%, fasting glucose >=126. Beta-cell function declining (C-peptide trajectory). ADA/EASD guidelines: metformin + lifestyle first-line. Add GLP-1 RA if CV risk, SGLT2i if CKD/HF. Monitor HbA1c q3 months, renal function annually, eye exam annually."
+  },
+  {
+    "id": "dt-cv-stage1",
+    "disease": "cardiovascular",
+    "stage": "optimal_risk",
+    "biomarker_pattern": "{\"ldl_c\": \"<100 mg/dL\", \"apob\": \"<80 mg/dL\", \"hs_crp\": \"<1.0 mg/L\", \"lp_a\": \"<30 nmol/L\", \"triglycerides\": \"<100 mg/dL\", \"hdl_c\": \">50 mg/dL\"}",
+    "years_to_diagnosis": 20.0,
+    "intervention_window": "Optimal cardiovascular health. Maintain Mediterranean/DASH diet, regular exercise, no smoking. Recheck lipids every 5 years. Check Lp(a) once (genetically determined).",
+    "risk_reduction_pct": 0.0,
+    "text_chunk": "Optimal CV risk: LDL <100, ApoB <80, hs-CRP <1, Lp(a) <30, TG <100, HDL >50. No pharmacological intervention needed. Maintain healthy lifestyle. APOE E4 carriers should still target LDL <70 due to inherent risk. Check Lp(a) once in lifetime (genetically fixed)."
+  },
+  {
+    "id": "dt-cv-stage2",
+    "disease": "cardiovascular",
+    "stage": "elevated_risk_factors",
+    "biomarker_pattern": "{\"ldl_c\": \"100-159 mg/dL\", \"apob\": \"80-100 mg/dL\", \"hs_crp\": \"1-3 mg/L\", \"triglycerides\": \"150-200 mg/dL\", \"hdl_c\": \"35-50 mg/dL\"}",
+    "years_to_diagnosis": 10.0,
+    "intervention_window": "Lifestyle intervention primary. 10-year ASCVD risk assessment. Statin consideration if 10-year risk >7.5%. PCSK9 loss-of-function carriers may be protected despite elevated LDL. APOE4 carriers need aggressive management.",
+    "risk_reduction_pct": 30.0,
+    "text_chunk": "Elevated CV risk factors: borderline LDL 100-159, mild inflammation hs-CRP 1-3. Calculate 10-year ASCVD risk. If >7.5%: consider statin therapy (check SLCO1B1 genotype before simvastatin). Lifestyle: Mediterranean diet reduces CV events 30% (PREDIMED). APOE4 carriers warrant statin regardless of risk score."
+  },
+  {
+    "id": "dt-cv-stage3",
+    "disease": "cardiovascular",
+    "stage": "subclinical_atherosclerosis",
+    "biomarker_pattern": "{\"ldl_c\": \">130 mg/dL\", \"apob\": \">100 mg/dL\", \"hs_crp\": \">3 mg/L\", \"lp_a\": \">75 nmol/L\", \"coronary_calcium\": \">0 Agatston\"}",
+    "years_to_diagnosis": 5.0,
+    "intervention_window": "Subclinical disease present. Statin therapy indicated. Coronary artery calcium >0 confirms atherosclerosis. Consider PCSK9 inhibitor if LDL not at target. Aspirin for primary prevention if CAC >100.",
+    "risk_reduction_pct": 30.0,
+    "text_chunk": "Subclinical atherosclerosis: elevated LDL + inflammation + CAC >0. Statin therapy indicated (rosuvastatin preferred if SLCO1B1 *5). Target LDL <70 mg/dL. If Lp(a) >75 nmol/L: additional residual risk not addressed by statins. PCSK9i if LDL not at goal. CAC >100: consider low-dose aspirin."
+  },
+  {
+    "id": "dt-cv-stage4",
+    "disease": "cardiovascular",
+    "stage": "established_cvd",
+    "biomarker_pattern": "{\"ldl_c\": \"target <55 mg/dL\", \"apob\": \"<65 mg/dL\", \"hs_crp\": \"target <2 mg/L\", \"hs_troponin\": \"may be elevated\", \"bnp\": \"may be elevated\"}",
+    "years_to_diagnosis": 0.0,
+    "intervention_window": "Secondary prevention. High-intensity statin + ezetimibe + PCSK9i as needed. LDL target <55 mg/dL (ESC) or <70 (ACC/AHA). Dual antiplatelet if recent ACS. BP <130/80. HbA1c <7%.",
+    "risk_reduction_pct": 0.0,
+    "text_chunk": "Established CVD (post-MI, stroke, PAD): aggressive secondary prevention. LDL target <55 mg/dL. High-intensity statin + ezetimibe; add PCSK9i (evolocumab, alirocumab) if not at goal. Colchicine 0.5mg daily for residual inflammatory risk (COLCOT trial). CYP2C19 genotype-guided antiplatelet selection."
+  },
+  {
+    "id": "dt-liver-stage1",
+    "disease": "liver",
+    "stage": "normal_liver",
+    "biomarker_pattern": "{\"alt\": \"<30 U/L\", \"ast\": \"<30 U/L\", \"ggt\": \"<30 U/L\", \"fib4\": \"<1.0\", \"hepatic_fat\": \"<5%\"}",
+    "years_to_diagnosis": 15.0,
+    "intervention_window": "Normal liver function. PNPLA3 GG carriers should still monitor annually as they have 3.2x NAFLD risk. Avoid excessive alcohol. Maintain healthy weight.",
+    "risk_reduction_pct": 0.0,
+    "text_chunk": "Normal liver: ALT <30, FIB-4 <1.0, hepatic fat <5%. PNPLA3 GG carriers have normal labs but 3.2x future NAFLD risk - annual monitoring recommended. TM6SF2 TT carriers also at elevated risk. Maintain BMI <25, limit alcohol (<1 drink/day for women, <2 for men)."
+  },
+  {
+    "id": "dt-liver-stage2",
+    "disease": "liver",
+    "stage": "simple_steatosis",
+    "biomarker_pattern": "{\"alt\": \"30-60 U/L\", \"ast\": \"25-45 U/L\", \"ggt\": \"30-65 U/L\", \"fib4\": \"<1.3\", \"hepatic_fat\": \"5-33%\"}",
+    "years_to_diagnosis": 10.0,
+    "intervention_window": "Early steatosis. Weight loss 7-10% can resolve steatosis. PNPLA3 GG carriers progress faster. Mediterranean diet preferred. Coffee (3-4 cups/day) is hepatoprotective. Avoid fructose.",
+    "risk_reduction_pct": 70.0,
+    "text_chunk": "Simple steatosis (NAFLD): mildly elevated ALT, hepatic fat 5-33%, no fibrosis (FIB-4 <1.3). PNPLA3 GG carriers have higher ALT baseline - adjust threshold +10-15 U/L. Weight loss 7-10% resolves steatosis in majority. HSD17B13 TA carriers have slower progression. Mediterranean diet + coffee protective."
+  },
+  {
+    "id": "dt-liver-stage3",
+    "disease": "liver",
+    "stage": "steatohepatitis",
+    "biomarker_pattern": "{\"alt\": \">60 U/L\", \"ast\": \">45 U/L\", \"ggt\": \">65 U/L\", \"fib4\": \"1.3-2.67\", \"hs_crp\": \">3 mg/L\"}",
+    "years_to_diagnosis": 5.0,
+    "intervention_window": "NASH with early fibrosis. Aggressive weight management (target 10%+ loss). GLP-1 RA (semaglutide) shows NASH resolution in 59% (STEP-NASH trial). Vitamin E 800 IU/day for non-diabetic NASH. FibroScan recommended.",
+    "risk_reduction_pct": 59.0,
+    "text_chunk": "Steatohepatitis (NASH): elevated ALT/AST, FIB-4 indeterminate (1.3-2.67), inflammation present. PNPLA3 GG carriers progress faster to fibrosis. Semaglutide achieves NASH resolution in 59%. Pioglitazone and vitamin E 800 IU/day are alternatives. FibroScan for fibrosis staging. Avoid alcohol completely."
+  },
+  {
+    "id": "dt-liver-stage4",
+    "disease": "liver",
+    "stage": "advanced_fibrosis",
+    "biomarker_pattern": "{\"alt\": \"variable\", \"ast_alt_ratio\": \">1.0\", \"platelets\": \"<150 x10^3/uL\", \"fib4\": \">2.67\", \"fibroscan\": \">10 kPa\", \"albumin\": \"<3.8 g/dL\"}",
+    "years_to_diagnosis": 0.0,
+    "intervention_window": "Advanced fibrosis/cirrhosis. Hepatology referral. HCC surveillance every 6 months (AFP + ultrasound). Variceal screening. Liver transplant evaluation if decompensated. PNPLA3 GG cirrhotics have higher HCC risk.",
+    "risk_reduction_pct": 0.0,
+    "text_chunk": "Advanced fibrosis: FIB-4 >2.67, FibroScan >10 kPa, AST/ALT ratio >1.0, low platelets. Refer to hepatology. HCC surveillance: AFP + ultrasound every 6 months (PNPLA3 GG cirrhotics have 2x HCC risk). Screen for esophageal varices. Assess for liver transplant if MELD >15."
+  },
+  {
+    "id": "dt-thyroid-stage1",
+    "disease": "thyroid",
+    "stage": "euthyroid",
+    "biomarker_pattern": "{\"tsh\": \"0.5-2.5 mIU/L\", \"free_t4\": \"1.0-1.5 ng/dL\", \"free_t3\": \"3.0-4.0 pg/mL\", \"tpo_ab\": \"<35 IU/mL\"}",
+    "years_to_diagnosis": 15.0,
+    "intervention_window": "Normal thyroid function. DIO2 AA carriers should confirm adequate Free T3 levels. Check TPO antibodies once as baseline. Annual TSH if family history of thyroid disease.",
+    "risk_reduction_pct": 0.0,
+    "text_chunk": "Euthyroid: TSH 0.5-2.5, FT4 1.0-1.5, FT3 3.0-4.0, TPO Ab negative. Optimal thyroid function. DIO2 AA carriers may have low-normal FT3 (2.3-2.8) even with 'normal' TSH - check FT3/FT4 ratio. Selenium 100-200 mcg/day supports thyroid function. Adequate iodine intake essential."
+  },
+  {
+    "id": "dt-thyroid-stage2",
+    "disease": "thyroid",
+    "stage": "autoimmune_predisposition",
+    "biomarker_pattern": "{\"tsh\": \"0.5-4.0 mIU/L\", \"free_t4\": \"normal\", \"free_t3\": \"normal\", \"tpo_ab\": \">35 IU/mL\"}",
+    "years_to_diagnosis": 8.0,
+    "intervention_window": "Positive TPO antibodies with normal TSH. 2-4% annual conversion to hypothyroidism. Selenium 200 mcg/day reduces TPO Ab (CATALYST trial). Monitor TSH every 6-12 months. Avoid excess iodine.",
+    "risk_reduction_pct": 30.0,
+    "text_chunk": "Autoimmune predisposition: normal thyroid function but positive TPO antibodies (>35 IU/mL). Hashimoto thyroiditis in preclinical phase. 2-4% annual risk of developing hypothyroidism. Selenium 200 mcg/day selenomethionine reduces TPO Ab titers 20-40%. Monitor TSH every 6-12 months."
+  },
+  {
+    "id": "dt-thyroid-stage3",
+    "disease": "thyroid",
+    "stage": "subclinical_hypothyroidism",
+    "biomarker_pattern": "{\"tsh\": \"4.0-10.0 mIU/L\", \"free_t4\": \"0.8-1.0 ng/dL (low-normal)\", \"free_t3\": \"2.3-3.0 pg/mL (low-normal)\", \"tpo_ab\": \">100 IU/mL\"}",
+    "years_to_diagnosis": 2.0,
+    "intervention_window": "Subclinical hypothyroidism. TSH 4-10 with normal FT4. Consider treatment if: TPO Ab positive, symptoms present, pregnancy/planning, TSH >7. DIO2 AA carriers more likely symptomatic at TSH 4-6.",
+    "risk_reduction_pct": 0.0,
+    "text_chunk": "Subclinical hypothyroidism: TSH 4-10, FT4 low-normal. Treat if: TPO Ab positive (higher conversion rate), symptoms present, TSH >7, pregnancy/conception planned. DIO2 AA carriers often symptomatic at TSH 4-6 and benefit from earlier treatment. Start levothyroxine 25-50 mcg with TSH recheck at 6 weeks."
+  },
+  {
+    "id": "dt-thyroid-stage4",
+    "disease": "thyroid",
+    "stage": "overt_hypothyroidism",
+    "biomarker_pattern": "{\"tsh\": \">10 mIU/L\", \"free_t4\": \"<0.8 ng/dL\", \"free_t3\": \"<2.3 pg/mL\", \"tpo_ab\": \"often >200 IU/mL\"}",
+    "years_to_diagnosis": 0.0,
+    "intervention_window": "Overt hypothyroidism requiring treatment. Levothyroxine standard therapy. DIO2 AA carriers may benefit from combination T4/T3 therapy if symptomatic despite normal TSH on T4-only.",
+    "risk_reduction_pct": 0.0,
+    "text_chunk": "Overt hypothyroidism: TSH >10, low FT4. Levothyroxine 1.6 mcg/kg/day full replacement. Recheck TSH at 6 weeks, titrate to TSH 0.5-2.5. DIO2 AA carriers: if persistent symptoms on T4 monotherapy with TSH in range, trial combination T4/T3 therapy (liothyronine 5-10 mcg BID)."
+  },
+  {
+    "id": "dt-iron-stage1",
+    "disease": "iron",
+    "stage": "normal_iron",
+    "biomarker_pattern": "{\"ferritin\": \"40-100 ng/mL\", \"tsat\": \"25-40%\", \"serum_iron\": \"80-150 mcg/dL\", \"tibc\": \"250-370 mcg/dL\"}",
+    "years_to_diagnosis": 20.0,
+    "intervention_window": "Normal iron status. HFE C282Y carriers should be monitored annually. Optimal ferritin for longevity: 40-100 ng/mL. Both deficiency and overload are harmful.",
+    "risk_reduction_pct": 0.0,
+    "text_chunk": "Normal iron status: ferritin 40-100 (longevity optimal range), TSAT 25-40%. HFE C282Y homozygotes should monitor ferritin and TSAT every 6-12 months even with normal values. Compound heterozygotes (C282Y/H63D): annual monitoring. Iron status affects epigenetic aging."
+  },
+  {
+    "id": "dt-iron-stage2",
+    "disease": "iron",
+    "stage": "early_overload",
+    "biomarker_pattern": "{\"ferritin\": \"250-500 ng/mL (male), 150-300 (female)\", \"tsat\": \"45-60%\", \"serum_iron\": \">170 mcg/dL\", \"alt\": \"mildly elevated\"}",
+    "years_to_diagnosis": 5.0,
+    "intervention_window": "Early iron overload. HFE genotyping indicated if TSAT >45%. Begin therapeutic phlebotomy if C282Y homozygous. Target ferritin <300 (male) or <200 (female). Avoid iron supplements and vitamin C with meals.",
+    "risk_reduction_pct": 90.0,
+    "text_chunk": "Early iron overload: ferritin rising above normal, TSAT >45%. Mandatory HFE genotyping. C282Y homozygotes: begin therapeutic phlebotomy (remove 500mL blood every 1-2 weeks until ferritin <50, then maintenance). Avoid iron-rich diet, vitamin C supplements (enhances iron absorption), and alcohol."
+  },
+  {
+    "id": "dt-iron-stage3",
+    "disease": "iron",
+    "stage": "organ_damage_risk",
+    "biomarker_pattern": "{\"ferritin\": \">500 ng/mL\", \"tsat\": \">60%\", \"alt\": \">60 U/L\", \"hba1c\": \"rising\", \"fib4\": \"may be elevated\"}",
+    "years_to_diagnosis": 1.0,
+    "intervention_window": "Significant iron overload with organ damage risk. Aggressive phlebotomy program. Screen for complications: liver fibrosis (FibroScan), diabetes (OGTT), cardiomyopathy (echocardiogram), arthritis.",
+    "risk_reduction_pct": 50.0,
+    "text_chunk": "Significant iron overload: ferritin >500, TSAT >60%. Organ damage risk: liver fibrosis, diabetes (iron damages beta-cells), cardiomyopathy, arthritis. Aggressive phlebotomy (weekly until ferritin <50). Liver biopsy if ferritin >1000 to assess fibrosis. MRI T2* for cardiac iron quantification."
+  },
+  {
+    "id": "dt-iron-stage4",
+    "disease": "iron",
+    "stage": "clinical_hemochromatosis",
+    "biomarker_pattern": "{\"ferritin\": \">1000 ng/mL\", \"tsat\": \">80%\", \"alt\": \"elevated\", \"liver_fibrosis\": \"present\", \"diabetes\": \"possible\"}",
+    "years_to_diagnosis": 0.0,
+    "intervention_window": "Clinical hemochromatosis with organ involvement. Intensive phlebotomy, hepatology referral, diabetes screening, cardiology if symptomatic. HCC surveillance if cirrhotic. Family cascade screening for HFE.",
+    "risk_reduction_pct": 0.0,
+    "text_chunk": "Clinical hemochromatosis: ferritin >1000, TSAT >80%, organ damage present. Liver cirrhosis, diabetes mellitus ('bronze diabetes'), cardiomyopathy, arthropathy, hypogonadism. Intensive phlebotomy program. If cirrhotic: HCC surveillance every 6 months. Cascade screening: test all first-degree relatives for HFE."
+  },
+  {
+    "id": "dt-nutr-stage1",
+    "disease": "nutritional",
+    "stage": "optimal_nutrition",
+    "biomarker_pattern": "{\"vitamin_d\": \"40-60 ng/mL\", \"b12\": \">500 pg/mL\", \"folate\": \">10 ng/mL\", \"omega3_index\": \">8%\", \"magnesium\": \">2.0 mg/dL\", \"homocysteine\": \"<8 umol/L\"}",
+    "years_to_diagnosis": 0.0,
+    "intervention_window": "Optimal nutritional status. Maintain with varied whole foods diet. Genotype-guided supplementation as baseline. MTHFR TT: continue L-methylfolate. FADS1 CC: continue fish oil.",
+    "risk_reduction_pct": 0.0,
+    "text_chunk": "Optimal nutrition: Vitamin D 40-60, B12 >500, folate >10, Omega-3 Index >8%, Mg >2.0, homocysteine <8. Genotype-guided baseline supplementation: MTHFR TT needs L-methylfolate 1000 mcg; FADS1 CC needs EPA+DHA 2-4g; VDR CC needs vitamin D 5000 IU; MTRR GG needs methylcobalamin."
+  },
+  {
+    "id": "dt-nutr-stage2",
+    "disease": "nutritional",
+    "stage": "suboptimal_status",
+    "biomarker_pattern": "{\"vitamin_d\": \"20-30 ng/mL\", \"b12\": \"300-500 pg/mL\", \"folate\": \"5-10 ng/mL\", \"omega3_index\": \"4-8%\", \"homocysteine\": \"10-15 umol/L\"}",
+    "years_to_diagnosis": 5.0,
+    "intervention_window": "Suboptimal but not deficient. Targeted supplementation based on genotype. Risk of progression to deficiency especially in MTHFR TT, MTRR GG, VDR CC, FADS1 CC carriers.",
+    "risk_reduction_pct": 60.0,
+    "text_chunk": "Suboptimal nutritional status: vitamin D insufficient (20-30), B12 low-normal (300-500), mild homocysteine elevation (10-15). Targeted supplementation: vitamin D 2000-5000 IU (VDR genotype-guided), methylcobalamin 1000 mcg (especially MTRR GG), L-methylfolate (MTHFR TT), fish oil 2g EPA+DHA (FADS1 CC)."
+  },
+  {
+    "id": "dt-nutr-stage3",
+    "disease": "nutritional",
+    "stage": "deficiency",
+    "biomarker_pattern": "{\"vitamin_d\": \"<20 ng/mL\", \"b12\": \"<200 pg/mL\", \"folate\": \"<3 ng/mL\", \"omega3_index\": \"<4%\", \"homocysteine\": \">15 umol/L\"}",
+    "years_to_diagnosis": 0.0,
+    "intervention_window": "Clinically significant deficiency. Therapeutic repletion doses needed. B12 <200: IM injections or high-dose sublingual. Vitamin D <20: loading dose 50,000 IU weekly x 8 weeks then maintenance.",
+    "risk_reduction_pct": 0.0,
+    "text_chunk": "Nutritional deficiency: vitamin D deficient (<20), B12 deficient (<200), folate deficient (<3), omega-3 critically low (<4%). Therapeutic repletion: vitamin D 50,000 IU weekly x 8 weeks; B12 1000 mcg IM weekly x 4 then monthly (or 5000 mcg sublingual methylcobalamin for MTRR carriers); L-methylfolate 1-5mg for MTHFR TT."
+  },
+  {
+    "id": "dt-nutr-stage4",
+    "disease": "nutritional",
+    "stage": "symptomatic_deficiency",
+    "biomarker_pattern": "{\"vitamin_d\": \"<10 ng/mL\", \"b12\": \"<150 pg/mL\", \"folate\": \"<2 ng/mL\", \"mcv\": \">100 fL\", \"homocysteine\": \">20 umol/L\"}",
+    "years_to_diagnosis": 0.0,
+    "intervention_window": "Severe deficiency with clinical manifestations. B12 <150 with macrocytic anemia and neuropathy. Urgent B12 repletion (IM injections). Evaluate for pernicious anemia, celiac disease, atrophic gastritis.",
+    "risk_reduction_pct": 0.0,
+    "text_chunk": "Severe nutritional deficiency: B12 <150 causes megaloblastic anemia (MCV >100) and subacute combined degeneration (neuropathy). Urgent B12 IM injections. Check intrinsic factor antibodies (pernicious anemia). Severe vitamin D deficiency (<10) causes osteomalacia. MTHFR TT + folate deficiency: elevated homocysteine >20 with high CV and stroke risk."
+  },
+  {
+    "id": "dt-cv-stage2b",
+    "disease": "cardiovascular",
+    "stage": "metabolic_syndrome",
+    "biomarker_pattern": "{\"triglycerides\": \">150 mg/dL\", \"hdl_c\": \"<40 mg/dL male, <50 female\", \"fasting_glucose\": \">100 mg/dL\", \"waist_circumference\": \">40in male, >35in female\", \"bp\": \">130/85 mmHg\"}",
+    "years_to_diagnosis": 8.0,
+    "intervention_window": "Metabolic syndrome (3+ of 5 criteria). Insulin resistance is the core driver. Lifestyle intervention primary: weight loss 7-10%, Mediterranean diet, 150+ min exercise/week. Addresses CV and diabetes risk simultaneously.",
+    "risk_reduction_pct": 50.0,
+    "text_chunk": "Metabolic syndrome: 3+ of: TG >150, HDL <40/50, glucose >100, waist >40/35 inches, BP >130/85. Insulin resistance is the core pathology. Doubles CV risk and 5x T2D risk. Lifestyle intervention reduces all components. TCF7L2 TT + metabolic syndrome: very high T2D conversion risk - consider early metformin."
+  },
+  {
+    "id": "dt-liver-stage1b",
+    "disease": "liver",
+    "stage": "alcohol_risk",
+    "biomarker_pattern": "{\"ggt\": \">65 U/L\", \"ast_alt_ratio\": \">2.0\", \"mcv\": \">95 fL\", \"cdg\": \"elevated\", \"alt\": \"mildly elevated\"}",
+    "years_to_diagnosis": 5.0,
+    "intervention_window": "Alcohol-related liver injury pattern. GGT most sensitive marker. AST/ALT >2 classic for alcoholic hepatitis. PNPLA3 GG carriers have dramatically higher risk of alcohol-related cirrhosis. Alcohol cessation is most effective intervention.",
+    "risk_reduction_pct": 80.0,
+    "text_chunk": "Alcohol-related liver injury: GGT >65 (most sensitive), AST/ALT ratio >2.0, macrocytic MCV >95. PNPLA3 GG + heavy alcohol: synergistic risk for cirrhosis (up to 14x). Complete alcohol cessation is the primary intervention. GGT normalizes within 2-3 weeks of abstinence. FibroScan to stage fibrosis."
+  },
+  {
+    "id": "dt-thyroid-stage2b",
+    "disease": "thyroid",
+    "stage": "dio2_impaired_conversion",
+    "biomarker_pattern": "{\"tsh\": \"1.0-3.0 mIU/L\", \"free_t4\": \"1.2-1.6 ng/dL (upper normal)\", \"free_t3\": \"2.3-2.8 pg/mL (low-normal)\", \"ft3_ft4_ratio\": \"<0.25\"}",
+    "years_to_diagnosis": 0.0,
+    "intervention_window": "DIO2 Thr92Ala AA carriers with impaired T4-to-T3 conversion. Normal TSH but low FT3/FT4 ratio. May have hypothyroid symptoms despite 'normal' labs. Consider combination T4/T3 therapy trial. Selenium supplementation supports deiodinase function.",
+    "risk_reduction_pct": 0.0,
+    "text_chunk": "DIO2 AA impaired conversion pattern: TSH appears normal (1-3) but FT3/FT4 ratio <0.25 indicates poor peripheral T4-to-T3 conversion. Common cause of persistent hypothyroid symptoms on levothyroxine monotherapy. Trial of liothyronine (T3) 5-10 mcg BID added to reduced T4 dose. Selenium 200 mcg supports deiodinase activity."
+  },
+  {
+    "id": "dt-iron-stage0",
+    "disease": "iron",
+    "stage": "iron_deficiency",
+    "biomarker_pattern": "{\"ferritin\": \"<20 ng/mL\", \"tsat\": \"<20%\", \"serum_iron\": \"<60 mcg/dL\", \"tibc\": \">400 mcg/dL\", \"mcv\": \"<80 fL\"}",
+    "years_to_diagnosis": 0.0,
+    "intervention_window": "Iron deficiency (with or without anemia). Most common nutritional deficiency worldwide. Investigate cause: GI blood loss (colonoscopy if >50), menstrual loss, celiac disease, poor absorption. Oral iron replacement first-line.",
+    "risk_reduction_pct": 0.0,
+    "text_chunk": "Iron deficiency: ferritin <20, TSAT <20%, low MCV. Most common nutritional deficiency globally. Causes: GI blood loss (occult malignancy in >50yo - colonoscopy indicated), menstrual losses, celiac disease, H. pylori. Oral ferrous sulfate 325mg on empty stomach with vitamin C. IV iron (ferric carboxymaltose) if oral intolerant."
+  },
+  {
+    "id": "dt-cv-hypertension-stage1",
+    "disease": "cardiovascular",
+    "stage": "elevated_blood_pressure",
+    "biomarker_pattern": "{\"systolic_bp\": \"120-129 mmHg\", \"diastolic_bp\": \"<80 mmHg\", \"bnp\": \"normal\", \"creatinine\": \"normal\", \"potassium\": \"normal\"}",
+    "years_to_diagnosis": 5.0,
+    "intervention_window": "Elevated BP (ACC/AHA 2017). Lifestyle modification: DASH diet, sodium <2300mg/day, exercise 150 min/week, weight loss, limit alcohol. Pharmacotherapy not yet indicated unless high CV risk.",
+    "risk_reduction_pct": 40.0,
+    "text_chunk": "Elevated blood pressure (120-129/<80 mmHg): lifestyle intervention primary. DASH diet reduces SBP 8-14 mmHg. Sodium restriction <2300mg/day. Exercise 150 min/week. Weight loss: each 1kg lost reduces SBP ~1 mmHg. Progress to Stage 1 HTN (130-139/80-89) at 15-20% annual rate without intervention."
+  }
+]
