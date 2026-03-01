@@ -51,7 +51,7 @@ if not os.environ.get("ANTHROPIC_API_KEY"):
 # =====================================================================
 
 
-@st.cache_resource
+@st.cache_resource(ttl=300)
 def init_engine():
     """Initialize the Precision Biomarker analysis engine (cached across reruns)."""
     try:
@@ -676,22 +676,22 @@ with tab2:
         "(Levine et al., Aging 2018)."
     )
 
-    t2_age = st.number_input("Chronological Age", min_value=0, max_value=150, value=45, key="t2_age")
+    t2_age = st.number_input("Chronological Age", min_value=1, max_value=150, value=45, key="t2_age")
 
     st.markdown("#### PhenoAge Biomarkers")
     c1, c2, c3 = st.columns(3)
     with c1:
-        t2_alb = st.number_input("Albumin (g/dL)", min_value=0.0, value=4.2, step=0.1, key="t2_alb")
-        t2_cr = st.number_input("Creatinine (mg/dL)", min_value=0.0, value=0.9, step=0.01, key="t2_cr")
-        t2_glu = st.number_input("Glucose (mg/dL)", min_value=0.0, value=95.0, step=1.0, key="t2_glu")
+        t2_alb = st.number_input("Albumin (g/dL)", min_value=0.01, value=4.2, step=0.1, key="t2_alb")
+        t2_cr = st.number_input("Creatinine (mg/dL)", min_value=0.01, value=0.9, step=0.01, key="t2_cr")
+        t2_glu = st.number_input("Glucose (mg/dL)", min_value=0.01, value=95.0, step=1.0, key="t2_glu")
     with c2:
-        t2_crp = st.number_input("hs-CRP (mg/L)", min_value=0.0, value=1.5, step=0.1, key="t2_crp")
-        t2_lymph = st.number_input("Lymphocyte %", min_value=0.0, max_value=100.0, value=30.0, step=0.1, key="t2_lymph")
-        t2_mcv = st.number_input("MCV (fL)", min_value=0.0, value=89.0, step=0.1, key="t2_mcv")
+        t2_crp = st.number_input("hs-CRP (mg/L)", min_value=0.01, value=1.5, step=0.1, key="t2_crp")
+        t2_lymph = st.number_input("Lymphocyte %", min_value=0.01, max_value=100.0, value=30.0, step=0.1, key="t2_lymph")
+        t2_mcv = st.number_input("MCV (fL)", min_value=0.01, value=89.0, step=0.1, key="t2_mcv")
     with c3:
-        t2_rdw = st.number_input("RDW %", min_value=0.0, value=13.0, step=0.1, key="t2_rdw")
-        t2_alp = st.number_input("Alk Phos (U/L)", min_value=0.0, value=65.0, step=1.0, key="t2_alp")
-        t2_wbc = st.number_input("WBC (10^3/uL)", min_value=0.0, value=6.0, step=0.1, key="t2_wbc")
+        t2_rdw = st.number_input("RDW %", min_value=0.01, value=13.0, step=0.1, key="t2_rdw")
+        t2_alp = st.number_input("Alk Phos (U/L)", min_value=0.01, value=65.0, step=1.0, key="t2_alp")
+        t2_wbc = st.number_input("WBC (10^3/uL)", min_value=0.01, value=6.0, step=0.1, key="t2_wbc")
 
     if st.button("Calculate Biological Age", type="primary", key="t2_run"):
         if engine is None:

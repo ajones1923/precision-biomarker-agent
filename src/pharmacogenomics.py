@@ -282,6 +282,71 @@ PGX_GENE_CONFIGS = {
             },
         },
     },
+    "CYP2C9": {
+        "display_name": "CYP2C9",
+        "description": "Cytochrome P450 2C9 — metabolizes warfarin, phenytoin, NSAIDs",
+        "allele_to_phenotype": {
+            "*1/*1": "Normal Metabolizer",
+            "*1/*2": "Intermediate Metabolizer",
+            "*1/*3": "Intermediate Metabolizer",
+            "*2/*2": "Poor Metabolizer",
+            "*2/*3": "Poor Metabolizer",
+            "*3/*3": "Poor Metabolizer",
+        },
+        "drug_recommendations": {
+            "warfarin": {
+                "Normal Metabolizer": {
+                    "recommendation": "Use standard warfarin dosing algorithm with VKORC1 genotype",
+                    "action": "STANDARD_DOSING",
+                    "alert_level": "INFO",
+                },
+                "Intermediate Metabolizer": {
+                    "recommendation": "Reduce warfarin dose by 20-30%. CYP2C9 intermediate metabolizers clear S-warfarin more slowly. Use pharmacogenomic dosing algorithm with VKORC1",
+                    "action": "DOSE_REDUCTION",
+                    "alert_level": "WARNING",
+                },
+                "Poor Metabolizer": {
+                    "recommendation": "Reduce warfarin dose by 30-50%. CYP2C9 poor metabolizers have significantly delayed S-warfarin clearance. High bleeding risk. Use pharmacogenomic dosing algorithm",
+                    "action": "DOSE_REDUCTION",
+                    "alert_level": "CRITICAL",
+                },
+            },
+            "phenytoin": {
+                "Normal Metabolizer": {
+                    "recommendation": "Use phenytoin per standard dosing",
+                    "action": "STANDARD_DOSING",
+                    "alert_level": "INFO",
+                },
+                "Intermediate Metabolizer": {
+                    "recommendation": "Reduce phenytoin dose by 25%. Monitor levels closely — CYP2C9 IMs have reduced phenytoin clearance",
+                    "action": "DOSE_REDUCTION",
+                    "alert_level": "WARNING",
+                },
+                "Poor Metabolizer": {
+                    "recommendation": "Reduce phenytoin dose by 50%. CYP2C9 PMs have markedly reduced clearance with toxicity risk (ataxia, nystagmus). Consider alternative anticonvulsant",
+                    "action": "DOSE_REDUCTION",
+                    "alert_level": "CRITICAL",
+                },
+            },
+            "celecoxib": {
+                "Normal Metabolizer": {
+                    "recommendation": "Use celecoxib per standard dosing",
+                    "action": "STANDARD_DOSING",
+                    "alert_level": "INFO",
+                },
+                "Intermediate Metabolizer": {
+                    "recommendation": "Use celecoxib with caution at lowest effective dose",
+                    "action": "DOSE_ADJUSTMENT",
+                    "alert_level": "INFO",
+                },
+                "Poor Metabolizer": {
+                    "recommendation": "Reduce celecoxib starting dose by 50%. CYP2C9 PMs have increased exposure. Consider alternative NSAID with less CYP2C9 dependence",
+                    "action": "DOSE_REDUCTION",
+                    "alert_level": "WARNING",
+                },
+            },
+        },
+    },
     "SLCO1B1": {
         "display_name": "SLCO1B1",
         "description": "Solute carrier organic anion transporter — statin hepatic uptake",
@@ -522,7 +587,7 @@ PGX_GENE_CONFIGS = {
 class PharmacogenomicMapper:
     """Maps star alleles and genotypes to drug recommendations.
 
-    Follows CPIC Level 1A guidelines for 7 pharmacogenes covering
+    Follows CPIC Level 1A guidelines for 8 pharmacogenes covering
     major drug classes including analgesics, antiplatelets, statins,
     anticoagulants, antimetabolites, thiopurines, and antiretrovirals.
     """
@@ -788,8 +853,15 @@ class PharmacogenomicMapper:
                 elif rec["action"] in ("DOSE_REDUCTION", "DOSE_ADJUSTMENT") and overall_action == "STANDARD_DOSING":
                     overall_action = rec["action"]
 
+        # Flag if the drug isn't in any PGx gene's recommendations
+        drug_found = any(
+            drug_lower in config.get("drug_recommendations", {})
+            for config in self._gene_configs.values()
+        )
+
         return {
             "drug": drug_name,
+            "drug_in_database": drug_found,
             "is_safe": is_safe,
             "overall_action": overall_action,
             "findings": findings,

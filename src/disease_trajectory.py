@@ -96,6 +96,13 @@ def _calculate_homa_ir(fasting_insulin: float, fasting_glucose: float) -> float:
     return (fasting_insulin * fasting_glucose) / 405.0
 
 
+_RISK_ORDER = {"LOW": 0, "MODERATE": 1, "HIGH": 2, "CRITICAL": 3}
+
+def _max_risk(*levels: str) -> str:
+    """Return the highest risk level from the given values."""
+    return max(levels, key=lambda x: _RISK_ORDER.get(x, -1))
+
+
 class DiseaseTrajectoryAnalyzer:
     """Detects pre-symptomatic disease trajectories using genotype-stratified
     biomarker thresholds across 6 disease categories.
@@ -140,11 +147,11 @@ class DiseaseTrajectoryAnalyzer:
         tcf7l2 = genotypes.get("TCF7L2_rs7903146", "")
         risk_allele_count = _count_risk_alleles(tcf7l2, "T")
 
-        # Genotype-stratified thresholds: TT (2) -> tightest, CC (0) -> standard
+        # Genotype-stratified thresholds (ADA 2024 Standards of Care; Florez 2012 PMID:22315325)
         thresholds = {
-            2: {"hba1c": 5.5, "homa_ir": 3.0, "fasting_glucose": 90},   # TT
-            1: {"hba1c": 5.8, "homa_ir": 3.5, "fasting_glucose": 95},   # CT
-            0: {"hba1c": 6.0, "homa_ir": 4.0, "fasting_glucose": 100},  # CC
+            2: {"hba1c": 5.5, "homa_ir": 3.0, "fasting_glucose": 90},   # TT: tightest
+            1: {"hba1c": 5.8, "homa_ir": 3.5, "fasting_glucose": 95},   # CT: intermediate
+            0: {"hba1c": 6.0, "homa_ir": 4.0, "fasting_glucose": 100},  # CC: standard ADA
         }
         thresh = thresholds.get(risk_allele_count, thresholds[0])
 
@@ -198,7 +205,7 @@ class DiseaseTrajectoryAnalyzer:
             if homa_ir >= thresh["homa_ir"] and stage in ("normal", "early_metabolic_shift"):
                 if stage == "normal":
                     stage = "insulin_resistance"
-                risk_level = max(risk_level, "MODERATE", key=lambda x: ["LOW", "MODERATE", "HIGH", "CRITICAL"].index(x))
+                risk_level = _max_risk(risk_level, "MODERATE")
                 findings.append(
                     f"HOMA-IR {homa_ir} exceeds genotype-adjusted threshold "
                     f"({thresh['homa_ir']} for {tcf7l2 or 'unknown'} genotype)"
@@ -256,6 +263,7 @@ class DiseaseTrajectoryAnalyzer:
 
         # Determine APOE genotype and LDL threshold
         apoe = genotypes.get("APOE", "")
+        # APOE-stratified LDL targets (Bennet 2007 PMID:17327455; ACC/AHA 2018 guidelines)
         ldl_thresholds = {
             "E4/E4": 100, "E3/E4": 115, "E4/E3": 115,
             "E3/E3": 130, "E2/E3": 130, "E3/E2": 130,
@@ -317,8 +325,7 @@ class DiseaseTrajectoryAnalyzer:
             elif ldl >= ldl_thresh:
                 if stage in ("optimal", "borderline"):
                     stage = "elevated_risk"
-                risk_level = max(risk_level, "MODERATE",
-                                 key=lambda x: ["LOW", "MODERATE", "HIGH", "CRITICAL"].index(x))
+                risk_level = _max_risk(risk_level, "MODERATE")
                 findings.append(
                     f"LDL-C {ldl} mg/dL exceeds APOE-adjusted threshold "
                     f"({ldl_thresh} mg/dL for {apoe or 'standard'})"
@@ -394,6 +401,7 @@ class DiseaseTrajectoryAnalyzer:
         # PNPLA3 genotype determines ALT upper limit
         pnpla3 = genotypes.get("PNPLA3_rs738409", "")
         pnpla3_risk = _count_risk_alleles(pnpla3, "G")
+        # PNPLA3-adjusted ALT limits (Romeo 2008 PMID:18820647; Sookoian 2015 PMID:25251399)
         alt_upper = {0: 56, 1: 45, 2: 35}.get(pnpla3_risk, 56)
 
         genetic_risk_factors = []
@@ -401,12 +409,14 @@ class DiseaseTrajectoryAnalyzer:
             gt = genotypes.get(gene_key, "")
             if gt:
                 count = _count_risk_alleles(gt, config["risk_allele"])
-                if count > 0 or (gene_key == "HSD17B13_rs72613567" and "TA" in gt):
+                is_protective = (gene_key == "HSD17B13_rs72613567" and "TA" in gt)
+                if count > 0 or is_protective:
                     genetic_risk_factors.append({
                         "gene": gene_key,
                         "genotype": gt,
                         "risk_alleles": count,
                         "effect": config["effect"],
+                        "direction": "protective" if is_protective else "risk",
                     })
 
         # Calculate FIB-4 if age, AST, platelets, ALT available
@@ -415,7 +425,7 @@ class DiseaseTrajectoryAnalyzer:
         ast = available.get("ast")
         platelets = available.get("platelets")
 
-        if age and ast and platelets and alt and alt > 0 and platelets > 0:
+        if age is not None and age > 0 and ast and platelets and alt and alt > 0 and platelets > 0:
             fib4 = round((age * ast) / (platelets * math.sqrt(alt)), 2)
             available["fib4_calculated"] = fib4
 
@@ -457,8 +467,7 @@ class DiseaseTrajectoryAnalyzer:
             elif fib4 > 1.30:
                 if stage != "advanced_fibrosis":
                     stage = "early_fibrosis"
-                risk_level = max(risk_level, "MODERATE",
-                                 key=lambda x: ["LOW", "MODERATE", "HIGH", "CRITICAL"].index(x))
+                risk_level = _max_risk(risk_level, "MODERATE")
                 findings.append(f"FIB-4 score {fib4} is indeterminate (1.30-2.67)")
                 recommendations.append("FibroScan recommended; recheck in 6 months")
 
@@ -523,7 +532,7 @@ class DiseaseTrajectoryAnalyzer:
         dio2 = genotypes.get("DIO2_rs225014", "")
         dio2_risk = _count_risk_alleles(dio2, "A")
 
-        # Genotype-stratified reference ranges
+        # DIO2-adjusted reference ranges (Panicker 2009 PMID:19190113; Castagna 2017 PMID:28371814)
         tsh_upper = {0: 4.0, 1: 3.5, 2: 3.0}.get(dio2_risk, 4.0)
         ft3_lower = {0: 2.3, 1: 2.5, 2: 2.8}.get(dio2_risk, 2.3)
 
@@ -575,8 +584,7 @@ class DiseaseTrajectoryAnalyzer:
             if ft3 < ft3_lower:
                 if stage == "euthyroid":
                     stage = "subclinical"
-                risk_level = max(risk_level, "MODERATE",
-                                 key=lambda x: ["LOW", "MODERATE", "HIGH", "CRITICAL"].index(x))
+                risk_level = _max_risk(risk_level, "MODERATE")
                 findings.append(
                     f"Free T3 {ft3} pg/mL is below DIO2-adjusted threshold "
                     f"({ft3_lower} pg/mL for {'AA' if dio2_risk == 2 else 'GA' if dio2_risk == 1 else 'GG'} genotype)"
@@ -644,7 +652,7 @@ class DiseaseTrajectoryAnalyzer:
         hfe_c282y = genotypes.get("HFE_rs1800562", "")
         c282y_risk = _count_risk_alleles(hfe_c282y, "A")
 
-        # Sex-stratified ferritin upper limits adjusted by HFE genotype
+        # HFE-adjusted ferritin limits (Adams 2005 PMID:16103830; EASL HFE guidelines 2010)
         if sex.lower() == "female":
             ferritin_upper = {0: 150, 1: 120, 2: 100}.get(c282y_risk, 150)
         else:
@@ -688,8 +696,7 @@ class DiseaseTrajectoryAnalyzer:
             if tsat > 45:
                 if stage == "normal":
                     stage = "early_accumulation"
-                risk_level = max(risk_level, "MODERATE",
-                                 key=lambda x: ["LOW", "MODERATE", "HIGH", "CRITICAL"].index(x))
+                risk_level = _max_risk(risk_level, "MODERATE")
                 findings.append(f"Transferrin saturation {tsat}% is elevated (>45%)")
                 recommendations.append("Evaluate for iron overload; consider HFE genotyping if not done")
             if tsat > 60:
@@ -753,6 +760,7 @@ class DiseaseTrajectoryAnalyzer:
         # FADS1 genotype for omega-3 targets
         fads1 = genotypes.get("FADS1_rs174546", "")
         fads1_risk = _count_risk_alleles(fads1, "C")
+        # FADS1-adjusted omega-3 targets (Schaeffer 2006 PMID:16825694; Harris 2018 PMID:29215303)
         omega3_target = {0: 8.0, 1: 6.0, 2: 5.0}.get(fads1_risk, 8.0)
 
         # MTHFR genotype for folate metabolism

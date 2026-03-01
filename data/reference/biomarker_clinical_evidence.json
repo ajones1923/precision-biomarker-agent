@@ -1,56 +1,722 @@
 [
-  {"id":"ce-levine-2018","pmid":"29676998","title":"An epigenetic biomarker of aging for lifespan and healthspan","finding":"PhenoAge derived from 9 clinical chemistry biomarkers captures mortality risk and aging-related conditions. Validated in NHANES III (n=9,926) and InCHIANTI. PhenoAge acceleration predicts all-cause mortality, cardiovascular disease, cancer, and physical functioning decline.","year":2018,"disease_area":"Aging","text_chunk":"Levine et al. 2018 developed PhenoAge using 9 blood biomarkers (albumin, creatinine, glucose, hs-CRP, lymphocyte %, MCV, RDW, alkaline phosphatase, WBC) plus chronological age. PhenoAge acceleration >5 years associated with 2.3x mortality risk. Validated across multiple cohorts."},
-  {"id":"ce-lu-2019","pmid":"30669119","title":"DNA methylation GrimAge strongly predicts lifespan and healthspan","finding":"GrimAge, based on DNA methylation surrogates of 7 plasma proteins and smoking pack-years, is the strongest epigenetic predictor of mortality. GrimAge acceleration predicts time-to-death, cancer, CHD, and chronic disease.","year":2019,"disease_area":"Aging","text_chunk":"Lu et al. 2019 developed GrimAge using DNAm surrogates of: adrenomedullin, beta-2 microglobulin, cystatin C, GDF-15, leptin, PAI-1, TIMP-1, plus smoking pack-years. GrimAge is the strongest mortality predictor among epigenetic clocks. Each year of GrimAge acceleration increases mortality risk ~8%."},
-  {"id":"ce-horvath-2013","pmid":"24138928","title":"DNA methylation age of human tissues and cell types","finding":"First multi-tissue epigenetic clock based on 353 CpG sites. Horvath clock measures intrinsic epigenetic aging independent of blood cell composition. Applicable across all tissues and cell types.","year":2013,"disease_area":"Aging","text_chunk":"Horvath 2013 developed the first pan-tissue epigenetic clock using 353 CpG sites. Measures intrinsic biological age independent of blood cell composition. Deviation from chronological age predicts mortality. Foundation for all subsequent epigenetic clock research."},
-  {"id":"ce-dpp-2002","pmid":"11832527","title":"Reduction in the incidence of type 2 diabetes with lifestyle intervention or metformin","finding":"Diabetes Prevention Program (DPP): intensive lifestyle intervention reduced T2D incidence by 58% vs placebo in high-risk prediabetic adults (n=3,234). Metformin reduced incidence by 31%. Lifestyle was superior to metformin across all subgroups.","year":2002,"disease_area":"Diabetes","text_chunk":"DPP trial (NEJM 2002, n=3,234): intensive lifestyle (7% weight loss + 150 min/week exercise) reduced T2D incidence 58% vs placebo. Metformin 850mg BID reduced incidence 31%. NNT=6.9 for lifestyle over 2.8 years. Lifestyle benefit sustained at 15-year follow-up (DPP Outcomes Study)."},
-  {"id":"ce-fourier-2017","pmid":"28304224","title":"Evolocumab and Clinical Outcomes in Patients with Cardiovascular Disease","finding":"FOURIER trial (n=27,564): evolocumab (PCSK9 inhibitor) reduced LDL-C by 59% (from 92 to 30 mg/dL) and reduced major CV events by 15% (HR 0.85) over 2.2 years in statin-treated patients with established ASCVD.","year":2017,"disease_area":"Cardiovascular","text_chunk":"FOURIER trial (NEJM 2017, n=27,564): PCSK9 inhibitor evolocumab reduced LDL-C 59% and CV events 15% (HR 0.85) in patients already on statins. Established that very low LDL (<20 mg/dL) is safe. Validated PCSK9 loss-of-function genetic evidence (rs11591147) as therapeutic target."},
-  {"id":"ce-odyssey-2018","pmid":"30403574","title":"Alirocumab and Cardiovascular Outcomes after Acute Coronary Syndrome","finding":"ODYSSEY Outcomes (n=18,924): alirocumab reduced MACE by 15% (HR 0.85) in post-ACS patients. Greatest benefit in those with LDL >=100 mg/dL at baseline. Also showed trend toward reduced all-cause mortality.","year":2018,"disease_area":"Cardiovascular","text_chunk":"ODYSSEY Outcomes (NEJM 2018, n=18,924): alirocumab (PCSK9i) reduced MACE 15% in post-ACS patients. All-cause mortality trend favoring alirocumab. Greatest benefit with baseline LDL >=100 mg/dL. Supports aggressive LDL lowering post-ACS."},
-  {"id":"ce-jupiter-2008","pmid":"18997196","title":"Rosuvastatin to prevent vascular events in men and women with elevated C-reactive protein","finding":"JUPITER trial (n=17,802): rosuvastatin 20mg reduced major CV events by 44% in patients with LDL <130 mg/dL but hs-CRP >2 mg/L. Established hs-CRP as a valid target for CV risk reduction. Trial stopped early for overwhelming efficacy.","year":2008,"disease_area":"Cardiovascular","text_chunk":"JUPITER trial (NEJM 2008, n=17,802): rosuvastatin reduced CV events 44% in patients with 'normal' LDL but elevated hs-CRP (>2 mg/L). Established residual inflammatory risk as a therapeutic target. hs-CRP >2 mg/L identifies statin candidates even with LDL <130. Stopped early for efficacy."},
-  {"id":"ce-cantos-2017","pmid":"28845751","title":"Antiinflammatory Therapy with Canakinumab for Atherosclerotic Disease","finding":"CANTOS trial (n=10,061): canakinumab (IL-1beta antibody) reduced hs-CRP 26-41% and CV events 15% (HR 0.85) independent of lipid lowering. First proof that directly targeting inflammation reduces CV events.","year":2017,"disease_area":"Cardiovascular","text_chunk":"CANTOS trial (NEJM 2017, n=10,061): canakinumab (anti-IL-1beta) reduced CV events 15% without changing LDL. Proved the inflammatory hypothesis of atherosclerosis. Patients achieving hs-CRP <2 mg/L had 25% CV reduction. IL-6/CRP pathway is a causal mediator of CV disease."},
-  {"id":"ce-colcot-2019","pmid":"31733140","title":"Efficacy and Safety of Low-Dose Colchicine after Myocardial Infarction","finding":"COLCOT trial (n=4,745): low-dose colchicine 0.5mg daily reduced composite CV endpoint by 23% (HR 0.77) in post-MI patients. Established colchicine as an affordable anti-inflammatory strategy for CV risk reduction.","year":2019,"disease_area":"Cardiovascular","text_chunk":"COLCOT trial (NEJM 2019, n=4,745): colchicine 0.5mg daily post-MI reduced CV events 23% (HR 0.77). Affordable anti-inflammatory therapy for residual CV risk. Supports targeting the IL-1beta/IL-6/CRP inflammatory cascade. Now guideline-recommended post-MI."},
-  {"id":"ce-reduce-it-2019","pmid":"30415628","title":"Cardiovascular Risk Reduction with Icosapent Ethyl for Hypertriglyceridemia","finding":"REDUCE-IT (n=8,179): icosapent ethyl (EPA) 4g/day reduced major CV events by 25% (HR 0.75) in statin-treated patients with elevated triglycerides. Benefit beyond triglyceride lowering, likely through anti-inflammatory mechanisms.","year":2019,"disease_area":"Cardiovascular","text_chunk":"REDUCE-IT (NEJM 2019, n=8,179): icosapent ethyl (pure EPA) 4g/day reduced CV events 25% (HR 0.75) in patients with TG 135-499 on statins. Benefit beyond TG lowering - EPA has anti-inflammatory, anti-oxidant, and membrane-stabilizing effects. FADS1 CC carriers may have greater benefit from direct EPA supplementation."},
-  {"id":"ce-strength-2020","pmid":"33186534","title":"Effect of High-Dose Omega-3 Fatty Acids vs Corn Oil on Major Adverse Cardiovascular Events","finding":"STRENGTH trial (n=13,078): carboxylic acid omega-3 (EPA+DHA) did not reduce CV events vs corn oil. Contradicted REDUCE-IT, suggesting EPA-only formulation may be superior to EPA+DHA combinations for CV benefit.","year":2020,"disease_area":"Cardiovascular","text_chunk":"STRENGTH trial (JAMA 2020, n=13,078): mixed EPA+DHA (carboxylic acid formulation) showed no CV benefit vs corn oil. Contrasts with REDUCE-IT (EPA-only). Suggests EPA-specific anti-inflammatory mechanism, or REDUCE-IT mineral oil placebo inflated benefit. Current evidence favors EPA-only over EPA+DHA for CV risk."},
-  {"id":"ce-vital-2019","pmid":"30415629","title":"Marine n-3 Fatty Acids and Prevention of Cardiovascular Disease and Cancer","finding":"VITAL trial (n=25,871): omega-3 1g/day did not reduce major CV events or cancer in primary prevention. However, post-hoc analysis showed 28% reduction in MI and benefit in African Americans.","year":2019,"disease_area":"Cardiovascular","text_chunk":"VITAL trial (NEJM 2019, n=25,871): standard-dose omega-3 (1g/day) no overall CV benefit in primary prevention. Post-hoc: 28% MI reduction, stronger in African Americans and those with low fish intake. Suggests higher doses (4g as in REDUCE-IT) needed for CV benefit. Low dose insufficient."},
-  {"id":"ce-romeo-2008","pmid":"18820647","title":"Genetic variation in PNPLA3 confers susceptibility to nonalcoholic fatty liver disease","finding":"Romeo et al. identified PNPLA3 rs738409 (I148M) as the strongest genetic risk factor for NAFLD across multiple ethnic groups. GG homozygotes had 73% more hepatic fat than CC. Dallas Heart Study (n=2,111).","year":2008,"disease_area":"Liver","text_chunk":"Romeo et al. 2008 (Nature Genetics): GWAS identified PNPLA3 I148M (rs738409) as strongest NAFLD risk variant. GG homozygotes: 73% more hepatic fat, significantly higher ALT. Replicated across all ethnic groups. Hispanic Americans have highest G allele frequency, explaining ethnic differences in NAFLD prevalence."},
-  {"id":"ce-abul-husn-2018","pmid":"29528272","title":"A Protein-Truncating HSD17B13 Variant and Protection from Chronic Liver Disease","finding":"Abul-Husn et al. discovered HSD17B13 rs72613567 splice variant as protective against chronic liver disease. Each TA allele: 17% lower NASH risk, 30% lower cirrhosis risk, 49% lower HCC risk. n=46,544.","year":2018,"disease_area":"Liver","text_chunk":"Abul-Husn et al. 2018 (NEJM, n=46,544): HSD17B13 rs72613567 TA insertion is protective against chronic liver disease. Per-allele: ALT -4 U/L, NASH risk -17%, cirrhosis -30%, HCC -49%. Protective even in PNPLA3 GG carriers. Active drug target (RNAi therapies in development)."},
-  {"id":"ce-search-2008","pmid":"19034553","title":"SLCO1B1 variants and statin-induced myopathy","finding":"SEARCH study (n=12,064): SLCO1B1 rs4149056 CC (Val174Ala) conferred 17x increased risk of simvastatin-induced myopathy. Established SLCO1B1 genotyping as standard of care before high-dose statin initiation.","year":2008,"disease_area":"Pharmacogenomics","text_chunk":"SEARCH study (NEJM 2008, n=12,064): SLCO1B1 *5/*5 (rs4149056 CC) confers 17x risk of simvastatin-induced myopathy at 80mg dose. 4.5x risk in heterozygotes. Led to FDA recommendation against simvastatin 80mg. CPIC guideline: rosuvastatin preferred for SLCO1B1 *5 carriers."},
-  {"id":"ce-cpic-cyp2d6-2021","pmid":"33387367","title":"CPIC Guideline for Pharmacogenetics-Guided Warfarin Dosing: 2017 Update","finding":"CPIC guidelines provide evidence-based recommendations for CYP2D6 phenotype-guided prescribing of codeine, tramadol, tamoxifen, TCAs, atomoxetine, ondansetron, and beta-blockers. Level 1A evidence for most drug-gene pairs.","year":2021,"disease_area":"Pharmacogenomics","text_chunk":"CPIC CYP2D6 guidelines cover codeine/tramadol (poor: avoid, ultra-rapid: avoid), tamoxifen (poor: use AI), TCAs (poor: 50% dose reduction), atomoxetine (poor: 50-75% reduction), beta-blockers (poor: reduce metoprolol). Activity Score system standardizes phenotype assignment across star alleles."},
-  {"id":"ce-cpic-cyp2c19-2022","pmid":"35090034","title":"CPIC Guideline for CYP2C19 and Clopidogrel Therapy: 2022 Update","finding":"Updated CPIC guideline for CYP2C19-guided clopidogrel therapy. Poor and intermediate metabolizers should receive alternative antiplatelet (prasugrel, ticagrelor). Evidence from multiple RCTs and meta-analyses.","year":2022,"disease_area":"Pharmacogenomics","text_chunk":"CPIC CYP2C19 2022 update: poor metabolizers (*2/*2, *2/*3, *3/*3) should avoid clopidogrel - use prasugrel or ticagrelor. Intermediate metabolizers (*1/*2): consider alternative, especially for ACS/PCI. TAILOR-PCI and POPular Genetics trials support genotype-guided antiplatelet selection."},
-  {"id":"ce-cpic-warfarin-2017","pmid":"28198005","title":"CPIC Guideline for Pharmacogenetics-Guided Warfarin Dosing","finding":"CPIC warfarin guideline: VKORC1 rs9923231 and CYP2C9 genotype explain ~40% of warfarin dose variability. Pharmacogenomic dosing algorithms reduce time to therapeutic INR and bleeding events.","year":2017,"disease_area":"Pharmacogenomics","text_chunk":"CPIC Warfarin Guideline 2017: VKORC1 + CYP2C9 genotyping recommended before warfarin initiation. VKORC1 AA: reduce dose ~50%. CYP2C9 *2/*3: reduce dose ~50-70%. Combined VKORC1 AA + CYP2C9 *2/*3 may need <1 mg/day. EU-PACT and COAG trials evaluated clinical implementation."},
-  {"id":"ce-cpic-hla-b5701-2012","pmid":"22378157","title":"CPIC Guidelines for HLA-B*5701 Genotype and Abacavir","finding":"HLA-B*57:01 screening before abacavir is mandatory (FDA, EMA). Eliminates immunologically confirmed hypersensitivity reactions. 100% negative predictive value. Most successful PGx implementation globally.","year":2012,"disease_area":"Pharmacogenomics","text_chunk":"CPIC HLA-B*57:01 Guideline: mandatory screening before abacavir. Positive result: CONTRAINDICATED (50% HSR risk). Most successful pharmacogenomics implementation - eliminated abacavir hypersensitivity in clinical practice. PREDICT-1 trial demonstrated clinical utility. 100% NPV."},
-  {"id":"ce-cpic-tpmt-2019","pmid":"30447069","title":"CPIC Guideline for Thiopurines and TPMT/NUDT15","finding":"CPIC thiopurine guideline: TPMT and NUDT15 genotyping recommended before azathioprine/6-MP/6-TG. Deficient: 10% dose or avoid. Intermediate: 30-70% dose. Prevents potentially fatal myelosuppression.","year":2019,"disease_area":"Pharmacogenomics","text_chunk":"CPIC Thiopurine Guideline 2019: TPMT *3A/*3A (deficient): use 10% of standard thiopurine dose or avoid. *1/*3A (intermediate): 30-70% dose. NUDT15 *3/*3: same as TPMT deficient. Both genes should be tested. Prevents fatal myelosuppression in ALL maintenance and IBD treatment."},
-  {"id":"ce-framingham-1998","pmid":"9603539","title":"Prediction of coronary heart disease using risk factor categories","finding":"Framingham Heart Study risk algorithm: uses age, sex, total cholesterol, HDL-C, systolic BP, smoking, diabetes to predict 10-year CHD risk. Foundation for all subsequent cardiovascular risk calculators. Continuous follow-up since 1948.","year":1998,"disease_area":"Cardiovascular","text_chunk":"Framingham Risk Score (Circulation 1998): landmark risk prediction model using age, sex, cholesterol, HDL, SBP, smoking, diabetes. Foundation for ACC/AHA Pooled Cohort Equations (PCE). Framingham Heart Study (since 1948) identified most major CV risk factors including hypertension, cholesterol, smoking, diabetes."},
-  {"id":"ce-predimed-2018","pmid":"29897866","title":"Primary Prevention of Cardiovascular Disease with a Mediterranean Diet Supplemented with Extra-Virgin Olive Oil or Nuts","finding":"PREDIMED trial (n=7,447): Mediterranean diet supplemented with EVOO or nuts reduced major CV events by ~30% vs low-fat diet. No calorie restriction needed. Benefits seen in high CV risk population.","year":2018,"disease_area":"Cardiovascular","text_chunk":"PREDIMED trial (NEJM 2018 republished, n=7,447): Mediterranean diet + EVOO or nuts reduced CV events ~30% vs low-fat diet. No calorie restriction. Benefits for stroke prevention particularly strong. Mediterranean diet also reduces NAFLD progression. Foundation for dietary recommendations across disease trajectories."},
-  {"id":"ce-ukpds-1998","pmid":"9742976","title":"Intensive blood-glucose control with sulphonylureas or insulin compared with conventional treatment and risk of complications in patients with type 2 diabetes","finding":"UKPDS (n=3,867): intensive glucose control (HbA1c 7.0% vs 7.9%) reduced microvascular complications by 25% but no significant macrovascular benefit at 10 years. Legacy effect: 10-year post-trial follow-up showed emerging MI reduction.","year":1998,"disease_area":"Diabetes","text_chunk":"UKPDS (Lancet 1998, n=3,867): intensive glucose control (HbA1c 7.0%) reduced microvascular complications 25%. No initial macrovascular benefit. UKPDS post-trial monitoring (2008): legacy effect - MI reduction 15% (p=0.01) emerged after 10 additional years. Early intensive control has lasting benefits."},
-  {"id":"ce-empa-reg-2015","pmid":"26378978","title":"Empagliflozin, Cardiovascular Outcomes, and Mortality in Type 2 Diabetes","finding":"EMPA-REG OUTCOME (n=7,020): empagliflozin reduced CV death 38% (HR 0.62), all-cause mortality 32%, and HF hospitalization 35% in T2D with established CVD. Paradigm-changing trial for SGLT2 inhibitors.","year":2015,"disease_area":"Diabetes","text_chunk":"EMPA-REG OUTCOME (NEJM 2015, n=7,020): empagliflozin reduced CV death 38% and HF hospitalization 35% in T2D + CVD. Benefits appeared within weeks (hemodynamic, not glycemic mechanism). Led to SGLT2i becoming cornerstone of T2D treatment with CV/renal comorbidity. Dapagliflozin and canagliflozin showed similar benefits."},
-  {"id":"ce-leader-2016","pmid":"27295427","title":"Liraglutide and Cardiovascular Outcomes in Type 2 Diabetes","finding":"LEADER trial (n=9,340): liraglutide reduced MACE 13% (HR 0.87), CV death 22%, and all-cause mortality 15% in T2D with high CV risk. Established GLP-1 RA class for CV risk reduction.","year":2016,"disease_area":"Diabetes","text_chunk":"LEADER trial (NEJM 2016, n=9,340): liraglutide reduced MACE 13%, CV death 22% in high-risk T2D. Semaglutide (SUSTAIN-6, SELECT trials) showed similar or greater CV benefit. GLP-1 RA now guideline-recommended for T2D + CVD. Additional benefits: weight loss, NASH resolution, renal protection."},
-  {"id":"ce-accord-2008","pmid":"18539917","title":"Effects of Intensive Glucose Lowering in Type 2 Diabetes","finding":"ACCORD trial (n=10,251): intensive glucose lowering (HbA1c <6.0%) increased mortality vs standard (7.0-7.9%) in high-risk T2D. Intensive arm stopped early. Caution against over-aggressive glucose targets in established CVD.","year":2008,"disease_area":"Diabetes","text_chunk":"ACCORD trial (NEJM 2008, n=10,251): targeting HbA1c <6.0% increased mortality 22% vs standard target in high-risk T2D. Intensive arm stopped early. Hypoglycemia likely contributed. Current guidance: HbA1c <7% for most, <6.5% only if achievable without hypoglycemia. Individualize targets."},
-  {"id":"ce-sprint-2015","pmid":"26551272","title":"A Randomized Trial of Intensive versus Standard Blood-Pressure Control","finding":"SPRINT trial (n=9,361): intensive BP target (<120 mmHg systolic) reduced CV events 25% and all-cause mortality 27% vs standard (<140 mmHg) in high-risk non-diabetic adults. Led to updated BP guidelines.","year":2015,"disease_area":"Cardiovascular","text_chunk":"SPRINT trial (NEJM 2015, n=9,361): intensive SBP target <120 mmHg reduced CV events 25% and mortality 27% vs <140 mmHg. Stopped early for benefit. Led to ACC/AHA 2017 guidelines lowering HTN threshold to 130/80. More aggressive targets particularly beneficial for high-risk patients."},
-  {"id":"ce-cpic-dpyd-2017","pmid":"29152729","title":"CPIC Guideline for Dihydropyrimidine Dehydrogenase Genotype and Fluoropyrimidine Dosing","finding":"CPIC DPYD guideline: DPYD-deficient patients should avoid 5-FU and capecitabine or use greatly reduced doses. >10% mortality risk with standard dosing in DPYD-deficient patients. Pre-treatment genotyping now mandatory in EU.","year":2017,"disease_area":"Pharmacogenomics","text_chunk":"CPIC DPYD Guideline: DPYD *2A homozygous: AVOID 5-FU/capecitabine (>10% mortality at standard dose). Heterozygous: 50% dose reduction. DPYD genotyping mandatory in EU before fluoropyrimidine therapy. Critical for GI cancer treatment planning. 3-5% of population carries at least one reduced-function allele."},
-  {"id":"ce-pnpla3-meta-2014","pmid":"25173636","title":"PNPLA3 I148M polymorphism and nonalcoholic fatty liver disease: meta-analysis","finding":"Meta-analysis of 24 studies: PNPLA3 rs738409 GG vs CC: OR 3.24 for NAFLD, 5.30 for NASH, 3.25 for fibrosis, 1.67 for HCC. Effect modified by alcohol intake and BMI.","year":2014,"disease_area":"Liver","text_chunk":"PNPLA3 meta-analysis (2014, 24 studies): GG vs CC: NAFLD OR 3.24, NASH OR 5.30, fibrosis OR 3.25, HCC OR 1.67. Alcohol amplifies PNPLA3 risk synergistically. BMI modifies effect - lean NAFLD in GG carriers occurs but is less common. Strongest genetic effect on liver disease risk."},
-  {"id":"ce-catalyst-2022","pmid":"36652492","title":"Selenium Supplementation for Hashimoto Thyroiditis: A Systematic Review and Meta-analysis","finding":"Meta-analysis: selenium supplementation (200 mcg/day selenomethionine) reduced TPO antibodies by ~20-40% in Hashimoto thyroiditis patients over 3-12 months. Modest improvement in thyroid function.","year":2022,"disease_area":"Thyroid","text_chunk":"Selenium meta-analysis for Hashimoto: 200 mcg/day selenomethionine reduces TPO antibodies 20-40% over 3-12 months. May slow progression from subclinical to overt hypothyroidism. Selenomethionine preferred over sodium selenite. Optimal selenium status: 100-130 mcg/L. Supports deiodinase function for T4-to-T3 conversion."},
-  {"id":"ce-dio2-panicker-2009","pmid":"19190113","title":"Combined analysis of fourteen cohorts confirms a common risk variant for hypothyroidism","finding":"Panicker et al. 2009: DIO2 Thr92Ala variant associated with impaired psychological well-being on levothyroxine monotherapy. Carriers prefer combination T4/T3 therapy. Meta-analysis of 14 cohorts.","year":2009,"disease_area":"Thyroid","text_chunk":"Panicker et al. 2009: DIO2 Thr92Ala (rs225014) AA carriers on levothyroxine monotherapy report worse psychological well-being and prefer combination T4/T3 therapy in blinded crossover design. Supports genotype-guided thyroid hormone replacement. ~16% of population is AA homozygous."},
-  {"id":"ce-mthfr-c677t-meta","pmid":"16199547","title":"MTHFR C677T polymorphism and risk of coronary heart disease: A meta-analysis","finding":"Meta-analysis of 40 studies: MTHFR C677T TT genotype associated with 16% increased CHD risk (OR 1.16). Mediated through elevated homocysteine. Greater effect in low folate regions.","year":2005,"disease_area":"Cardiovascular","text_chunk":"MTHFR C677T meta-analysis (40 studies): TT genotype increases CHD risk 16% (OR 1.16) mediated through homocysteine elevation. Effect stronger in populations with low folate fortification. L-methylfolate supplementation for MTHFR TT reduces homocysteine and may reduce CV risk, though RCTs of homocysteine-lowering show mixed results."},
-  {"id":"ce-serpine1-amish-2017","pmid":"29091578","title":"A null mutation in SERPINE1 protects against biological aging in humans","finding":"Khan et al. 2017: heterozygous SERPINE1 null mutation in Old Order Amish associated with longer telomeres (+10%), lower fasting insulin, and reduced metabolic disease. Provides human evidence for PAI-1 as aging target.","year":2017,"disease_area":"Aging","text_chunk":"Khan et al. 2017 (Science Medicine): SERPINE1 null mutation in Amish community: heterozygotes have 10% longer telomeres, lower PAI-1, lower fasting insulin, and trend toward longer lifespan. PAI-1 is a GrimAge component. Validates PAI-1 as a therapeutic target for aging and metabolic disease."},
-  {"id":"ce-fto-obesity-2007","pmid":"17434869","title":"A Common Variant in the FTO Gene Is Associated with Body Mass Index and Predisposes to Childhood and Adult Obesity","finding":"Frayling et al. 2007: FTO rs9939609 first GWAS hit for obesity. Each A allele increases BMI 0.36 kg/m2. AA homozygotes have 1.67x odds of obesity. Replicated across all populations.","year":2007,"disease_area":"Obesity","text_chunk":"FTO rs9939609 (Science 2007): first obesity GWAS hit. Each A allele: +0.36 kg/m2 BMI, 1.3x obesity risk. AA homozygotes: 1.67x obesity risk, ~3 kg heavier. FTO regulates IRX3/IRX5 in adipocyte precursors, affecting thermogenesis. Lifestyle intervention can override genetic predisposition."},
-  {"id":"ce-pcsk9-cohen-2006","pmid":"16554528","title":"Sequence variations in PCSK9, low LDL, and protection against coronary heart disease","finding":"Cohen et al. 2006: PCSK9 loss-of-function variants (including R46L rs11591147) reduce LDL-C 15-28% and CHD risk 47-88%. Lifelong exposure to lower LDL has greater CV benefit per mg/dL than statin-achieved LDL reduction.","year":2006,"disease_area":"Cardiovascular","text_chunk":"Cohen et al. 2006 (NEJM): PCSK9 loss-of-function variants provide Mendelian randomization proof that LDL is causal for CHD. R46L (rs11591147 T): LDL -15%, CHD risk -47%. Y142X and C679X: LDL -28%, CHD risk -88%. Lifelong genetic LDL reduction ~3x more effective per mg/dL than statin therapy started in middle age."},
-  {"id":"ce-hfe-feder-1996","pmid":"8696333","title":"A novel MHC class I-like gene is mutated in patients with hereditary haemochromatosis","finding":"Feder et al. 1996: discovery of HFE gene. C282Y (rs1800562) mutation found in 85% of hereditary hemochromatosis patients. H63D (rs1799945) identified as modifier. Enabled genetic screening for iron overload.","year":1996,"disease_area":"Iron","text_chunk":"Feder et al. 1996 (Nature Genetics): HFE gene discovery. C282Y homozygosity in 85% of hemochromatosis patients. Prevalence: ~1 in 200 Northern Europeans are C282Y/C282Y. H63D is a common modifier. HFE genotyping when TSAT >45% is standard of care. Phlebotomy prevents organ damage if started early."},
-  {"id":"ce-select-2009","pmid":"19066370","title":"Vitamin E and the Risk of Prostate Cancer: SELECT","finding":"SELECT trial (n=35,533): vitamin E supplementation (400 IU/day) did not prevent cancer and increased prostate cancer risk by 17% with long-term follow-up. Selenium supplementation also showed no benefit.","year":2009,"disease_area":"Cancer","text_chunk":"SELECT trial (JAMA 2009, n=35,533): vitamin E 400 IU/day increased prostate cancer risk 17% in healthy men. Selenium supplementation (L-selenomethionine 200 mcg) showed no cancer prevention benefit. Caution against high-dose antioxidant supplementation without evidence. Individual selenium status may modify response."},
-  {"id":"ce-nhanes-phenoage","pmid":"29676998","title":"PhenoAge validation in NHANES III","finding":"PhenoAge validated in NHANES III (n=9,926): PhenoAge acceleration >5 years associated with 2.3x mortality risk. PhenoAge outperformed Horvath clock for mortality prediction. 9 clinical biomarkers are routinely available.","year":2018,"disease_area":"Aging","text_chunk":"PhenoAge in NHANES III (n=9,926): 9 biomarker composite age predicts mortality better than any individual biomarker. Components: albumin (-0.0336), creatinine (0.0095, log), glucose (0.00188, log), hs-CRP (0.0167, log), lymphocyte % (-0.0120), MCV (0.0268), RDW (0.0952), ALP (0.0203, log), WBC (0.0954)."},
-  {"id":"ce-apoe-ad-meta","pmid":"9343467","title":"Effects of age, sex, and ethnicity on the association between apolipoprotein E genotype and Alzheimer disease","finding":"Meta-analysis: APOE E4 increases Alzheimer disease risk 3.2x (heterozygous) to 14.9x (homozygous). E2 is protective (OR 0.6). Effect strongest in ages 55-65, attenuating after 75. Women have higher risk per E4 allele.","year":1997,"disease_area":"Neurology","text_chunk":"APOE-AD meta-analysis: E4 heterozygous OR 3.2, E4/E4 OR 14.9 for Alzheimer disease. E2 protective (OR 0.6). 40-65% of AD patients carry at least one E4 allele. E4 promotes amyloid-beta aggregation and impairs clearance. APOE genotyping increasingly used in AD risk stratification and clinical trial enrollment."},
-  {"id":"ce-hsd17b13-target","pmid":"33037395","title":"HSD17B13 as a therapeutic target for NASH","finding":"HSD17B13 inhibition validated as therapeutic target for NASH through genetic evidence. ARO-HSD17B13 (RNAi therapy) and other approaches in clinical trials. Loss-of-function mutations provide ~50% HCC risk reduction.","year":2020,"disease_area":"Liver","text_chunk":"HSD17B13 as therapeutic target: genetic evidence (rs72613567 TA) shows liver protection across the NAFLD spectrum. ARO-HSD (Arrowhead Pharmaceuticals) RNAi therapy in Phase 1/2 trials. Genetic loss-of-function provides 17% NASH reduction, 30% cirrhosis reduction, 49% HCC reduction per TA allele. First genetically-validated liver drug target."},
-  {"id":"ce-comt-meta-2004","pmid":"15457404","title":"COMT Val158Met polymorphism and cognition","finding":"Meta-analysis of COMT Val158Met: Met/Met (low activity) associated with better executive function and working memory but higher anxiety and stress sensitivity. Val/Val (high activity) associated with stress resilience but reduced baseline cognitive performance.","year":2004,"disease_area":"Psychiatry","text_chunk":"COMT Val158Met meta-analysis: Met/Met (AA): better prefrontal cognition, higher dopamine, but increased anxiety sensitivity. Val/Val (GG): stress resilient, lower dopamine, better under pressure. Context-dependent effects - no universally 'better' allele. Affects pain sensitivity, estrogen metabolism, and drug responses."},
-  {"id":"ce-tcf7l2-grant-2006","pmid":"16415884","title":"Variant of transcription factor 7-like 2 (TCF7L2) gene confers risk of type 2 diabetes","finding":"Grant et al. 2006: TCF7L2 rs7903146 identified as strongest common T2D risk variant. Each T allele increases risk 1.45x. Population attributable risk ~21%. Replicated across all ethnic groups.","year":2006,"disease_area":"Diabetes","text_chunk":"TCF7L2 rs7903146 (Nature Genetics 2006): strongest common T2D risk variant. Per T allele OR 1.45. TT homozygotes: OR 2.1. Population attributable risk ~21%. Impairs incretin signaling and beta-cell function via Wnt pathway. TCF7L2 TT carriers respond better to lifestyle intervention than metformin (DPP subanalysis)."},
-  {"id":"ce-grimace-components","pmid":"30669119","title":"GrimAge component surrogates and mortality prediction","finding":"GrimAge includes DNAm surrogates for 7 plasma proteins: adrenomedullin, beta-2 microglobulin, cystatin C, GDF-15, leptin, PAI-1, TIMP-1, plus smoking pack-years. Each component independently predicts mortality.","year":2019,"disease_area":"Aging","text_chunk":"GrimAge components (Lu 2019): DNAm surrogates for adrenomedullin (vascular), beta-2 microglobulin (immune/renal), cystatin C (renal), GDF-15 (mitochondrial stress), leptin (metabolic), PAI-1 (thrombosis/senescence), TIMP-1 (fibrosis), plus smoking. Each independently predicts mortality. Composite GrimAge is strongest mortality predictor."},
-  {"id":"ce-step-nash-2024","pmid":"38856224","title":"Semaglutide for NASH Resolution","finding":"Semaglutide Phase 2b/3 trials showed 59% NASH resolution without worsening fibrosis vs 17% placebo. Also improved fibrosis by at least one stage in 43% vs 33%. GLP-1 RA emerging as leading NASH therapy.","year":2024,"disease_area":"Liver","text_chunk":"Semaglutide for NASH: Phase 3 showed 59% NASH resolution vs 17% placebo (p<0.001). Fibrosis improvement in 43% vs 33%. Weight loss ~13% with 2.4mg weekly. GLP-1 RA addresses both metabolic and hepatic components of NAFLD/NASH. PNPLA3 GG carriers with NASH may particularly benefit given metabolic-genetic synergy."},
-  {"id":"ce-tailor-pci-2020","pmid":"32755456","title":"Effect of Genotype-Guided Oral P2Y12 Inhibitor Selection vs Conventional Clopidogrel Therapy on Ischemic Outcomes After Percutaneous Coronary Intervention","finding":"TAILOR-PCI (n=5,302): CYP2C19 genotype-guided antiplatelet selection (ticagrelor for carriers) vs universal clopidogrel reduced ischemic events in loss-of-function carriers (HR 0.66) but not in overall population.","year":2020,"disease_area":"Pharmacogenomics","text_chunk":"TAILOR-PCI (JAMA 2020, n=5,302): CYP2C19 genotype-guided strategy reduced CV events 34% (HR 0.66) in loss-of-function allele carriers. Validates genotype-guided antiplatelet selection post-PCI. POPular Genetics trial confirmed: genotype-guided approach is non-inferior with less bleeding."},
-  {"id":"ce-age-acceleration-mortality","pmid":"30048243","title":"Epigenetic age acceleration and mortality: a meta-analysis","finding":"Meta-analysis of 13 cohorts (n=13,089): each year of epigenetic age acceleration associated with 4% increased mortality (HR 1.04). Consistent across Horvath, Hannum, PhenoAge, and GrimAge clocks.","year":2019,"disease_area":"Aging","text_chunk":"Epigenetic age acceleration meta-analysis (13 cohorts, n=13,089): each year of biological age acceleration increases mortality risk 4% (HR 1.04). GrimAge acceleration has strongest mortality association. Lifestyle factors (exercise, diet, sleep) can decelerate biological aging. Blood biomarker optimization may partially mediate this effect."},
-  {"id":"ce-klotho-aging-2004","pmid":"15475948","title":"Klotho: a gene related to aging","finding":"Klotho gene encodes anti-aging protein. Klotho-deficient mice show premature aging phenotype. Overexpression extends lifespan 20-30%. Soluble Klotho declines with age and CKD in humans.","year":2004,"disease_area":"Aging","text_chunk":"Klotho (discovered 1997, Science): anti-aging protein. Mouse Klotho deficiency causes premature aging (shortened lifespan, atherosclerosis, osteoporosis, cognitive decline). Overexpression extends lifespan 20-30%. Soluble Klotho in humans: declines with age, low in CKD. KL-VS variant affects cognitive function. Exercise and vitamin D increase Klotho levels."},
-  {"id":"ce-brca1-risk-2003","pmid":"12677558","title":"Average risks of breast and ovarian cancer associated with BRCA1 or BRCA2 mutations","finding":"Meta-analysis: BRCA1 mutation carriers have 65% lifetime breast cancer risk and 39% ovarian cancer risk by age 70. BRCA2: 45% breast and 11% ovarian. Risk-reducing surgery dramatically reduces cancer-specific mortality.","year":2003,"disease_area":"Cancer","text_chunk":"BRCA1/2 cancer risk meta-analysis: BRCA1 carriers: 65% breast cancer by 70, 39% ovarian. BRCA2: 45% breast, 11% ovarian. Risk-reducing mastectomy reduces breast cancer risk >90%. Risk-reducing oophorectomy reduces ovarian cancer risk 80% and breast cancer 50%. PARP inhibitors (olaparib) for BRCA-associated cancers."},
-  {"id":"ce-berberine-meta","pmid":"33007773","title":"Berberine for metabolic health: systematic review","finding":"Meta-analysis: berberine 500mg TID reduces HbA1c ~0.7%, fasting glucose ~15 mg/dL, LDL ~20 mg/dL, triglycerides ~35 mg/dL. Comparable to metformin for glucose lowering. AMPK activation mechanism.","year":2020,"disease_area":"Metabolic","text_chunk":"Berberine meta-analysis: 500mg TID reduces HbA1c -0.7%, FPG -15 mg/dL, LDL -20 mg/dL, TG -35 mg/dL. Activates AMPK pathway similar to metformin. Useful adjunct for metabolic syndrome, prediabetes, and dyslipidemia. GI side effects (diarrhea) common. May be particularly useful for insulin-resistant phenotype."},
-  {"id":"ce-nad-aging-2016","pmid":"27127236","title":"NAD+ metabolism and its roles in cellular processes during aging","finding":"NAD+ declines with age, impairing sirtuins and PARP activity. NMN and NR supplementation restore NAD+ levels in animal models. Human trials show NAD+ elevation but clinical outcomes data still emerging.","year":2016,"disease_area":"Aging","text_chunk":"NAD+ decline is a hallmark of aging. NAD+ is essential for sirtuin activation (SIRT1-7), PARP DNA repair, and mitochondrial function. NMN and NR precursors restore NAD+ in animal models with healthspan benefits. Human trials (NR 300-1000mg, NMN 250-1200mg) show NAD+ elevation. Clinical outcome data still emerging."},
-  {"id":"ce-vdr-variants-2017","pmid":"28051893","title":"VDR polymorphisms and vitamin D status","finding":"VDR polymorphisms (FokI, BsmI, TaqI, ApaI) modulate vitamin D receptor signaling efficiency. FokI (rs2228570) affects VDR translation start site. Variant carriers may need higher 25-OH vitamin D levels for equivalent biological effect.","year":2017,"disease_area":"Nutrition","text_chunk":"VDR polymorphisms affect vitamin D receptor efficiency. FokI rs2228570 CC: potentially reduced VDR activity, may need higher serum 25-OH-D (50-60 ng/mL). BsmI, TaqI, ApaI variants affect VDR expression levels. Genotype-guided vitamin D dosing optimizes calcium absorption, immune function, and bone health."},
-  {"id":"ce-fads-meta-2015","pmid":"25646338","title":"FADS genetic variants and omega-3 fatty acid metabolism","finding":"Meta-analysis: FADS1/2 variants explain ~30% of variation in EPA/DHA levels and omega-3 index. FADS1 rs174546 C allele associated with lower delta-5 desaturase activity. Ancestral allele frequency varies dramatically by population.","year":2015,"disease_area":"Nutrition","text_chunk":"FADS1/2 meta-analysis: explain ~30% of omega-3 fatty acid variation. FADS1 rs174546 CC: 25-40% lower EPA/DHA conversion from plant ALA. African-descent populations have higher T allele frequency (efficient converters). European-descent: higher C allele frequency (poor converters). Genotype-guided omega-3 supplementation recommended."},
-  {"id":"ce-sulforaphane-2019","pmid":"31087225","title":"Sulforaphane and its effects on cancer, mortality, aging, and metabolic disease","finding":"Sulforaphane (from broccoli sprouts) activates Nrf2 pathway, the master regulator of antioxidant defense. Reduces oxidative stress, inflammation, and has anti-cancer properties. Dose: 30-60mg sulforaphane equivalent daily.","year":2019,"disease_area":"Nutrition","text_chunk":"Sulforaphane (broccoli sprout extract): potent Nrf2 activator, upregulating >200 cytoprotective genes. Reduces oxidative stress biomarkers, improves insulin sensitivity, and has anti-cancer properties. GSTM1 null genotype may enhance sulforaphane bioavailability. Dose: 30-60mg (equivalent to 100g broccoli sprouts). Myrosinase required for conversion."},
-  {"id":"ce-glynac-2023","pmid":"36482485","title":"GlyNAC supplementation and aging biomarkers","finding":"GlyNAC (glycine + N-acetylcysteine) supplementation in older adults: restored glutathione levels, reduced oxidative stress, improved mitochondrial function, and reversed multiple aging biomarkers in RCT.","year":2023,"disease_area":"Aging","text_chunk":"GlyNAC supplementation (glycine 1.33mmol/kg + NAC 0.81mmol/kg daily): RCT in older adults showed restored glutathione, reduced oxidative stress, improved mitochondrial function, reduced inflammation, improved insulin resistance, and reduced waist circumference. More effective than NAC alone for glutathione repletion."}
+  {
+    "id": "ce_levine_2018",
+    "pmid": "29676998",
+    "title": "An epigenetic biomarker of aging for lifespan and healthspan",
+    "finding": "PhenoAge derived from 9 clinical chemistry biomarkers captures mortality risk and aging-related conditions. Validated in NHANES III (n=9,926) and InCHIANTI. PhenoAge acceleration predicts all-cause mortality, cardiovascular disease, cancer, and physical functioning decline.",
+    "year": 2018,
+    "disease_area": "Aging",
+    "text_chunk": "Levine et al. 2018 developed PhenoAge using 9 blood biomarkers (albumin, creatinine, glucose, hs-CRP, lymphocyte %, MCV, RDW, alkaline phosphatase, WBC) plus chronological age. PhenoAge acceleration of more than 5 years is associated with 2.3x mortality risk. Validated across multiple cohorts. This clock bridges routine blood tests with biological aging assessment."
+  },
+  {
+    "id": "ce_lu_2019",
+    "pmid": "30669119",
+    "title": "DNA methylation GrimAge strongly predicts lifespan and healthspan",
+    "finding": "GrimAge based on DNA methylation surrogates of 7 plasma proteins and smoking pack-years is the strongest epigenetic predictor of mortality. GrimAge acceleration predicts time-to-death, cancer, CHD, and chronic disease.",
+    "year": 2019,
+    "disease_area": "Aging",
+    "text_chunk": "Lu et al. 2019 developed GrimAge using DNAm surrogates of adrenomedullin, beta-2 microglobulin, cystatin C, GDF-15, leptin, PAI-1, TIMP-1, plus smoking pack-years. GrimAge is the strongest mortality predictor among epigenetic clocks. Each year of GrimAge acceleration increases mortality risk by approximately 8%."
+  },
+  {
+    "id": "ce_horvath_2013",
+    "pmid": "24138928",
+    "title": "DNA methylation age of human tissues and cell types",
+    "finding": "First multi-tissue epigenetic clock based on 353 CpG sites. Horvath clock measures intrinsic epigenetic aging independent of blood cell composition. Applicable across all tissues and cell types.",
+    "year": 2013,
+    "disease_area": "Aging",
+    "text_chunk": "Horvath 2013 developed the first pan-tissue epigenetic clock using 353 CpG sites. Measures intrinsic biological age independent of blood cell composition. Deviation from chronological age predicts mortality. Foundation for all subsequent epigenetic clock research including PhenoAge and GrimAge."
+  },
+  {
+    "id": "ce_dpp_2002",
+    "pmid": "11832527",
+    "title": "Reduction in the incidence of type 2 diabetes with lifestyle intervention or metformin",
+    "finding": "DPP trial: intensive lifestyle intervention reduced T2D incidence by 58% vs placebo in high-risk prediabetic adults (n=3,234). Metformin reduced incidence by 31%. Lifestyle was superior to metformin across all subgroups.",
+    "year": 2002,
+    "disease_area": "Diabetes",
+    "text_chunk": "The Diabetes Prevention Program (NEJM 2002, n=3,234) demonstrated that intensive lifestyle modification (7% weight loss plus 150 min/week exercise) reduced T2D incidence by 58% versus placebo. Metformin 850 mg twice daily reduced incidence by 31%. NNT=6.9 for lifestyle over 2.8 years. Benefits sustained at 15-year follow-up."
+  },
+  {
+    "id": "ce_ukpds_1998",
+    "pmid": "9742976",
+    "title": "Intensive blood-glucose control with sulphonylureas or insulin compared with conventional treatment and risk of complications in patients with type 2 diabetes (UKPDS 33)",
+    "finding": "UKPDS demonstrated that intensive glycemic control (HbA1c 7.0% vs 7.9%) reduced microvascular complications by 25% in newly diagnosed T2D patients over 10 years. Each 1% reduction in HbA1c was associated with 21% reduction in diabetes-related deaths.",
+    "year": 1998,
+    "disease_area": "Diabetes",
+    "text_chunk": "UKPDS (Lancet 1998, n=3,867) was the landmark trial for type 2 diabetes management. Intensive glucose control reduced microvascular complications by 25%. Each 1% HbA1c reduction yielded 21% reduction in diabetes deaths, 14% reduction in MI, and 37% reduction in microvascular endpoints. The legacy effect persisted for 10+ years post-trial."
+  },
+  {
+    "id": "ce_finnish_dps_2001",
+    "pmid": "11333990",
+    "title": "Prevention of type 2 diabetes mellitus by changes in lifestyle among subjects with impaired glucose tolerance",
+    "finding": "Finnish Diabetes Prevention Study: lifestyle intervention reduced T2D risk by 58% in overweight subjects with IGT (n=522). Weight loss, dietary fiber increase, fat reduction, and exercise were all independent predictors of reduced diabetes risk.",
+    "year": 2001,
+    "disease_area": "Diabetes",
+    "text_chunk": "The Finnish Diabetes Prevention Study (NEJM 2001, n=522) demonstrated 58% T2D risk reduction through lifestyle intervention in subjects with IGT. Five goals: >5% weight loss, <30% fat calories, <10% saturated fat, >15g fiber/1000kcal, >4h exercise/week. Achieving 4+ goals virtually eliminated diabetes risk. Results paralleled the DPP trial."
+  },
+  {
+    "id": "ce_tcf7l2_grant_2006",
+    "pmid": "16415884",
+    "title": "Variant of transcription factor 7-like 2 (TCF7L2) gene confers risk of type 2 diabetes",
+    "finding": "TCF7L2 rs7903146 identified as the strongest common genetic risk factor for T2D with OR 1.45 per T allele. Replicated across multiple populations. TT homozygotes have approximately 2-fold increased T2D risk.",
+    "year": 2006,
+    "disease_area": "Diabetes",
+    "text_chunk": "Grant et al. 2006 (Nature Genetics) identified TCF7L2 rs7903146 as the strongest common T2D risk variant (OR 1.45 per T allele). Originally discovered in Icelandic population and replicated globally. TCF7L2 affects Wnt signaling in pancreatic beta cells. This discovery catalyzed the T2D GWAS era."
+  },
+  {
+    "id": "ce_framingham_1998",
+    "pmid": "9603539",
+    "title": "Prediction of coronary heart disease using risk factor categories",
+    "finding": "Framingham Risk Score using total cholesterol, HDL, blood pressure, diabetes, and smoking predicts 10-year CHD risk. Validated in multiple populations and became the foundation of cardiovascular risk assessment for clinical guidelines.",
+    "year": 1998,
+    "disease_area": "Cardiovascular",
+    "text_chunk": "The Framingham Heart Study (Circulation 1998) developed the original cardiovascular risk prediction model using readily available clinical variables. The Framingham Risk Score became the basis for statin treatment guidelines worldwide. Over 70+ years of longitudinal data from this study established most of the major cardiovascular risk factors."
+  },
+  {
+    "id": "ce_jupiter_2008",
+    "pmid": "18997196",
+    "title": "Rosuvastatin to prevent vascular events in men and women with elevated C-reactive protein",
+    "finding": "JUPITER trial: rosuvastatin 20 mg reduced major cardiovascular events by 44% in patients with normal LDL (<130 mg/dL) but elevated hs-CRP (>2.0 mg/L). Established hs-CRP as a treatment target. n=17,802.",
+    "year": 2008,
+    "disease_area": "Cardiovascular",
+    "text_chunk": "JUPITER trial (NEJM 2008, n=17,802) demonstrated that rosuvastatin 20 mg reduced cardiovascular events by 44% in patients with LDL <130 but hs-CRP >2.0 mg/L. Trial stopped early for efficacy. Established the role of inflammation (hs-CRP) as an independent treatment target beyond LDL cholesterol."
+  },
+  {
+    "id": "ce_fourier_2017",
+    "pmid": "28304224",
+    "title": "Evolocumab and clinical outcomes in patients with cardiovascular disease",
+    "finding": "FOURIER trial: evolocumab (PCSK9 inhibitor) reduced LDL by 59% and cardiovascular events by 15% on top of statin therapy in 27,564 patients with established atherosclerotic CVD. No safety concerns with very low LDL.",
+    "year": 2017,
+    "disease_area": "Cardiovascular",
+    "text_chunk": "FOURIER trial (NEJM 2017, n=27,564) demonstrated that evolocumab (anti-PCSK9) reduced LDL by 59% to median 30 mg/dL and reduced cardiovascular events by 15% on top of optimized statin therapy. Validated PCSK9 as therapeutic target originally identified through loss-of-function mutations (rs11591147). No safety signal with very low LDL levels."
+  },
+  {
+    "id": "ce_pcsk9_mr_2006",
+    "pmid": "16554528",
+    "title": "Low LDL cholesterol in individuals of African descent resulting from frequent nonsense mutations in PCSK9",
+    "finding": "PCSK9 loss-of-function mutations found in 2.6% of African Americans were associated with 28% lower LDL and 88% lower CHD incidence over 15 years. This Mendelian randomization study validated PCSK9 as a drug target.",
+    "year": 2006,
+    "disease_area": "Cardiovascular",
+    "text_chunk": "Cohen et al. 2006 (NEJM) identified PCSK9 loss-of-function mutations in the Dallas Heart Study, demonstrating that lifelong low LDL from PCSK9 deficiency reduces coronary events by 88%, far more than the 25-30% reduction from statin initiation in middle age. This Mendelian randomization study was pivotal in PCSK9 inhibitor drug development."
+  },
+  {
+    "id": "ce_apoe_mr_corder_1993",
+    "pmid": "8346443",
+    "title": "Gene dose of apolipoprotein E type 4 allele and the risk of Alzheimer's disease in late onset families",
+    "finding": "APOE E4 allele dose-dependently increases Alzheimer disease risk: E3/E4 carriers have OR 2.84, E4/E4 homozygotes have OR 12.5 compared to E3/E3. E4 also lowers age of onset by approximately 8 years per allele.",
+    "year": 1993,
+    "disease_area": "Cardiovascular",
+    "text_chunk": "Corder et al. 1993 (Science) established the APOE E4 allele as the strongest genetic risk factor for late-onset Alzheimer disease. E4/E4 homozygotes have OR 12.5 and mean onset age of 68 versus 84 for E3/E3. APOE also strongly influences LDL cholesterol, making it a dual cardiovascular and neurological risk variant."
+  },
+  {
+    "id": "ce_search_slco1b1_2008",
+    "pmid": "18650507",
+    "title": "SLCO1B1 variants and statin-induced myopathy: a genomewide study",
+    "finding": "SEARCH trial GWAS identified SLCO1B1 rs4149056 as the major genetic determinant of simvastatin-induced myopathy. *5/*5 homozygotes have 17-fold increased myopathy risk with simvastatin 80 mg. Single strongest pharmacogenomic association for statins.",
+    "year": 2008,
+    "disease_area": "Pharmacogenomics",
+    "text_chunk": "The SEARCH collaborative group (NEJM 2008) performed the first GWAS for drug adverse effects, identifying SLCO1B1 rs4149056 (*5 allele) as the primary determinant of simvastatin-induced myopathy (OR 16.9 for homozygotes). This finding led to CPIC guidelines recommending SLCO1B1 genotyping before statin prescribing."
+  },
+  {
+    "id": "ce_cpic_cyp2d6_codeine_2012",
+    "pmid": "22205192",
+    "title": "Clinical Pharmacogenetics Implementation Consortium guidelines for CYP2D6 genotype and codeine therapy",
+    "finding": "First CPIC guideline for codeine: poor metabolizers should avoid codeine (lack of analgesia), ultra-rapid metabolizers should avoid codeine (risk of fatal respiratory depression). Based on case reports of deaths in ultra-rapid metabolizers.",
+    "year": 2012,
+    "disease_area": "Pharmacogenomics",
+    "text_chunk": "CPIC guideline for CYP2D6 and codeine (Clinical Pharmacology and Therapeutics 2012) was among the first evidence-based pharmacogenomic guidelines. Based on reports of pediatric deaths in ultra-rapid metabolizers and lack of efficacy in poor metabolizers. Led to FDA black box warning and removal of codeine from pediatric formularies."
+  },
+  {
+    "id": "ce_cpic_cyp2c19_clopidogrel_2013",
+    "pmid": "23698643",
+    "title": "Clinical Pharmacogenetics Implementation Consortium guidelines for CYP2C19 genotype and clopidogrel therapy",
+    "finding": "CYP2C19 poor metabolizers have significantly reduced clopidogrel activation with increased risk of stent thrombosis and cardiovascular events. CPIC recommends prasugrel or ticagrelor as alternatives.",
+    "year": 2013,
+    "disease_area": "Pharmacogenomics",
+    "text_chunk": "CPIC guideline for CYP2C19 and clopidogrel (Clinical Pharmacology and Therapeutics 2013) codified the recommendation to avoid clopidogrel in poor metabolizers. Based on multiple studies showing increased stent thrombosis and cardiovascular events. FDA boxed warning since 2010. Prasugrel and ticagrelor bypass CYP2C19 activation requirement."
+  },
+  {
+    "id": "ce_cpic_vkorc1_warfarin_2011",
+    "pmid": "21900891",
+    "title": "Clinical Pharmacogenetics Implementation Consortium guidelines for CYP2C9 and VKORC1 genotypes and warfarin dosing",
+    "finding": "VKORC1 and CYP2C9 genotypes explain approximately 35-40% of warfarin dose variability. Pharmacogenomic dosing algorithms reduce time to therapeutic INR and reduce adverse events (bleeding and thromboembolism).",
+    "year": 2011,
+    "disease_area": "Pharmacogenomics",
+    "text_chunk": "CPIC warfarin guideline (Clinical Pharmacology and Therapeutics 2011) established genotype-guided dosing using VKORC1 and CYP2C9. Pharmacogenomic algorithms (warfarindosing.org) incorporate genotype with clinical factors. EU-PACT and COAG trials tested implementation, with EU-PACT showing benefit of genotype-guided dosing."
+  },
+  {
+    "id": "ce_cpic_tpmt_thiopurines_2011",
+    "pmid": "21270794",
+    "title": "Clinical Pharmacogenetics Implementation Consortium guidelines for thiopurine methyltransferase genotype and thiopurine dosing",
+    "finding": "TPMT deficient patients (homozygous for non-functional alleles) are at extreme risk of life-threatening myelosuppression from standard thiopurine doses. Pre-treatment genotyping prevents this by enabling 90% dose reduction.",
+    "year": 2011,
+    "disease_area": "Pharmacogenomics",
+    "text_chunk": "CPIC thiopurine/TPMT guideline (Clinical Pharmacology and Therapeutics 2011) was among the earliest pharmacogenomic guidelines with clear clinical impact. TPMT *3A/*3A homozygotes require 90% dose reduction of azathioprine/mercaptopurine. Pre-treatment TPMT genotyping is now standard of care in many institutions, particularly for pediatric ALL maintenance therapy."
+  },
+  {
+    "id": "ce_cpic_hlab5701_abacavir_2012",
+    "pmid": "22378157",
+    "title": "Clinical Pharmacogenetics Implementation Consortium guidelines for HLA-B genotype and abacavir dosing",
+    "finding": "HLA-B*57:01 testing before abacavir prescription eliminates immunologically-confirmed hypersensitivity reactions. PREDICT-1 trial demonstrated 100% negative predictive value of HLA-B*57:01 testing.",
+    "year": 2012,
+    "disease_area": "Pharmacogenomics",
+    "text_chunk": "CPIC abacavir/HLA-B*57:01 guideline codified mandatory pre-prescription genetic testing. The PREDICT-1 trial (NEJM 2008) demonstrated that prospective testing eliminated immunologically confirmed hypersensitivity. This remains the most successful pharmacogenomic implementation, with testing now universal in HIV care."
+  },
+  {
+    "id": "ce_predict1_2008",
+    "pmid": "18256392",
+    "title": "HLA-B*5701 screening for hypersensitivity to abacavir",
+    "finding": "PREDICT-1 RCT (n=1,956) demonstrated that prospective HLA-B*57:01 screening reduced clinically suspected abacavir HSR from 7.8% to 3.4% and eliminated immunologically confirmed HSR (0% vs 2.7%). NNT=14.",
+    "year": 2008,
+    "disease_area": "Pharmacogenomics",
+    "text_chunk": "PREDICT-1 trial (NEJM 2008, n=1,956) was the first prospective RCT of pharmacogenomic testing. Screening for HLA-B*57:01 before abacavir eliminated immunologically confirmed hypersensitivity reactions. This trial established the gold standard for pharmacogenomic clinical utility evidence."
+  },
+  {
+    "id": "ce_pnpla3_romeo_2008",
+    "pmid": "18820647",
+    "title": "Genetic variation in PNPLA3 confers susceptibility to nonalcoholic fatty liver disease",
+    "finding": "GWAS in the Dallas Heart Study identified PNPLA3 rs738409 (I148M) as the strongest genetic determinant of hepatic steatosis. GG homozygotes had 3-fold higher hepatic fat content. Replicated across all ethnic groups.",
+    "year": 2008,
+    "disease_area": "Liver",
+    "text_chunk": "Romeo et al. 2008 (Nature Genetics) performed the seminal GWAS identifying PNPLA3 rs738409 as the major genetic driver of NAFLD. The I148M variant was found across all ethnic groups in the Dallas Heart Study (n=2,111). This discovery opened the field of NAFLD genetics and identified PNPLA3 as a therapeutic target."
+  },
+  {
+    "id": "ce_fib4_sterling_2006",
+    "pmid": "16702586",
+    "title": "Development of a simple noninvasive index to predict significant fibrosis in patients with HIV/HCV coinfection",
+    "finding": "FIB-4 index using age, AST, ALT, and platelet count accurately identifies advanced fibrosis with AUROC 0.765. FIB-4 <1.45 has 90% NPV for excluding advanced fibrosis. Simple, free, and widely available.",
+    "year": 2006,
+    "disease_area": "Liver",
+    "text_chunk": "Sterling et al. 2006 (Hepatology) developed the FIB-4 index as a non-invasive fibrosis score. Originally validated in HIV/HCV coinfection, subsequently validated in NAFLD, HBV, and general liver disease. FIB-4 below 1.30 excludes advanced fibrosis; above 2.67 confirms it. Now recommended by AASLD and EASL as first-line fibrosis assessment."
+  },
+  {
+    "id": "ce_hsd17b13_abul_husn_2018",
+    "pmid": "29669716",
+    "title": "A protein-truncating HSD17B13 variant and protection from chronic liver disease",
+    "finding": "HSD17B13 rs72613567 splice variant protects against NASH, alcoholic liver disease, and liver fibrosis. Reduces ALT by 10% and NASH risk by 17%. Even attenuates harmful effects of PNPLA3 I148M.",
+    "year": 2018,
+    "disease_area": "Liver",
+    "text_chunk": "Abul-Husn et al. 2018 (NEJM) discovered that HSD17B13 rs72613567 (TA insertion) protects against chronic liver disease. Found in 25% of the population, it reduces NASH progression and attenuates PNPLA3 I148M effects. This protective variant became a leading therapeutic target for NASH drug development."
+  },
+  {
+    "id": "ce_tm6sf2_kozlitina_2014",
+    "pmid": "24531328",
+    "title": "Exome-wide association study identifies a TM6SF2 variant that confers susceptibility to nonalcoholic fatty liver disease",
+    "finding": "TM6SF2 rs58542926 (E167K) increases NAFLD risk but decreases cardiovascular risk by impairing hepatic VLDL secretion. Demonstrates the metabolic trade-off between liver and cardiovascular health.",
+    "year": 2014,
+    "disease_area": "Liver",
+    "text_chunk": "Kozlitina et al. 2014 (Nature Genetics) identified TM6SF2 rs58542926 through exome-wide association, revealing a liver-heart metabolic trade-off: the variant increases NAFLD risk while reducing cardiovascular risk by retaining lipids in the liver rather than secreting them as VLDL."
+  },
+  {
+    "id": "ce_mthfr_frosst_1995",
+    "pmid": "7647779",
+    "title": "A candidate genetic risk factor for vascular disease: a common mutation in methylenetetrahydrofolate reductase",
+    "finding": "MTHFR C677T (rs1801133) identified as a common thermolabile variant causing hyperhomocysteinemia. TT homozygotes have 70% reduced enzyme activity with significantly elevated homocysteine, especially with low folate status.",
+    "year": 1995,
+    "disease_area": "Nutrition",
+    "text_chunk": "Frosst et al. 1995 (Nature Genetics) characterized the MTHFR C677T variant, establishing the molecular basis for common hyperhomocysteinemia. TT homozygotes (10-15% of Europeans) have a thermolabile enzyme with 70% reduced activity. This discovery connected folate metabolism to cardiovascular risk and guided the folate fortification policy debate."
+  },
+  {
+    "id": "ce_fads_tanaka_2009",
+    "pmid": "19451168",
+    "title": "Genome-wide association study of plasma polyunsaturated fatty acids in the InCHIANTI Study",
+    "finding": "FADS1 rs174547 identified as the strongest genetic determinant of plasma omega-3 and omega-6 fatty acid levels. Explains 18.6% of variance in arachidonic acid levels. Implications for personalized omega-3 supplementation.",
+    "year": 2009,
+    "disease_area": "Nutrition",
+    "text_chunk": "Tanaka et al. 2009 (PLoS Genetics) identified FADS1/FADS2 variants as major determinants of fatty acid desaturase activity, explaining up to 18.6% of arachidonic acid variance. FADS1 rs174547 affects omega-3 and omega-6 metabolism, with implications for personalized fatty acid supplementation and interpretation of the omega-3 index."
+  },
+  {
+    "id": "ce_vdr_uitterlinden_2004",
+    "pmid": "14769725",
+    "title": "Genetics and biology of vitamin D receptor polymorphisms",
+    "finding": "Comprehensive review of VDR polymorphisms (FokI, BsmI, TaqI, ApaI) and their effects on vitamin D biology. VDR variants modify bone density, fracture risk, cancer susceptibility, and autoimmune disease risk.",
+    "year": 2004,
+    "disease_area": "Nutrition",
+    "text_chunk": "Uitterlinden et al. 2004 (Gene) provided the definitive review of VDR polymorphisms. VDR rs2228570 (FokI) produces a structurally different protein affecting transcriptional activity. VDR variants modify the relationship between serum vitamin D and biological effects, supporting personalized supplementation targets."
+  },
+  {
+    "id": "ce_gc_wang_2010",
+    "pmid": "20541252",
+    "title": "Common genetic determinants of vitamin D insufficiency: a genome-wide association study",
+    "finding": "GWAS identified GC rs2282679, DHCR7, CYP2R1, and CYP24A1 as major genetic determinants of serum 25-OH vitamin D. GC explains the largest proportion of variance. Carriers of multiple risk alleles have 2-3 fold increased vitamin D deficiency risk.",
+    "year": 2010,
+    "disease_area": "Nutrition",
+    "text_chunk": "Wang et al. 2010 (Lancet) performed the definitive GWAS for vitamin D levels, identifying 4 loci explaining significant variance in 25-OH vitamin D. GC (vitamin D binding protein) had the largest effect. This study established the genetic architecture of vitamin D levels and implications for interpreting vitamin D lab results."
+  },
+  {
+    "id": "ce_hfe_feder_1996",
+    "pmid": "8696333",
+    "title": "A novel MHC class I-like gene is mutated in patients with hereditary haemochromatosis",
+    "finding": "Positional cloning identified HFE gene and the C282Y mutation (rs1800562) as the cause of hereditary hemochromatosis. C282Y homozygosity found in 85-90% of hemochromatosis patients of Northern European descent.",
+    "year": 1996,
+    "disease_area": "Iron",
+    "text_chunk": "Feder et al. 1996 (Nature Genetics) identified the HFE gene and C282Y mutation as the primary cause of hereditary hemochromatosis. This discovery enabled genetic testing for hemochromatosis and family screening. C282Y is present in 10-15% of Northern European populations as heterozygous carriers. Homozygosity affects 1 in 200-400 individuals."
+  },
+  {
+    "id": "ce_hemochromatosis_management_2011",
+    "pmid": "21638320",
+    "title": "Diagnosis and management of hemochromatosis: 2011 practice guideline by the American Association for the Study of Liver Diseases",
+    "finding": "AASLD guideline established transferrin saturation >45% as the screening threshold for hemochromatosis, followed by HFE genotyping. Therapeutic phlebotomy targeting ferritin <50 ng/mL prevents organ damage when initiated before fibrosis develops.",
+    "year": 2011,
+    "disease_area": "Iron",
+    "text_chunk": "AASLD hemochromatosis guideline (Hepatology 2011) established the clinical management framework: screen with TSAT (>45% triggers evaluation), confirm with HFE genotyping, stage with ferritin and liver MRI, treat with phlebotomy targeting ferritin below 50 ng/mL. Early treatment prevents liver fibrosis, diabetes, and cardiomyopathy."
+  },
+  {
+    "id": "ce_bcmo1_leung_2009",
+    "pmid": "19103647",
+    "title": "Two common single nucleotide polymorphisms in the gene encoding beta-carotene 15,15-monoxygenase alter beta-carotene metabolism in female volunteers",
+    "finding": "BCMO1 rs12934922 and rs7501331 variants reduce beta-carotene conversion to retinol by 32% and 69% respectively in female volunteers. Carriers may be at risk of vitamin A deficiency on plant-based diets.",
+    "year": 2009,
+    "disease_area": "Nutrition",
+    "text_chunk": "Leung et al. 2009 (FASEB Journal) demonstrated that BCMO1 variants significantly impair beta-carotene to retinol conversion in humans. The rs12934922 T allele reduces conversion by 32%; combined variants reduce it by 69%. This has major implications for plant-based dieters and vegetarians who rely on carotenoids for vitamin A."
+  },
+  {
+    "id": "ce_reduce_it_2019",
+    "pmid": "30415628",
+    "title": "Cardiovascular risk reduction with icosapent ethyl for hypertriglyceridemia",
+    "finding": "REDUCE-IT trial: icosapent ethyl (high-dose EPA) 4g/day reduced major cardiovascular events by 25% in statin-treated patients with elevated triglycerides. NNT=21 over 4.9 years. First omega-3 therapy to show CV benefit.",
+    "year": 2019,
+    "disease_area": "Cardiovascular",
+    "text_chunk": "REDUCE-IT trial (NEJM 2019, n=8,179) demonstrated that icosapent ethyl 4g/day reduced cardiovascular events by 25% in patients with elevated triglycerides (135-499) on statin therapy. First positive omega-3 cardiovascular outcomes trial. FADS1 genotype may modify response. Changed clinical practice for residual triglyceride risk management."
+  },
+  {
+    "id": "ce_cetp_mr_voight_2012",
+    "pmid": "22872314",
+    "title": "Plasma HDL cholesterol and risk of myocardial infarction: a mendelian randomisation study",
+    "finding": "Mendelian randomization using 14 HDL-raising variants (including CETP rs708272) showed no causal relationship between genetically elevated HDL and MI risk. Challenged the HDL hypothesis and influenced CETP inhibitor trial interpretation.",
+    "year": 2012,
+    "disease_area": "Cardiovascular",
+    "text_chunk": "Voight et al. 2012 (Lancet) used Mendelian randomization with CETP and other HDL-modifying variants to demonstrate that genetically elevated HDL does not reduce MI risk. This landmark study challenged the HDL hypothesis and contributed to the failure/abandonment of CETP inhibitor drug development (torcetrapib, dalcetrapib)."
+  },
+  {
+    "id": "ce_lpa_kamstrup_2009",
+    "pmid": "19064971",
+    "title": "Genetically elevated lipoprotein(a) and increased risk of myocardial infarction",
+    "finding": "LPA kringle IV repeat polymorphism and rs10455872 causally associated with MI risk via Mendelian randomization. Lp(a) above 50 mg/dL confers 2-3 fold increased MI risk independent of LDL cholesterol.",
+    "year": 2009,
+    "disease_area": "Cardiovascular",
+    "text_chunk": "Kamstrup et al. 2009 (JAMA) demonstrated through Mendelian randomization that genetically elevated Lp(a) causally increases MI risk. LPA rs10455872 G allele raises Lp(a) and MI risk dose-dependently. This study established Lp(a) as a causal cardiovascular risk factor, motivating development of dedicated Lp(a)-lowering therapies (pelacarsen, olpasiran)."
+  },
+  {
+    "id": "ce_fto_frayling_2007",
+    "pmid": "17434869",
+    "title": "A common variant in the FTO gene is associated with body mass index and predisposes to childhood and adult obesity",
+    "finding": "FTO rs9939609 identified as the first robustly replicated obesity GWAS hit. A allele increases BMI by 0.36 kg/m2 per allele. AA homozygotes have 1.67-fold increased obesity risk. Risk attenuated by physical activity.",
+    "year": 2007,
+    "disease_area": "Diabetes",
+    "text_chunk": "Frayling et al. 2007 (Science) reported FTO rs9939609 as the first obesity-associated common variant from GWAS. Each A allele increases weight by approximately 1.5 kg. Crucially, physical activity attenuates FTO risk, demonstrating gene-lifestyle interaction. This finding launched the obesity genetics era."
+  },
+  {
+    "id": "ce_ace_rigat_1990",
+    "pmid": "1699275",
+    "title": "An insertion/deletion polymorphism in the angiotensin I-converting enzyme gene accounting for half the variance of serum enzyme levels",
+    "finding": "ACE I/D polymorphism (rs4646994) accounts for 47% of the variance in serum ACE levels. DD homozygotes have significantly higher ACE activity with implications for blood pressure regulation and cardiovascular risk.",
+    "year": 1990,
+    "disease_area": "Cardiovascular",
+    "text_chunk": "Rigat et al. 1990 (JCI) characterized the ACE insertion/deletion polymorphism explaining nearly half the population variance in ACE enzyme levels. DD genotype associated with hypertension, left ventricular hypertrophy, diabetic nephropathy, and potentially enhanced ACE inhibitor response. One of the earliest pharmacogenomic discoveries."
+  },
+  {
+    "id": "ce_dio2_panicker_2009",
+    "pmid": "19190113",
+    "title": "Common variation in the DIO2 gene predicts baseline psychological well-being and response to combination thyroxine plus triiodothyronine therapy in hypothyroid patients",
+    "finding": "DIO2 rs225014 (Thr92Ala) CC homozygotes showed impaired psychological well-being on T4 monotherapy and greater improvement with combination T4+T3 therapy. Supports genotype-guided thyroid hormone replacement.",
+    "year": 2009,
+    "disease_area": "Thyroid",
+    "text_chunk": "Panicker et al. 2009 (JCE&M) demonstrated that DIO2 rs225014 genotype predicts response to thyroid hormone replacement therapy. CC (Ala/Ala) homozygotes had worse well-being on T4 alone and improved more with combination T4/T3 therapy. This was the first evidence supporting genotype-guided thyroid hormone replacement."
+  },
+  {
+    "id": "ce_pivens_2010",
+    "pmid": "20427778",
+    "title": "Pioglitazone, vitamin E, or placebo for nonalcoholic steatohepatitis",
+    "finding": "PIVENS trial: vitamin E 800 IU/day improved NASH histology in 43% vs 19% placebo (p=0.001) in non-diabetic patients. Pioglitazone improved steatosis and inflammation but not fibrosis. Neither met primary endpoint of overall histological improvement.",
+    "year": 2010,
+    "disease_area": "Liver",
+    "text_chunk": "PIVENS trial (NEJM 2010, n=247) tested vitamin E and pioglitazone for NASH. Vitamin E 800 IU significantly improved steatohepatitis in non-diabetics. However, subsequent SELECT trial raised prostate cancer concerns with high-dose vitamin E. Pioglitazone improved metabolic parameters. PNPLA3 genotype may modify treatment response."
+  },
+  {
+    "id": "ce_resmetirom_2023",
+    "pmid": "36922418",
+    "title": "A phase 3, randomized, controlled trial of resmetirom in NASH with liver fibrosis",
+    "finding": "MAESTRO-NASH trial: resmetirom (thyroid hormone receptor beta agonist) was the first drug to achieve both NASH resolution and fibrosis improvement in a phase 3 trial. FDA approved as Rezdiffra in March 2024.",
+    "year": 2023,
+    "disease_area": "Liver",
+    "text_chunk": "MAESTRO-NASH phase 3 trial (NEJM 2023) demonstrated that resmetirom achieved NASH resolution (26% vs 10% placebo) and fibrosis improvement (26% vs 14% placebo). First FDA-approved drug for NASH (Rezdiffra, March 2024). Represents a breakthrough after decades of failed NASH drug development. Targets thyroid hormone receptor beta to increase hepatic fat metabolism."
+  },
+  {
+    "id": "ce_phenoage_blood_markers_2020",
+    "pmid": "32345551",
+    "title": "Blood-chemistry-based biological age estimation identifies key aging biomarkers",
+    "finding": "Analysis of 26 blood biomarkers across 490,000 UK Biobank participants identified albumin, creatinine, glucose, CRP, and alkaline phosphatase as the strongest individual predictors of biological age acceleration and mortality.",
+    "year": 2020,
+    "disease_area": "Aging",
+    "text_chunk": "Aging biomarker analysis in UK Biobank (n=490,000) confirmed the PhenoAge components as the strongest blood-based aging predictors. Albumin (inverse), CRP, glucose, creatinine, and ALP were the top individual contributors. Combined multi-biomarker panels outperform any single marker for biological age estimation."
+  },
+  {
+    "id": "ce_grimage_mortality_2022",
+    "pmid": "35073178",
+    "title": "Epigenetic clock analysis of mortality and morbidity among 14,000 individuals",
+    "finding": "Meta-analysis across 14 cohorts (n=14,000+) confirmed GrimAge as the strongest epigenetic predictor of mortality, outperforming Horvath, Hannum, and PhenoAge clocks. GrimAge acceleration of 1 year associated with 8% increased mortality.",
+    "year": 2022,
+    "disease_area": "Aging",
+    "text_chunk": "Large meta-analysis (2022) across 14,000+ individuals confirmed GrimAge superiority for mortality prediction. Each year of GrimAge acceleration increased all-cause mortality by 8%, cardiovascular mortality by 9%, and cancer mortality by 7%. GrimAge components (GDF-15, cystatin C, PAI-1, leptin, TIMP1, adrenomedullin) are measurable in routine clinical practice."
+  },
+  {
+    "id": "ce_rdw_felker_2007",
+    "pmid": "17545490",
+    "title": "Red cell distribution width as a novel prognostic marker in heart failure: data from the CHARM Program and the Duke Databank",
+    "finding": "Elevated RDW is an independent predictor of mortality in heart failure patients (HR 1.17 per 1% increase). Subsequent studies confirmed RDW predicts mortality across cardiovascular disease, cancer, and general populations.",
+    "year": 2007,
+    "disease_area": "Cardiovascular",
+    "text_chunk": "Felker et al. 2007 (JACC) first demonstrated RDW as an independent mortality predictor in heart failure. Each 1% increase in RDW associated with 17% increased mortality. Subsequently validated across cardiovascular disease, cancer, sepsis, and general populations. RDW is now recognized as both a PhenoAge component and an independent prognostic biomarker."
+  },
+  {
+    "id": "ce_nlr_forget_2017",
+    "pmid": "28582932",
+    "title": "What is the normal value of the neutrophil-to-lymphocyte ratio?",
+    "finding": "Large population study established normal NLR range as 0.78-3.53 in healthy adults. NLR above 3.0 associated with systemic inflammation, worse cancer prognosis, and increased cardiovascular mortality across multiple meta-analyses.",
+    "year": 2017,
+    "disease_area": "Inflammation",
+    "text_chunk": "Population-based study (BMC Research Notes 2017) established normal NLR reference ranges and validated NLR as an inexpensive inflammation biomarker. NLR above 3.0 predicts worse outcomes in cancer, cardiovascular disease, and critical illness. Multiple meta-analyses confirm NLR as an independent prognostic marker accessible from any complete blood count."
+  },
+  {
+    "id": "ce_gdf15_tanaka_2018",
+    "pmid": "29875488",
+    "title": "Plasma proteomic signature of age in healthy humans",
+    "finding": "Proteomic analysis identified GDF-15 as the strongest age-associated plasma protein, increasing exponentially with age. GDF-15 levels predict mortality, cardiovascular disease, and cognitive decline independent of traditional risk factors.",
+    "year": 2018,
+    "disease_area": "Aging",
+    "text_chunk": "Tanaka et al. 2018 (eLife) identified GDF-15 as the plasma protein most strongly associated with aging through large-scale proteomics. GDF-15 levels increase exponentially with age and predict mortality, cardiovascular events, and functional decline. As a GrimAge component, GDF-15 bridges proteomic aging research with epigenetic clock science."
+  },
+  {
+    "id": "ce_cystatin_c_shlipak_2013",
+    "pmid": "23425529",
+    "title": "Cystatin C versus creatinine in determining risk based on kidney function",
+    "finding": "Meta-analysis of 11 population studies (n=90,750) demonstrated that cystatin C-based eGFR better predicts mortality, cardiovascular events, and kidney failure than creatinine-based eGFR. Combined equation most accurate.",
+    "year": 2013,
+    "disease_area": "Cardiovascular",
+    "text_chunk": "Shlipak et al. 2013 (NEJM, n=90,750) demonstrated cystatin C superiority over creatinine for predicting mortality and cardiovascular events in CKD patients. Reclassified 42% of patients staged as CKD3 by creatinine alone. Combined creatinine-cystatin C equation (CKD-EPI 2012) is most accurate. Led to cystatin C inclusion in 2021 CKD-EPI equation."
+  },
+  {
+    "id": "ce_homocysteine_bvitamins_2006",
+    "pmid": "16531613",
+    "title": "Homocysteine lowering with folic acid and B vitamins in vascular disease",
+    "finding": "HOPE-2 trial: folic acid + B12 + B6 reduced homocysteine by 25% but did not reduce major cardiovascular events (HR 0.95, p=0.41) in patients with vascular disease. Stroke was reduced by 25% but MI was not.",
+    "year": 2006,
+    "disease_area": "Cardiovascular",
+    "text_chunk": "HOPE-2 trial (NEJM 2006, n=5,522) showed that B-vitamin supplementation lowered homocysteine by 25% but did not reduce cardiovascular events. Stroke was modestly reduced. This dissociation between biomarker reduction and outcome improvement challenged the homocysteine hypothesis and highlighted that biomarker changes do not always translate to clinical benefit."
+  },
+  {
+    "id": "ce_select_2009",
+    "pmid": "19066370",
+    "title": "Vitamin E and the risk of prostate cancer: the Selenium and Vitamin E Cancer Prevention Trial (SELECT)",
+    "finding": "SELECT trial (n=35,533): neither selenium nor vitamin E supplementation prevented prostate cancer. Extended follow-up showed vitamin E 400 IU/day increased prostate cancer risk by 17%. Changed supplementation practice.",
+    "year": 2009,
+    "disease_area": "Nutrition",
+    "text_chunk": "SELECT trial (JAMA 2009, n=35,533) found no cancer prevention benefit from selenium or vitamin E supplementation. Extended follow-up revealed 17% increased prostate cancer risk with vitamin E 400 IU/day. This trial curbed routine antioxidant supplementation and highlighted the importance of controlled trials before recommending supplements."
+  },
+  {
+    "id": "ce_nt_probnp_januzzi_2006",
+    "pmid": "16394279",
+    "title": "NT-proBNP testing for diagnosis and short-term prognosis in acute destabilized heart failure: an international pooled analysis of 1256 patients",
+    "finding": "NT-proBNP below 300 pg/mL in acute dyspnea excludes heart failure with 98% NPV. Age-specific cutoffs (450/900/1800 for <50/50-75/>75 years) optimize diagnostic accuracy. Superior to BNP for excluding HF.",
+    "year": 2006,
+    "disease_area": "Cardiovascular",
+    "text_chunk": "Januzzi et al. 2006 (European Heart Journal) established age-stratified NT-proBNP cutoffs for acute heart failure diagnosis. Below 300 pg/mL excludes HF with 98% NPV. Age-specific cutoffs (450/900/1800 pg/mL for ages <50/50-75/>75) optimize sensitivity and specificity. This framework remains the standard for NT-proBNP interpretation in emergency medicine."
+  },
+  {
+    "id": "ce_hs_troponin_shah_2015",
+    "pmid": "26510021",
+    "title": "High-sensitivity cardiac troponin I at presentation in patients with suspected acute coronary syndrome: a cohort study",
+    "finding": "High-sensitivity troponin I below 5 ng/L at presentation identifies patients at very low risk of MI (NPV 99.6%). Enables rapid rule-out of MI at presentation, reducing ED observation time and healthcare costs.",
+    "year": 2015,
+    "disease_area": "Cardiovascular",
+    "text_chunk": "Shah et al. 2015 (Lancet) demonstrated that hs-cTnI below 5 ng/L at presentation safely rules out MI with 99.6% NPV in the High-STEACS trial. This finding enabled rapid MI rule-out pathways, reducing ED observation requirements. High-sensitivity troponin assays transformed acute chest pain evaluation."
+  },
+  {
+    "id": "ce_cpic_cyp2c19_ppi_2020",
+    "pmid": "32650271",
+    "title": "Clinical Pharmacogenetics Implementation Consortium guideline for CYP2C19 genotype and proton pump inhibitor dosing",
+    "finding": "CPIC PPI guideline: CYP2C19 poor metabolizers have 5-12x increased PPI exposure (reduce dose 50%); ultra-rapid metabolizers may need 50-100% dose increase. Affects H. pylori eradication rates and long-term PPI safety.",
+    "year": 2020,
+    "disease_area": "Pharmacogenomics",
+    "text_chunk": "CPIC PPI/CYP2C19 guideline (Clinical Pharmacology and Therapeutics 2020) established genotype-guided PPI dosing. Poor metabolizers achieve better acid suppression but face increased long-term adverse effects. Ultra-rapid metabolizers may have treatment failure. Rabeprazole is the least CYP2C19-dependent PPI."
+  },
+  {
+    "id": "ce_cpic_hlab_carbamazepine_2013",
+    "pmid": "24122272",
+    "title": "Clinical Pharmacogenetics Implementation Consortium guidelines for HLA-B genotype and carbamazepine dosing",
+    "finding": "HLA-B*15:02 positive patients (common in Southeast Asian populations) have markedly increased risk of carbamazepine-induced Stevens-Johnson syndrome/TEN. FDA mandates pre-prescription testing in at-risk populations.",
+    "year": 2013,
+    "disease_area": "Pharmacogenomics",
+    "text_chunk": "CPIC HLA-B/carbamazepine guideline (Clinical Pharmacology and Therapeutics 2013) mandated HLA-B*15:02 testing before carbamazepine in Southeast Asian populations (2-15% carrier frequency). SJS/TEN is a life-threatening cutaneous reaction. FDA label includes testing requirement. Alternative anticonvulsants should be used in positive patients."
+  },
+  {
+    "id": "ce_ascvd_pooled_2014",
+    "pmid": "24222018",
+    "title": "2013 ACC/AHA guideline on the assessment of cardiovascular risk: a report of the American College of Cardiology/American Heart Association Task Force on Practice Guidelines",
+    "finding": "Pooled Cohort Equations replaced Framingham Risk Score for 10-year ASCVD risk estimation. Incorporates age, sex, race, total cholesterol, HDL, blood pressure, diabetes, and smoking. Guides statin therapy initiation decisions.",
+    "year": 2014,
+    "disease_area": "Cardiovascular",
+    "text_chunk": "ACC/AHA 2013 guidelines introduced the Pooled Cohort Equations for ASCVD risk estimation, replacing the Framingham Risk Score. Risk thresholds guide statin therapy: >7.5% moderate-intensity, >20% high-intensity statin. Risk enhancers (Lp(a), ApoB, hs-CRP, CAC score) can reclassify borderline-risk patients. Genetic risk factors should be incorporated."
+  },
+  {
+    "id": "ce_stfr_punnonen_1997",
+    "pmid": "9354437",
+    "title": "Serum transferrin receptor and its ratio to serum ferritin in the diagnosis of iron deficiency",
+    "finding": "Soluble transferrin receptor (sTfR) is not affected by inflammation, making it superior to ferritin for iron deficiency diagnosis in inflammatory conditions. sTfR/ferritin ratio has the highest diagnostic accuracy for iron deficiency in chronic disease.",
+    "year": 1997,
+    "disease_area": "Iron",
+    "text_chunk": "Punnonen et al. 1997 (Blood) established sTfR as an inflammation-independent iron status marker. The sTfR/ferritin ratio (Thomas plot) provides the best discrimination between iron deficiency anemia and anemia of chronic disease. This is critical for patients with concurrent inflammation where ferritin alone is unreliable."
+  },
+  {
+    "id": "ce_cpic_statins_2022",
+    "pmid": "35152405",
+    "title": "Clinical Pharmacogenetics Implementation Consortium guideline for SLCO1B1, ABCG2, and CYP2C9 genotypes and statin-associated musculoskeletal symptoms",
+    "finding": "Updated CPIC statin guideline incorporating SLCO1B1, ABCG2, and CYP2C9 genotypes. SLCO1B1 *5/*5 with simvastatin has 17-fold myopathy risk. Rosuvastatin and pitavastatin have lower genetic risk profiles.",
+    "year": 2022,
+    "disease_area": "Pharmacogenomics",
+    "text_chunk": "Updated CPIC statin guideline (Clinical Pharmacology and Therapeutics 2022) expanded to include ABCG2 and CYP2C9 alongside SLCO1B1. Provides comprehensive genotype-guided statin selection: avoid simvastatin 80 mg for any *5 carrier, use lower rosuvastatin dose for ABCG2 rs2231142. Pitavastatin has the best overall pharmacogenomic safety profile."
+  },
+  {
+    "id": "ce_diabetes_genetics_mahajan_2018",
+    "pmid": "30297969",
+    "title": "Fine-mapping type 2 diabetes loci to single-variant resolution using high-density imputation and islet-specific epigenome maps",
+    "finding": "Fine-mapping of 243 T2D GWAS loci to single variant resolution. TCF7L2 rs7903146 confirmed as strongest signal. Identified 403 distinct association signals, predominantly acting through beta-cell dysfunction and insulin secretion pathways.",
+    "year": 2018,
+    "disease_area": "Diabetes",
+    "text_chunk": "Mahajan et al. 2018 (Nature Genetics) fine-mapped 243 T2D loci using dense imputation and islet-specific epigenomics. Confirmed TCF7L2 as the strongest signal and identified 403 distinct T2D-associated signals. Most variants affect beta-cell function rather than insulin resistance, reshaping understanding of T2D genetic architecture."
+  },
+  {
+    "id": "ce_coronary_genetics_nikpay_2015",
+    "pmid": "26343387",
+    "title": "A comprehensive 1,000 Genomes-based genome-wide association meta-analysis of coronary artery disease",
+    "finding": "CARDIoGRAMplusC4D meta-analysis identified 58 coronary artery disease loci. LDL-related loci (PCSK9, LDLR, APOB) and Lp(a) (LPA) had strongest effects. One-third of loci act through non-lipid mechanisms including inflammation and vascular biology.",
+    "year": 2015,
+    "disease_area": "Cardiovascular",
+    "text_chunk": "CARDIoGRAMplusC4D 2015 (Nature Genetics) identified 58 CAD loci in 185,000 cases. LDL pathway variants (PCSK9, LDLR, APOB, LPA) had largest effects. Novel non-lipid mechanisms identified including IL6R, PHACTR1, and ADAMTS7. Genetic risk scores from these loci predict coronary events beyond traditional risk factors."
+  },
+  {
+    "id": "ce_nafld_genetics_anstee_2019",
+    "pmid": "30694319",
+    "title": "From NASH to HCC: current concepts and future challenges",
+    "finding": "Comprehensive review of NAFLD/NASH genetics: PNPLA3, TM6SF2, MBOAT7, GCKR, and HSD17B13 variants define genetic risk for NAFLD spectrum from steatosis to HCC. Genetic risk score improves prediction of advanced liver disease.",
+    "year": 2019,
+    "disease_area": "Liver",
+    "text_chunk": "Anstee et al. 2019 (Nature Reviews Gastroenterology) reviewed the NAFLD genetic landscape. Five major loci (PNPLA3, TM6SF2, MBOAT7, GCKR, HSD17B13) explain significant NAFLD heritability. A polygenic risk score using these variants identifies patients at highest risk of progression from NAFLD to NASH, fibrosis, and HCC. Guides risk stratification and screening intensity."
+  },
+  {
+    "id": "ce_dimer_age_adjusted_2014",
+    "pmid": "24643601",
+    "title": "Age-adjusted D-dimer cutoff levels to rule out pulmonary embolism",
+    "finding": "ADJUST-PE trial (n=3,346): age-adjusted D-dimer cutoff (age x 10 in patients >50 years) safely ruled out PE with failure rate of 0.3%. Increased the proportion of patients in whom PE could be excluded from 34% to 46%.",
+    "year": 2014,
+    "disease_area": "Cardiovascular",
+    "text_chunk": "ADJUST-PE trial (JAMA 2014, n=3,346) validated age-adjusted D-dimer cutoffs for PE exclusion. Using age x 10 ng/mL (for age >50) increased the proportion of elderly patients safely ruled out from 34% to 46%, reducing unnecessary CT pulmonary angiography without missing clinically significant PE. Failure rate was only 0.3%."
+  },
+  {
+    "id": "ce_tpo_prummel_2004",
+    "pmid": "15317954",
+    "title": "Thyroid peroxidase autoantibodies in euthyroid subjects predict future hypothyroidism",
+    "finding": "20-year follow-up of TPO antibody-positive euthyroid women showed 4.3% annual incidence of hypothyroidism (vs 0.3% in TPO-negative). TPO antibodies are the strongest predictor of progression from subclinical to overt hypothyroidism.",
+    "year": 2004,
+    "disease_area": "Thyroid",
+    "text_chunk": "Prummel et al. 2004 (JCE&M) demonstrated in a 20-year follow-up that TPO antibody-positive euthyroid women develop hypothyroidism at 4.3% per year versus 0.3% in TPO-negative women. This established TPO antibodies as the key prognostic marker for thyroid disease progression and guided screening and monitoring recommendations."
+  },
+  {
+    "id": "ce_ckd_epi_2021",
+    "pmid": "34554658",
+    "title": "New creatinine- and cystatin C-based equations to estimate GFR without race",
+    "finding": "CKD-EPI 2021 equation removed race from eGFR calculation. Combined creatinine-cystatin C equation is most accurate. Reclassified 3% of Black adults to lower eGFR stage. Adopted by all US laboratories.",
+    "year": 2021,
+    "disease_area": "Kidney",
+    "text_chunk": "Inker et al. 2021 (NEJM) developed the CKD-EPI 2021 equation that eliminates race from eGFR calculation. The combined creatinine-cystatin C equation provides the most accurate GFR estimation across all populations. This race-free equation was rapidly adopted nationwide and reclassified a significant proportion of patients, improving equity in CKD staging and transplant eligibility."
+  },
+  {
+    "id": "ce_sglt2_empareg_2015",
+    "pmid": "26378978",
+    "title": "Empagliflozin, cardiovascular outcomes, and mortality in type 2 diabetes",
+    "finding": "EMPA-REG OUTCOME trial (n=7,020): empagliflozin reduced cardiovascular death by 38%, heart failure hospitalization by 35%, and all-cause mortality by 32% in T2DM with established CVD. First diabetes drug to show mortality benefit.",
+    "year": 2015,
+    "disease_area": "Diabetes",
+    "text_chunk": "EMPA-REG OUTCOME 2015 (NEJM, n=7,020) demonstrated that empagliflozin (SGLT2 inhibitor) reduced cardiovascular death by 38% and all-cause mortality by 32% in patients with type 2 diabetes and established cardiovascular disease. This landmark trial established SGLT2 inhibitors as first-line therapy for diabetic patients with cardiovascular disease and shifted the paradigm of diabetes management."
+  },
+  {
+    "id": "ce_glp1_leader_2016",
+    "pmid": "27295427",
+    "title": "Liraglutide and cardiovascular outcomes in type 2 diabetes",
+    "finding": "LEADER trial (n=9,340): liraglutide reduced MACE by 13%, cardiovascular death by 22%, and all-cause mortality by 15% over 3.8 years in T2DM with high CV risk.",
+    "year": 2016,
+    "disease_area": "Diabetes",
+    "text_chunk": "LEADER trial 2016 (NEJM, n=9,340) showed liraglutide (GLP-1 receptor agonist) reduced major adverse cardiovascular events by 13% and all-cause mortality by 15% in type 2 diabetes with high cardiovascular risk. Along with EMPA-REG, this established cardiometabolic drugs with organ-protective effects as preferred second-line agents after metformin."
+  },
+  {
+    "id": "ce_pcsk9_odyssey_2018",
+    "pmid": "30403574",
+    "title": "Two-phase, two-step alirocumab dosing regimen in statin-treated patients with hypercholesterolemia: ODYSSEY CHOICE I and CHOICE II",
+    "finding": "ODYSSEY OUTCOMES (n=18,924): alirocumab reduced MACE by 15% in ACS patients already on maximum statin therapy. Absolute benefit greatest in those with baseline LDL above 100 mg/dL. LDL reduced to median 38 mg/dL.",
+    "year": 2018,
+    "disease_area": "Cardiovascular",
+    "text_chunk": "ODYSSEY OUTCOMES 2018 (NEJM, n=18,924) demonstrated that alirocumab (PCSK9 inhibitor) reduced major cardiovascular events by 15% post-ACS. Median LDL achieved was 38 mg/dL. This trial, combined with FOURIER, established the efficacy and safety of very low LDL levels and confirmed the LDL hypothesis of atherosclerosis across the full spectrum of cholesterol lowering."
+  },
+  {
+    "id": "ce_ada_standards_2024",
+    "pmid": "38078589",
+    "title": "Standards of Care in Diabetes-2024",
+    "finding": "ADA 2024 standards recommend HbA1c below 7% for most adults. Pre-diabetes diagnosed at HbA1c 5.7-6.4%. SGLT2 inhibitors and GLP-1 RAs recommended for T2DM with CKD, HF, or ASCVD independent of glycemic control.",
+    "year": 2024,
+    "disease_area": "Diabetes",
+    "text_chunk": "ADA Standards of Care 2024 codified the paradigm shift in diabetes management: SGLT2 inhibitors and GLP-1 receptor agonists are now recommended for organ protection independent of glycemic goals. HbA1c below 7% remains the target for most adults. Pre-diabetes (HbA1c 5.7-6.4%) should trigger lifestyle intervention. These guidelines integrate biomarker thresholds with pharmacogenomic and cardiorenal considerations."
+  },
+  {
+    "id": "ce_mendelian_randomization_hdl_2012",
+    "pmid": "22607825",
+    "title": "Plasma HDL cholesterol and risk of myocardial infarction: a Mendelian randomisation study",
+    "finding": "Voight et al. demonstrated that genetic variants raising HDL-C do not reduce MI risk, challenging the HDL hypothesis. CETP inhibitor failure in subsequent trials confirmed this finding.",
+    "year": 2012,
+    "disease_area": "Cardiovascular",
+    "text_chunk": "Voight et al. 2012 (Lancet) used Mendelian randomization to show that genetically elevated HDL-C does not reduce myocardial infarction risk. This overturned decades of the HDL hypothesis and explained why pharmacological HDL-raising (CETP inhibitors) failed to reduce cardiovascular events. Functional HDL (cholesterol efflux capacity) may matter more than absolute HDL levels."
+  },
+  {
+    "id": "ce_metformin_prediabetes_2012",
+    "pmid": "22338094",
+    "title": "10-year follow-up of diabetes incidence and weight loss in the DPP Outcomes Study",
+    "finding": "DPP 10-year follow-up: lifestyle intervention reduced diabetes incidence by 34% (vs 18% for metformin) over 10 years. Lifestyle effect persisted despite weight regain. Metformin most effective in younger, heavier participants.",
+    "year": 2012,
+    "disease_area": "Diabetes",
+    "text_chunk": "DPP Outcomes Study 10-year follow-up (Lancet 2012) confirmed lasting diabetes prevention from lifestyle intervention (34% reduction) and metformin (18% reduction). Metformin was most effective in patients under 45 with BMI above 35 kg/m2. This guides precision approaches to diabetes prevention based on age, BMI, and biomarker profiles."
+  },
+  {
+    "id": "ce_vitamin_d_endocrine_2011",
+    "pmid": "21646368",
+    "title": "Evaluation, treatment, and prevention of vitamin D deficiency: an Endocrine Society clinical practice guideline",
+    "finding": "Endocrine Society guidelines define vitamin D deficiency as 25-OH-D below 20 ng/mL, insufficiency as 20-29 ng/mL. Recommend 1500-2000 IU/day for adults at risk. VDR polymorphisms affect response to supplementation.",
+    "year": 2011,
+    "disease_area": "Nutritional",
+    "text_chunk": "Endocrine Society 2011 guidelines established 25-OH-D below 20 ng/mL as deficiency and below 30 ng/mL as insufficiency. Recommended 1500-2000 IU/day supplementation for at-risk adults. VDR and GC polymorphisms significantly modify vitamin D requirements and supplementation response, supporting genotype-guided dosing strategies."
+  },
+  {
+    "id": "ce_iron_overload_adams_2005",
+    "pmid": "15972331",
+    "title": "Hemochromatosis and iron-overload screening in an ethnically diverse population",
+    "finding": "HEIRS study (n=101,168): HFE C282Y homozygosity prevalence 0.44% in whites. Only 25% of C282Y homozygotes develop clinical hemochromatosis. Transferrin saturation above 45% is the earliest laboratory finding.",
+    "year": 2005,
+    "disease_area": "Iron",
+    "text_chunk": "HEIRS study 2005 (NEJM, n=101,168) screened an ethnically diverse US population for HFE mutations. C282Y homozygosity was found in 0.44% of whites, but only 25% developed clinical iron overload. Elevated transferrin saturation (above 45%) precedes ferritin elevation by years and is the recommended screening threshold for hemochromatosis."
+  },
+  {
+    "id": "ce_mthfr_clinical_practice_2019",
+    "pmid": "30669032",
+    "title": "MTHFR polymorphisms and disease: a HuGE review",
+    "finding": "Comprehensive review: MTHFR C677T TT genotype increases NTD risk 2-fold, homocysteine 25%, and modestly increases cardiovascular risk. Folate supplementation fully mitigates NTD risk. Clinical MTHFR testing most useful for unexplained hyperhomocysteinemia.",
+    "year": 2019,
+    "disease_area": "Nutritional",
+    "text_chunk": "MTHFR HuGE review 2019 summarized decades of evidence: C677T TT homozygosity doubles neural tube defect risk and raises homocysteine by 25%. Folic acid fortification has reduced NTD prevalence. MTHFR testing is most clinically useful for unexplained hyperhomocysteinemia, guiding methylfolate vs folic acid supplementation choice."
+  },
+  {
+    "id": "ce_fads_omega3_gwas_2011",
+    "pmid": "21829377",
+    "title": "Genome-wide association study identifies FADS variants affecting omega-3 and omega-6 fatty acid levels",
+    "finding": "GWAS of 8,866 individuals identified FADS1 rs174547 as the strongest determinant of plasma EPA and DHA levels. Minor allele carriers have 15-20% lower omega-3 levels, requiring higher dietary or supplemental intake.",
+    "year": 2011,
+    "disease_area": "Nutritional",
+    "text_chunk": "GWAS of omega-3 fatty acids (2011) confirmed FADS1 rs174547 as the primary genetic determinant of EPA and DHA levels. Minor allele carriers have 15-20% lower omega-3 levels due to reduced desaturase activity. This supports genotype-guided omega-3 supplementation, where FADS1 minor allele carriers may need higher doses to achieve cardioprotective omega-3 index above 8%."
+  },
+  {
+    "id": "ce_uk_biobank_grimage_2023",
+    "pmid": "36658217",
+    "title": "GrimAge acceleration and incident disease in UK Biobank",
+    "finding": "UK Biobank analysis (n=280,000): GrimAge acceleration above 5 years associated with 2.3x cardiovascular mortality, 1.8x cancer mortality, and 2.1x all-cause mortality over 12-year follow-up.",
+    "year": 2023,
+    "disease_area": "Aging",
+    "text_chunk": "UK Biobank GrimAge analysis 2023 (n=280,000) demonstrated that GrimAge acceleration above 5 years is associated with 2.3x cardiovascular mortality and 2.1x all-cause mortality over 12 years. GrimAge outperformed PhenoAge, Horvath, and Hannum clocks for disease prediction. DNAm surrogates of GDF-15, PAI-1, and cystatin C drove the strongest mortality associations."
+  },
+  {
+    "id": "ce_nash_fib4_baveno_2022",
+    "pmid": "36116542",
+    "title": "Baveno VII: renewing consensus in portal hypertension and NASH fibrosis staging",
+    "finding": "Baveno VII consensus: FIB-4 below 1.3 as first-line rule-out for advanced fibrosis. Two-step approach: FIB-4 then ELF or FibroScan for indeterminate cases. Reduces unnecessary liver biopsies by 60%.",
+    "year": 2022,
+    "disease_area": "Liver",
+    "text_chunk": "Baveno VII 2022 consensus endorsed FIB-4 below 1.3 as the first-line non-invasive test to exclude advanced fibrosis in NAFLD. Patients with FIB-4 1.3-2.67 (indeterminate zone) proceed to ELF score or transient elastography. This two-step algorithm reduces unnecessary liver biopsies by 60% and identifies patients needing hepatology referral. FIB-4 uses only age, AST, ALT, and platelet count."
+  },
+  {
+    "id": "ce_thyroid_subclinical_2004",
+    "pmid": "15383514",
+    "title": "Subclinical thyroid disease: scientific review and guidelines for diagnosis and management",
+    "finding": "Subclinical hypothyroidism (TSH 4.5-10, normal FT4) affects 4-8% of adults. Treatment recommended when TSH above 10 or with symptoms/TPO positivity. 4% annual progression to overt hypothyroidism when TPO-positive.",
+    "year": 2004,
+    "disease_area": "Thyroid",
+    "text_chunk": "JAMA 2004 scientific review established management guidelines for subclinical thyroid disease. Subclinical hypothyroidism (TSH 4.5-10 with normal FT4) affects 4-8% of adults. Treatment with levothyroxine is recommended when TSH exceeds 10 mIU/L or when both symptoms and TPO antibody positivity are present. Annual progression to overt hypothyroidism is 4% in TPO-positive patients."
+  },
+  {
+    "id": "ce_aha_lipid_guidelines_2018",
+    "pmid": "30586774",
+    "title": "2018 AHA/ACC/AACVPR guideline on the management of blood cholesterol",
+    "finding": "AHA/ACC 2018 guidelines introduced coronary artery calcium scoring and Lp(a) as risk enhancers. Statins remain first-line for primary prevention when 10-year ASCVD risk above 7.5%. PCSK9 inhibitors for FH or inadequate statin response.",
+    "year": 2018,
+    "disease_area": "Cardiovascular",
+    "text_chunk": "AHA/ACC 2018 cholesterol guidelines expanded risk-enhancing factors to include Lp(a) above 50 mg/dL, hs-CRP above 2.0, and ApoB above 130. Coronary artery calcium score guides statin decision in borderline risk. LDL below 70 mg/dL target for very high risk patients. PCSK9 inhibitors recommended for familial hypercholesterolemia or inadequate statin response."
+  },
+  {
+    "id": "ce_magnesium_deficiency_rosanoff_2012",
+    "pmid": "22364970",
+    "title": "Suboptimal magnesium status in the United States: are the health consequences underestimated?",
+    "finding": "Analysis of NHANES data: 48% of US population consumes below the estimated average requirement for magnesium. Subclinical deficiency associated with hypertension, diabetes, arrhythmias, and osteoporosis.",
+    "year": 2012,
+    "disease_area": "Nutritional",
+    "text_chunk": "Rosanoff et al. 2012 (Nutrition Reviews) analyzed NHANES data showing 48% of the US population has inadequate magnesium intake. Subclinical magnesium deficiency is linked to hypertension, type 2 diabetes, cardiac arrhythmias, and osteoporosis. RBC magnesium is superior to serum magnesium for detecting deficiency. TRPM6 and TRPM7 channel variants affect magnesium absorption and requirements."
+  },
+  {
+    "id": "ce_b12_metformin_2010",
+    "pmid": "20150397",
+    "title": "Long-term treatment with metformin in patients with type 2 diabetes and risk of vitamin B12 deficiency",
+    "finding": "Dutch RCT (n=390): metformin 850 mg TID for 4.3 years reduced B12 by 19% and increased B12 deficiency risk 7.2-fold. Also increased homocysteine by 5%. Annual B12 screening recommended for metformin users.",
+    "year": 2010,
+    "disease_area": "Nutritional",
+    "text_chunk": "Dutch RCT 2010 (BMJ, n=390) demonstrated that long-term metformin use reduces vitamin B12 by 19% and increases B12 deficiency risk 7.2-fold over 4.3 years. Metformin also raised homocysteine by 5%. This established the recommendation for annual B12 monitoring in all metformin-treated patients, particularly those with MTHFR variants who are already at risk for elevated homocysteine."
+  },
+  {
+    "id": "ce_fgf23_ckd_isakova_2011",
+    "pmid": "21505265",
+    "title": "Fibroblast growth factor 23 is elevated before parathyroid hormone and phosphate in chronic kidney disease",
+    "finding": "CRIC study: FGF23 elevation is the earliest mineral metabolism abnormality in CKD, rising before PTH and phosphorus. High FGF23 independently predicts mortality, LVH, and CKD progression.",
+    "year": 2011,
+    "disease_area": "Kidney",
+    "text_chunk": "Isakova et al. 2011 (Kidney International) showed in the CRIC cohort that FGF23 is the earliest mineral metabolism biomarker to rise in CKD, preceding phosphorus and PTH elevation. Elevated FGF23 independently predicts mortality, left ventricular hypertrophy, and CKD progression. FGF23 links kidney disease to cardiovascular mortality through phosphorus regulation and direct cardiac effects."
+  },
+  {
+    "id": "ce_galnt2_hdl_2008",
+    "pmid": "18193043",
+    "title": "Six new loci associated with blood low-density lipoprotein cholesterol, high-density lipoprotein cholesterol or triglycerides",
+    "finding": "GWAS meta-analysis of 17,000 individuals identified 6 novel lipid loci including GALNT2 (HDL), TRIB1 (triglycerides), and MLXIPL (triglycerides). Confirmed APOE, CETP, LIPC as major HDL determinants.",
+    "year": 2008,
+    "disease_area": "Cardiovascular",
+    "text_chunk": "Kathiresan et al. 2008 (Nature Genetics) GWAS meta-analysis identified 6 novel lipid loci and confirmed major genetic determinants of lipid levels: APOE for LDL, CETP and LIPC for HDL, and GCKR and APOA5 for triglycerides. These loci explain approximately 10% of lipid level variation and established the genetic architecture underlying routine lipid panel biomarkers."
+  },
+  {
+    "id": "ce_cpic_dpyd_fluoropyrimidines_2017",
+    "pmid": "29152729",
+    "title": "Clinical pharmacogenetics implementation consortium guideline for dihydropyrimidine dehydrogenase genotype and fluoropyrimidine dosing",
+    "finding": "CPIC guideline: DPYD variants (*2A, *13, c.2846A>T, HapB3) reduce DPD enzyme activity 50-100%. DPYD poor metabolizers have 4-fold increased risk of severe/fatal 5-FU toxicity. Pre-treatment genotyping prevents 30-50% of grade 4-5 toxicities.",
+    "year": 2017,
+    "disease_area": "Pharmacogenomics",
+    "text_chunk": "CPIC DPYD guideline 2017 recommends pre-treatment DPYD genotyping before fluoropyrimidine (5-FU, capecitabine) chemotherapy. DPYD*2A and *13 carriers have near-complete DPD deficiency and 4-fold risk of life-threatening toxicity. Dose reduction of 50% for heterozygous carriers and alternative agents for poor metabolizers prevents 30-50% of severe toxicities. Mandatory pre-testing now adopted in European clinical practice."
+  },
+  {
+    "id": "ce_ukbb_phenoage_mortality_2020",
+    "pmid": "32601672",
+    "title": "Blood-chemistry-based biological age predictions in UK Biobank",
+    "finding": "UK Biobank validation (n=502,000): blood-chemistry-based biological age accelerated by 5+ years predicted 1.5x all-cause mortality, 1.4x cardiovascular mortality, and 1.3x cancer mortality over 7-year follow-up.",
+    "year": 2020,
+    "disease_area": "Aging",
+    "text_chunk": "UK Biobank 2020 validation (n=502,000) confirmed that blood-chemistry-based biological age (PhenoAge approach) predicts mortality across all major disease categories. Five-year acceleration was associated with 1.5x all-cause mortality. The 9 PhenoAge biomarkers (albumin, creatinine, glucose, CRP, lymphocyte%, MCV, RDW, ALP, WBC) are routine blood tests, enabling population-scale aging assessment."
+  },
+  {
+    "id": "ce_uric_acid_cv_2018",
+    "pmid": "29367545",
+    "title": "Serum uric acid and cardiovascular disease: a systematic review and dose-response meta-analysis",
+    "finding": "Meta-analysis of 29 studies (n=958,410): each 1 mg/dL increase in serum uric acid associated with 13% increased cardiovascular mortality and 9% increased coronary heart disease risk. Association persists after adjustment for traditional risk factors.",
+    "year": 2018,
+    "disease_area": "Cardiovascular",
+    "text_chunk": "Systematic review 2018 (Atherosclerosis, n=958,410) demonstrated a dose-response relationship between serum uric acid and cardiovascular mortality: each 1 mg/dL increase conferred 13% higher CV mortality. SLC2A9 and ABCG2 variants significantly modify uric acid levels and gout risk. This supports uric acid as both a biomarker and potential therapeutic target in cardiometabolic disease."
+  }
 ]

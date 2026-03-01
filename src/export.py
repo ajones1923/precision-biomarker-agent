@@ -419,6 +419,13 @@ def export_fhir_diagnostic_report(
                 }
             ],
             "code": {
+                "coding": [
+                    {
+                        "system": "http://loinc.org",
+                        "code": "88331-4",
+                        "display": "Biological age",
+                    }
+                ],
                 "text": "Biological Age (PhenoAge)",
             },
             "subject": {"reference": patient_ref},
@@ -435,6 +442,8 @@ def export_fhir_diagnostic_report(
                     "valueQuantity": {
                         "value": analysis.biological_age.chronological_age,
                         "unit": "years",
+                        "system": "http://unitsofmeasure.org",
+                        "code": "a",
                     },
                 },
                 {
@@ -442,12 +451,17 @@ def export_fhir_diagnostic_report(
                     "valueQuantity": {
                         "value": analysis.biological_age.age_acceleration,
                         "unit": "years",
+                        "system": "http://unitsofmeasure.org",
+                        "code": "a",
                     },
                 },
                 {
                     "code": {"text": "Mortality Risk Score"},
                     "valueQuantity": {
                         "value": analysis.biological_age.mortality_risk,
+                        "unit": "{score}",
+                        "system": "http://unitsofmeasure.org",
+                        "code": "{score}",
                     },
                 },
             ],
@@ -477,6 +491,13 @@ def export_fhir_diagnostic_report(
                     }
                 ],
                 "code": {
+                    "coding": [
+                        {
+                            "system": "http://snomed.info/sct",
+                            "code": "225338004",
+                            "display": "Risk assessment",
+                        }
+                    ],
                     "text": f"Disease Risk Assessment - {traj.disease.value}",
                 },
                 "subject": {"reference": patient_ref},
@@ -588,6 +609,10 @@ def export_fhir_diagnostic_report(
     # Build FHIR Bundle
     bundle = {
         "resourceType": "Bundle",
+        "id": f"bundle-{report_id}",
+        "meta": {
+            "lastUpdated": timestamp,
+        },
         "type": "collection",
         "timestamp": timestamp,
         "entry": entries,

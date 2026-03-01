@@ -33,6 +33,7 @@ router = APIRouter(prefix="/v1/events", tags=["events"])
 
 _inbound_events: List[Dict[str, Any]] = []
 _outbound_alerts: List[Dict[str, Any]] = []
+_MAX_STORED_EVENTS = 1000
 
 
 # =====================================================================
@@ -142,6 +143,10 @@ async def receive_cross_modal_event(event: CrossModalEvent, req: Request):
     }
     _inbound_events.append(record)
 
+    # Evict oldest events if store exceeds max size
+    if len(_inbound_events) > _MAX_STORED_EVENTS:
+        _inbound_events[:] = _inbound_events[-_MAX_STORED_EVENTS:]
+
     # Determine actions based on event type
     actions_triggered = []
 
@@ -221,6 +226,10 @@ async def send_biomarker_alert(alert: BiomarkerAlert, req: Request):
         "status": "sent",
     }
     _outbound_alerts.append(record)
+
+    # Evict oldest alerts if store exceeds max size
+    if len(_outbound_alerts) > _MAX_STORED_EVENTS:
+        _outbound_alerts[:] = _outbound_alerts[-_MAX_STORED_EVENTS:]
 
     # In production: publish to message bus
     # await message_bus.publish(alert.target_agent, record)

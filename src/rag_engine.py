@@ -26,7 +26,7 @@ from .models import (
 logger = logging.getLogger(__name__)
 
 # Allowed characters for Milvus filter expressions to prevent injection
-_SAFE_FILTER_RE = re.compile(r"^[A-Za-z0-9 _.\-/]+$")
+_SAFE_FILTER_RE = re.compile(r"^[A-Za-z0-9 _\-]+$")
 
 # =====================================================================
 # SYSTEM PROMPT
@@ -171,7 +171,7 @@ class BiomarkerRAGEngine:
             disease_area = self._detect_disease_area(query.question)
             if disease_area and cfg.get("has_disease_area"):
                 safe_area = disease_area.strip()
-                if _SAFE_FILTER_RE.match(safe_area):
+                if _SAFE_FILTER_RE.match(safe_area) and len(safe_area) <= 50:
                     parts.append(f'disease_area == "{safe_area}"')
 
             # Year filter for clinical evidence

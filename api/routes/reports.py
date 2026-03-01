@@ -13,6 +13,8 @@ from __future__ import annotations
 
 import io
 import time
+
+from loguru import logger
 import uuid
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
@@ -29,6 +31,7 @@ router = APIRouter(prefix="/v1/report", tags=["reports"])
 # =====================================================================
 
 _report_store: Dict[str, Dict[str, Any]] = {}
+_MAX_STORED_REPORTS = 100
 
 
 # =====================================================================
@@ -77,7 +80,7 @@ class FHIRExportRequest(BaseModel):
 # =====================================================================
 
 @router.post("/generate", response_model=ReportGenerateResponse)
-async def generate_report(request: ReportGenerateRequest, req: Request):
+def generate_report(request: ReportGenerateRequest, req: Request):
     """Generate a full 12-section precision biomarker patient report.
 
     Runs all analysis modules (biological age, disease trajectories,
@@ -128,6 +131,15 @@ async def generate_report(request: ReportGenerateRequest, req: Request):
             "generated_at": timestamp,
         }
 
+        # Evict oldest reports if store exceeds max size
+        if len(_report_store) > _MAX_STORED_REPORTS:
+            oldest_keys = sorted(
+                _report_store.keys(),
+                key=lambda k: _report_store[k].get("generated_at", ""),
+            )[:len(_report_store) - _MAX_STORED_REPORTS]
+            for k in oldest_keys:
+                del _report_store[k]
+
         # Format output
         if request.format == "json":
             from src.export import export_json
@@ -155,11 +167,12 @@ async def generate_report(request: ReportGenerateRequest, req: Request):
     except HTTPException:
         raise
     except Exception as e:
+        logger.exception(f"Report generation failed: {e}")
         raise HTTPException(status_code=500, detail=f"Report generation failed: {e}")
 
 
 @router.get("/{report_id}/pdf")
-async def download_pdf(report_id: str):
+def download_pdf(report_id: str):
     """Download a previously generated report as a styled PDF.
 
     The report must have been generated first via POST /v1/report/generate.
@@ -189,11 +202,12 @@ async def download_pdf(report_id: str):
     except HTTPException:
         raise
     except Exception as e:
+        logger.exception(f"PDF export failed: {e}")
         raise HTTPException(status_code=500, detail=f"PDF export failed: {e}")
 
 
 @router.post("/fhir")
-async def export_fhir(request: FHIRExportRequest, req: Request):
+def export_fhir(request: FHIRExportRequest, req: Request):
     """Export patient analysis as a FHIR R4 DiagnosticReport JSON bundle.
 
     Creates a FHIR Bundle containing:
@@ -238,4 +252,5 @@ async def export_fhir(request: FHIRExportRequest, req: Request):
     except HTTPException:
         raise
     except Exception as e:
+        logger.exception(f"FHIR export failed: {e}")
         raise HTTPException(status_code=500, detail=f"FHIR export failed: {e}")

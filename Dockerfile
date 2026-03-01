@@ -74,9 +74,10 @@ USER biomarkeruser
 EXPOSE 8528
 EXPOSE 8529
 
-# Healthcheck against Streamlit (default service)
+# Health check: tries Streamlit first (default CMD), falls back to API
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD curl -f http://localhost:8528/_stcore/health || exit 1
+    CMD curl -f http://localhost:8528/_stcore/health 2>/dev/null || \
+        curl -f http://localhost:8529/health 2>/dev/null || exit 1
 
 # Default: launch Streamlit UI
 CMD ["streamlit", "run", "app/biomarker_ui.py", \

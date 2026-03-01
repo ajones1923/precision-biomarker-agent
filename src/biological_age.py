@@ -153,10 +153,12 @@ class BiologicalAgeCalculator:
 
         # Convert mortality score to biological age (PhenoAge)
         # phenoage = (log(BA_n * log(1 - m)) / BA_d) + BA_i
-        biological_age = (
-            math.log(BA_NUMERATOR * math.log(max(1 - mortality_score, 1e-10)))
-            / BA_DENOMINATOR
-        ) + BA_INTERCEPT
+        # Clamp mortality_score to valid range for log computation
+        m_clamped = max(min(mortality_score, 1 - 1e-10), 1e-10)
+        inner = BA_NUMERATOR * math.log(1 - m_clamped)
+        # inner must be positive for outer log; clamp to prevent domain error
+        inner = max(inner, 1e-10)
+        biological_age = (math.log(inner) / BA_DENOMINATOR) + BA_INTERCEPT
 
         age_acceleration = biological_age - chronological_age
 

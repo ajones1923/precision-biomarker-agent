@@ -7,12 +7,16 @@ metrics, and Pydantic request/response schemas.
 Endpoints:
     GET  /health           -- Service health with collection and vector counts
     GET  /collections      -- Collection names and record counts
-    POST /query            -- Full RAG query (retrieve + LLM synthesis)
-    POST /search           -- Evidence-only retrieval (no LLM, fast)
-    POST /analyze          -- Full patient analysis
-    POST /biological-age   -- Biological age calculation only
     GET  /knowledge/stats  -- Knowledge graph statistics
     GET  /metrics          -- Prometheus-compatible metrics (placeholder)
+
+    Versioned routes (via api/routes/):
+    POST /v1/analyze       -- Full patient analysis
+    POST /v1/biological-age -- Biological age calculation
+    POST /v1/disease-risk  -- Disease trajectory analysis
+    POST /v1/pgx           -- Pharmacogenomic mapping
+    POST /v1/query         -- RAG Q&A query
+    GET  /v1/health        -- V1 health check
 
 Port: 8529 (from config/settings.py)
 
@@ -25,12 +29,12 @@ Date: March 2026
 
 import os
 import sys
-import time
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 
 from fastapi import FastAPI, HTTPException, Request
+from loguru import logger
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, PlainTextResponse
 from pydantic import BaseModel, Field
@@ -44,7 +48,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 # Load API key from rag-chat-pipeline .env if not already set
 if not os.environ.get("ANTHROPIC_API_KEY"):
-    _env_path = Path("/home/adam/projects/hcls-ai-factory/rag-chat-pipeline/.env")
+    _env_path = PROJECT_ROOT.parent.parent / "rag-chat-pipeline" / ".env"
     if _env_path.exists():
         for _line in _env_path.read_text().splitlines():
             if _line.startswith("ANTHROPIC_API_KEY="):
@@ -56,7 +60,6 @@ from src.biological_age import BiologicalAgeCalculator
 from src.disease_trajectory import DiseaseTrajectoryAnalyzer
 from src.genotype_adjustment import GenotypeAdjuster
 from src.knowledge import get_knowledge_stats
-from src.models import AgentQuery, CrossCollectionResult, PatientProfile, SearchHit
 from src.pharmacogenomics import PharmacogenomicMapper
 from src.rag_engine import BiomarkerRAGEngine
 
@@ -274,58 +277,6 @@ class CollectionsResponse(BaseModel):
     total: int
 
 
-class QueryRequest(BaseModel):
-    """Request schema for POST /query and POST /search."""
-    question: str = Field(..., min_length=1, description="Natural-language question")
-    disease_area: Optional[str] = Field(None, max_length=50, description="Filter by disease area")
-    collections: Optional[List[str]] = Field(None, description="Restrict search to specific collections")
-    year_min: Optional[int] = Field(None, ge=1990, le=2030, description="Minimum publication year")
-    year_max: Optional[int] = Field(None, ge=1990, le=2030, description="Maximum publication year")
-
-
-class EvidenceItem(BaseModel):
-    """A single piece of evidence returned to the client."""
-    collection: str
-    id: str
-    score: float
-    text: str
-    metadata: Dict[str, Any] = Field(default_factory=dict)
-
-
-class QueryResponse(BaseModel):
-    """Response schema for POST /query (RAG with LLM)."""
-    question: str
-    answer: str
-    evidence: List[EvidenceItem]
-    knowledge_context: str = ""
-    collections_searched: int = 0
-    search_time_ms: float = 0.0
-
-
-class SearchResponse(BaseModel):
-    """Response schema for POST /search (evidence only, no LLM)."""
-    question: str
-    evidence: List[EvidenceItem]
-    knowledge_context: str = ""
-    collections_searched: int = 0
-    search_time_ms: float = 0.0
-
-
-class BiologicalAgeRequest(BaseModel):
-    """Request schema for POST /biological-age."""
-    age: int = Field(..., ge=0, le=150, description="Chronological age")
-    biomarkers: Dict[str, float] = Field(..., description="Biomarker name -> value mapping")
-
-
-class BiologicalAgeResponse(BaseModel):
-    """Response schema for POST /biological-age."""
-    chronological_age: int
-    biological_age: float
-    age_acceleration: float
-    mortality_risk: str
-    top_aging_drivers: List[Dict]
-
-
 class KnowledgeStatsResponse(BaseModel):
     """Response schema for GET /knowledge/stats."""
     disease_domains: int
@@ -335,21 +286,6 @@ class KnowledgeStatsResponse(BaseModel):
     pgx_drug_interactions: int
     phenoage_markers: int
     cross_modal_links: int
-
-
-# =====================================================================
-# Helper -- convert internal SearchHit to API EvidenceItem
-# =====================================================================
-
-def _hit_to_evidence(hit: SearchHit) -> EvidenceItem:
-    """Convert an internal SearchHit to the API EvidenceItem schema."""
-    return EvidenceItem(
-        collection=hit.collection,
-        id=hit.id,
-        score=hit.score,
-        text=hit.text,
-        metadata=hit.metadata,
-    )
 
 
 # =====================================================================
@@ -382,6 +318,7 @@ async def health():
             agent_ready=agent_ready,
         )
     except Exception as e:
+        logger.exception(f"Health check failed -- Milvus unavailable: {e}")
         _metrics["errors_total"] += 1
         raise HTTPException(status_code=503, detail=f"Milvus unavailable: {e}")
 
@@ -405,137 +342,9 @@ async def list_collections():
             total=len(items),
         )
     except Exception as e:
+        logger.exception(f"Failed to fetch collection stats: {e}")
         _metrics["errors_total"] += 1
         raise HTTPException(status_code=500, detail=f"Failed to fetch collection stats: {e}")
-
-
-@app.post("/query", response_model=QueryResponse, tags=["rag"])
-async def query(request: QueryRequest):
-    """Full RAG query: retrieve evidence from Milvus, augment with the
-    knowledge graph, and synthesize an LLM response.
-    """
-    _metrics["requests_total"] += 1
-    _metrics["query_requests_total"] += 1
-
-    if not _engine:
-        raise HTTPException(status_code=503, detail="Engine not initialized")
-    if not _engine.llm:
-        raise HTTPException(status_code=503, detail="LLM client not available")
-    if not _engine.embedder:
-        raise HTTPException(status_code=503, detail="Embedding model not loaded")
-
-    try:
-        agent_query = AgentQuery(question=request.question)
-
-        evidence: CrossCollectionResult = _engine.retrieve(
-            query=agent_query,
-            collections_filter=request.collections,
-            year_min=request.year_min,
-            year_max=request.year_max,
-        )
-
-        from src.rag_engine import BIOMARKER_SYSTEM_PROMPT
-        prompt_text = _engine._build_prompt(request.question, evidence)
-        answer = _engine.llm.generate(
-            prompt=prompt_text,
-            system_prompt=BIOMARKER_SYSTEM_PROMPT,
-            max_tokens=2048,
-            temperature=0.7,
-        )
-
-        return QueryResponse(
-            question=request.question,
-            answer=answer,
-            evidence=[_hit_to_evidence(h) for h in evidence.hits],
-            knowledge_context=evidence.knowledge_context,
-            collections_searched=evidence.total_collections_searched,
-            search_time_ms=evidence.search_time_ms,
-        )
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        _metrics["errors_total"] += 1
-        raise HTTPException(status_code=500, detail=f"Query failed: {e}")
-
-
-@app.post("/search", response_model=SearchResponse, tags=["rag"])
-async def search(request: QueryRequest):
-    """Evidence-only retrieval (no LLM). Fast retrieval for evidence snippets."""
-    _metrics["requests_total"] += 1
-    _metrics["search_requests_total"] += 1
-
-    if not _engine:
-        raise HTTPException(status_code=503, detail="Engine not initialized")
-    if not _engine.embedder:
-        raise HTTPException(status_code=503, detail="Embedding model not loaded")
-
-    try:
-        agent_query = AgentQuery(question=request.question)
-
-        evidence: CrossCollectionResult = _engine.retrieve(
-            query=agent_query,
-            collections_filter=request.collections,
-            year_min=request.year_min,
-            year_max=request.year_max,
-        )
-
-        return SearchResponse(
-            question=request.question,
-            evidence=[_hit_to_evidence(h) for h in evidence.hits],
-            knowledge_context=evidence.knowledge_context,
-            collections_searched=evidence.total_collections_searched,
-            search_time_ms=evidence.search_time_ms,
-        )
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        _metrics["errors_total"] += 1
-        raise HTTPException(status_code=500, detail=f"Search failed: {e}")
-
-
-@app.post("/analyze", tags=["analysis"])
-async def analyze(profile: PatientProfile):
-    """Full patient analysis using all modules (bio age, trajectories, PGx, adjustments)."""
-    _metrics["requests_total"] += 1
-    _metrics["analyze_requests_total"] += 1
-
-    if not _agent:
-        raise HTTPException(status_code=503, detail="Agent not initialized")
-
-    try:
-        result = _agent.analyze_patient(profile)
-        return JSONResponse(content=result.model_dump())
-    except HTTPException:
-        raise
-    except Exception as e:
-        _metrics["errors_total"] += 1
-        raise HTTPException(status_code=500, detail=f"Analysis failed: {e}")
-
-
-@app.post("/biological-age", response_model=BiologicalAgeResponse, tags=["analysis"])
-async def biological_age(request: BiologicalAgeRequest):
-    """Calculate biological age from blood biomarkers using PhenoAge algorithm."""
-    _metrics["requests_total"] += 1
-    _metrics["bio_age_requests_total"] += 1
-
-    if not _bio_age_calc:
-        raise HTTPException(status_code=503, detail="Bio age calculator not initialized")
-
-    try:
-        result = _bio_age_calc.calculate(request.age, request.biomarkers)
-        phenoage = result.get("phenoage", {})
-        return BiologicalAgeResponse(
-            chronological_age=request.age,
-            biological_age=result.get("biological_age", request.age),
-            age_acceleration=result.get("age_acceleration", 0.0),
-            mortality_risk=phenoage.get("mortality_risk", "UNKNOWN"),
-            top_aging_drivers=phenoage.get("top_aging_drivers", []),
-        )
-    except Exception as e:
-        _metrics["errors_total"] += 1
-        raise HTTPException(status_code=500, detail=f"Biological age calculation failed: {e}")
 
 
 @app.get("/knowledge/stats", response_model=KnowledgeStatsResponse, tags=["knowledge"])
@@ -547,6 +356,7 @@ async def knowledge_stats():
         stats = get_knowledge_stats()
         return KnowledgeStatsResponse(**stats)
     except Exception as e:
+        logger.exception(f"Knowledge stats failed: {e}")
         _metrics["errors_total"] += 1
         raise HTTPException(status_code=500, detail=f"Knowledge stats failed: {e}")
 
@@ -590,8 +400,8 @@ async def metrics():
             for name, count in stats.items():
                 lines.append(f'biomarker_collection_vectors{{collection="{name}"}} {count}')
             lines.append("")
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning(f"Failed to fetch collection vectors for metrics: {e}")
 
     return "\n".join(lines) + "\n"
 

@@ -14,8 +14,9 @@ Date: March 2026
 
 import sys
 import time
+from pathlib import Path
 
-sys.path.insert(0, "/home/adam/projects/hcls-ai-factory/ai_agent_adds/precision_biomarker_agent")
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from sentence_transformers import SentenceTransformer
 

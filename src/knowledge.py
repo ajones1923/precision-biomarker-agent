@@ -700,6 +700,7 @@ CROSS_MODAL_LINKS: Dict[str, Dict[str, Any]] = {
     "elevated_lpa": {
         "trigger_condition": "Lp(a) > 125 nmol/L",
         "target_agent": "imaging_intelligence_agent",
+        "target_url": "not_deployed",
         "action": "cardiovascular_imaging_assessment",
         "description": (
             "Elevated Lp(a) is the strongest heritable cardiovascular risk factor. "
@@ -718,6 +719,7 @@ CROSS_MODAL_LINKS: Dict[str, Dict[str, Any]] = {
     "pgx_critical": {
         "trigger_condition": "Critical PGx finding (DPYD poor metabolizer or CYP2D6 ultra-rapid on opioids)",
         "target_agent": "cart_intelligence_agent",
+        "target_url": "http://localhost:8525/api/v1/drug-interaction-check",
         "action": "drug_interaction_check",
         "description": (
             "When a critical pharmacogenomic finding is detected (e.g., DPYD poor "
@@ -736,6 +738,7 @@ CROSS_MODAL_LINKS: Dict[str, Dict[str, Any]] = {
     "pre_diabetic_trajectory": {
         "trigger_condition": "HOMA-IR > 2.5 AND HbA1c > 5.5% AND TCF7L2 risk carrier",
         "target_agent": "genomics_pipeline",
+        "target_url": "http://localhost:5001/api/v1/reanalyze",
         "action": "vcf_reanalysis_diabetes_genes",
         "description": (
             "When biomarker trajectory analysis detects pre-diabetic pattern combined "
@@ -753,6 +756,7 @@ CROSS_MODAL_LINKS: Dict[str, Dict[str, Any]] = {
     "iron_overload_detected": {
         "trigger_condition": "Ferritin > 500 AND transferrin saturation > 45%",
         "target_agent": "imaging_intelligence_agent",
+        "target_url": "not_deployed",
         "action": "liver_iron_quantification",
         "description": (
             "Iron overload detected by biomarkers. Trigger imaging assessment for "
@@ -770,6 +774,7 @@ CROSS_MODAL_LINKS: Dict[str, Dict[str, Any]] = {
     "accelerated_aging_detected": {
         "trigger_condition": "PhenoAge acceleration > 5 years",
         "target_agent": "genomics_pipeline",
+        "target_url": "http://localhost:5001/api/v1/reanalyze",
         "action": "epigenetic_variant_analysis",
         "description": (
             "Significant biological age acceleration detected. Trigger genomic pipeline "

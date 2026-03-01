@@ -15,10 +15,12 @@ Date: March 2026
 from __future__ import annotations
 
 import time
+
+from loguru import logger
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel, Field
 
 router = APIRouter(prefix="/v1", tags=["analysis"])
@@ -134,7 +136,7 @@ class QueryResponse(BaseModel):
 # =====================================================================
 
 @router.post("/analyze", response_model=AnalysisResponse)
-async def full_analysis(request: PatientProfileRequest, req: Request):
+def full_analysis(request: PatientProfileRequest, req: Request):
     """Run full patient analysis using all modules.
 
     Executes biological age calculation, disease trajectory analysis,
@@ -174,11 +176,12 @@ async def full_analysis(request: PatientProfileRequest, req: Request):
     except HTTPException:
         raise
     except Exception as e:
+        logger.exception(f"Full analysis failed: {e}")
         raise HTTPException(status_code=500, detail=f"Analysis failed: {e}")
 
 
 @router.post("/biological-age", response_model=BiologicalAgeResponse)
-async def biological_age(request: BiologicalAgeRequest, req: Request):
+def biological_age(request: BiologicalAgeRequest, req: Request):
     """Calculate biological age from blood biomarkers.
 
     Uses PhenoAge (Levine 2018) algorithm with 9 routine blood biomarkers.
@@ -201,11 +204,12 @@ async def biological_age(request: BiologicalAgeRequest, req: Request):
             grimage=result.get("grimage"),
         )
     except Exception as e:
+        logger.exception(f"Biological age calculation failed: {e}")
         raise HTTPException(status_code=500, detail=f"Biological age calculation failed: {e}")
 
 
 @router.post("/disease-risk", response_model=DiseaseRiskResponse)
-async def disease_risk(request: DiseaseRiskRequest, req: Request):
+def disease_risk(request: DiseaseRiskRequest, req: Request):
     """Analyze disease trajectory risk across 6 disease categories.
 
     Detects pre-symptomatic disease patterns using genotype-stratified
@@ -229,11 +233,12 @@ async def disease_risk(request: DiseaseRiskRequest, req: Request):
             processing_time_ms=round(elapsed, 1),
         )
     except Exception as e:
+        logger.exception(f"Disease risk analysis failed: {e}")
         raise HTTPException(status_code=500, detail=f"Disease risk analysis failed: {e}")
 
 
 @router.post("/pgx", response_model=PGxResponse)
-async def pharmacogenomics(request: PGxRequest, req: Request):
+def pharmacogenomics(request: PGxRequest, req: Request):
     """Map star alleles and genotypes to CPIC drug recommendations.
 
     Supports CYP2D6, CYP2C19, CYP2C9, VKORC1, SLCO1B1, DPYD, and CYP3A5.
@@ -260,11 +265,12 @@ async def pharmacogenomics(request: PGxRequest, req: Request):
             critical_findings=critical,
         )
     except Exception as e:
+        logger.exception(f"PGx mapping failed: {e}")
         raise HTTPException(status_code=500, detail=f"PGx mapping failed: {e}")
 
 
 @router.post("/query", response_model=QueryResponse)
-async def rag_query(request: QueryRequest, req: Request):
+def rag_query(request: QueryRequest, req: Request):
     """RAG Q&A query with evidence retrieval and LLM synthesis.
 
     Optionally accepts a patient profile for personalized context injection
@@ -312,7 +318,44 @@ async def rag_query(request: QueryRequest, req: Request):
     except HTTPException:
         raise
     except Exception as e:
+        logger.exception(f"RAG query failed: {e}")
         raise HTTPException(status_code=500, detail=f"Query failed: {e}")
+
+
+@router.post("/query/stream")
+def rag_query_stream(request: QueryRequest, req: Request):
+    """Streaming RAG Q&A query. Returns SSE stream with evidence then answer tokens."""
+    engine = getattr(req.app.state, "engine", None)
+    if not engine:
+        raise HTTPException(status_code=503, detail="RAG engine not initialized")
+    if not engine.llm:
+        raise HTTPException(status_code=503, detail="LLM client not available")
+    if not engine.embedder:
+        raise HTTPException(status_code=503, detail="Embedding model not loaded")
+
+    patient_profile = None
+    if request.patient_profile:
+        from src.models import PatientProfile
+        patient_profile = PatientProfile(**request.patient_profile.model_dump())
+
+    def event_generator():
+        import json as _json
+        for chunk in engine.query_stream(
+            question=request.question,
+            patient_profile=patient_profile,
+            collections_filter=request.collections,
+            year_min=request.year_min,
+            year_max=request.year_max,
+        ):
+            if chunk["type"] == "token":
+                yield f"data: {_json.dumps({'type': 'token', 'content': chunk['content']})}\n\n"
+            elif chunk["type"] == "done":
+                yield f"data: {_json.dumps({'type': 'done'})}\n\n"
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+    )
 
 
 @router.get("/health")
