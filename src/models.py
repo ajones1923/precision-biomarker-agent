@@ -457,6 +457,9 @@ class BiologicalAgeResult(BaseModel):
     grimage_score: Optional[float] = Field(
         None, description="GrimAge composite score (if available)",
     )
+    grimage_data: Optional[Dict[str, Any]] = Field(
+        None, description="Full GrimAge surrogate result dict (CI, confidence, validation)",
+    )
     mortality_risk: float = Field(
         0.0, ge=0.0, le=1.0,
         description="Relative mortality risk multiplier",

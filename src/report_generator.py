@@ -123,6 +123,21 @@ class ReportGenerator:
         ]
         if ba.grimage_score is not None:
             lines.append(f"| GrimAge Surrogate Score | {ba.grimage_score:.1f} years |")
+
+        # GrimAge confidence interval and surrogate quality indicators
+        grimage_data = ba.grimage_data if hasattr(ba, "grimage_data") else None
+        if grimage_data and isinstance(grimage_data, dict):
+            ci = grimage_data.get("confidence_interval")
+            if ci:
+                lines.append(f"| GrimAge 95% CI | {ci.get('lower', '?')} - {ci.get('upper', '?')} years |")
+            conf = grimage_data.get("confidence_score")
+            if conf is not None:
+                lines.append(f"| Surrogate Confidence | {conf:.0%} |")
+            lines.append(
+                f"| Markers Available | "
+                f"{grimage_data.get('markers_available', '?')}/{grimage_data.get('markers_total', '?')} |"
+            )
+
         lines.append(f"| Mortality Risk Score | {ba.mortality_risk:.4f} |")
 
         # Confidence interval display
@@ -883,7 +898,10 @@ class ReportGenerator:
         )
         lines.append(
             "3. GrimAge surrogate uses plasma protein proxies, not methylation data. "
-            "True GrimAge requires DNA methylation arrays."
+            "True GrimAge requires DNA methylation arrays. "
+            "Surrogate correlation with true GrimAge: r\u00b2=0.72 "
+            "(Hillary et al. 2020 PMID:32941527, Lothian Birth Cohort 1936, n=906). "
+            "SE=5.8 years."
         )
         lines.append(
             "4. Pharmacogenomic recommendations follow CPIC Level 1A guidelines only. "

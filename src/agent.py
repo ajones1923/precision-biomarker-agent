@@ -201,6 +201,7 @@ class PrecisionBiomarkerAgent:
                 bio_age_raw["grimage"]["grimage_score"]
                 if bio_age_raw.get("grimage") else None
             ),
+            grimage_data=bio_age_raw.get("grimage"),
             mortality_risk=bio_age_raw.get("phenoage", {}).get("mortality_score", 0.0),
             aging_drivers=bio_age_raw.get("phenoage", {}).get("top_aging_drivers", []),
             confidence_interval=bio_age_raw.get("phenoage", {}).get("confidence_interval"),

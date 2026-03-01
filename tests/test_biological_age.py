@@ -18,6 +18,7 @@ from src.biological_age import (
     PHENOAGE_SE_FULL,
     PHENOAGE_SE_PARTIAL,
     GRIMAGE_MARKERS,
+    GRIMAGE_VALIDATION,
 )
 
 
@@ -245,6 +246,62 @@ class TestGrimAgeSurrogate:
         """GrimAge result includes surrogate disclaimer note."""
         result = calculator.calculate_grimage_surrogate(50.0, {"gdf15": 1000.0})
         assert "surrogate" in result.get("note", "").lower()
+
+    def test_grimage_has_confidence_score(self):
+        """GrimAge surrogate includes a confidence score between 0 and 1."""
+        calc = BiologicalAgeCalculator()
+        result = calc.calculate_grimage_surrogate(60, {
+            "gdf15": 800, "cystatin_c": 0.9, "leptin": 10,
+        })
+        assert "confidence_score" in result
+        assert 0 < result["confidence_score"] <= 1.0
+
+    def test_grimage_has_confidence_interval(self):
+        """GrimAge surrogate includes a 95% CI with SE=5.8 from Hillary et al."""
+        calc = BiologicalAgeCalculator()
+        result = calc.calculate_grimage_surrogate(60, {
+            "gdf15": 800, "cystatin_c": 0.9, "leptin": 10,
+        })
+        ci = result["confidence_interval"]
+        assert ci["lower"] < result["grimage_score"] < ci["upper"]
+        assert ci["standard_error"] == 5.8
+        assert ci["confidence_level"] == 0.95
+
+    def test_grimage_has_validation_data(self):
+        """GrimAge surrogate includes published validation metadata."""
+        calc = BiologicalAgeCalculator()
+        result = calc.calculate_grimage_surrogate(60, {"gdf15": 800})
+        assert "validation" in result
+        assert result["validation"]["correlation_with_true_grimage"] == 0.72
+        assert "Hillary" in result["validation"]["validation_citation"]
+
+    def test_grimage_confidence_scales_with_markers(self):
+        """More markers should yield a higher confidence score."""
+        calc = BiologicalAgeCalculator()
+        # More markers = higher confidence
+        one_marker = calc.calculate_grimage_surrogate(60, {"gdf15": 800})
+        three_markers = calc.calculate_grimage_surrogate(60, {
+            "gdf15": 800, "cystatin_c": 0.9, "leptin": 10,
+        })
+        assert three_markers["confidence_score"] > one_marker["confidence_score"]
+
+    def test_grimage_note_includes_correlation(self):
+        """GrimAge note includes the r-squared correlation with true GrimAge."""
+        calc = BiologicalAgeCalculator()
+        result = calc.calculate_grimage_surrogate(60, {"gdf15": 800})
+        assert "r\u00b2=0.72" in result["note"]
+        assert "surrogate" in result["note"].lower()
+
+    def test_full_calculate_includes_grimage_ci(self):
+        """Combined calculate() propagates GrimAge CI and confidence score."""
+        calc = BiologicalAgeCalculator()
+        result = calc.calculate(60, {
+            "albumin": 4.2, "creatinine": 0.9, "glucose": 95,
+            "gdf15": 800, "cystatin_c": 0.9,
+        })
+        assert result["grimage"] is not None
+        assert "confidence_interval" in result["grimage"]
+        assert "confidence_score" in result["grimage"]
 
 
 # =====================================================================
