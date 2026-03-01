@@ -610,3 +610,101 @@ class AnalysisResult(BaseModel):
     timestamp: str = Field(
         default_factory=lambda: datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
     )
+
+
+# =====================================================================
+# Longitudinal Tracking Models
+# =====================================================================
+
+class BiomarkerPanel(BaseModel):
+    """A single time-point biomarker panel for longitudinal tracking."""
+    date: str = Field(..., description="ISO-8601 date of the panel (e.g., '2025-06-15')")
+    biomarkers: Dict[str, float] = Field(..., description="Biomarker name -> measured value")
+    biological_age: Optional[float] = Field(None, description="Computed biological age at this time point")
+    notes: Optional[str] = None
+
+
+class PatientHistory(BaseModel):
+    """Longitudinal patient data across multiple visits.
+
+    Enables biological age trajectory analysis: is the patient aging
+    faster or slower over time? This turns a snapshot into a story.
+    """
+    patient_id: str
+    panels: List[BiomarkerPanel] = Field(default_factory=list, description="Time-ordered biomarker panels")
+
+    @property
+    def panel_count(self) -> int:
+        return len(self.panels)
+
+    @property
+    def date_range(self) -> tuple:
+        """Return (earliest_date, latest_date) or (None, None) if empty."""
+        if not self.panels:
+            return (None, None)
+        dates = sorted(p.date for p in self.panels)
+        return (dates[0], dates[-1])
+
+    def biological_age_trajectory(self) -> List[Dict[str, Any]]:
+        """Extract biological age trajectory for plotting."""
+        return [
+            {"date": p.date, "biological_age": p.biological_age}
+            for p in self.panels
+            if p.biological_age is not None
+        ]
+
+    def age_acceleration_trend(self) -> Optional[str]:
+        """Determine if age acceleration is improving or worsening.
+
+        Returns 'improving', 'stable', or 'worsening', or None if insufficient data.
+        """
+        trajectory = self.biological_age_trajectory()
+        if len(trajectory) < 2:
+            return None
+
+        recent = trajectory[-1]["biological_age"]
+        previous = trajectory[-2]["biological_age"]
+        diff = recent - previous
+
+        if diff < -0.5:
+            return "improving"
+        elif diff > 0.5:
+            return "worsening"
+        else:
+            return "stable"
+
+
+class WearableData(BaseModel):
+    """Wearable device data for correlation with biomarker analysis.
+
+    Captures physiological signals from consumer/clinical wearables
+    that correlate with biological aging and disease trajectories.
+    Schema designed for Apple Watch, Fitbit, Garmin, Oura Ring data.
+    """
+    device_type: Optional[str] = Field(None, description="Device manufacturer/model")
+    measurement_date: str = Field(..., description="ISO-8601 date")
+
+    # Heart rate metrics
+    resting_heart_rate: Optional[float] = Field(None, ge=20, le=200, description="Resting HR in bpm")
+    heart_rate_variability: Optional[float] = Field(None, ge=0, le=500, description="HRV (RMSSD) in ms")
+    max_heart_rate: Optional[float] = Field(None, ge=40, le=250, description="Max HR in bpm")
+
+    # Blood oxygen
+    spo2_average: Optional[float] = Field(None, ge=70, le=100, description="Average SpO2 %")
+    spo2_minimum: Optional[float] = Field(None, ge=50, le=100, description="Minimum SpO2 %")
+
+    # Sleep
+    sleep_duration_hours: Optional[float] = Field(None, ge=0, le=24, description="Total sleep duration")
+    deep_sleep_pct: Optional[float] = Field(None, ge=0, le=100, description="Deep sleep percentage")
+    rem_sleep_pct: Optional[float] = Field(None, ge=0, le=100, description="REM sleep percentage")
+    sleep_score: Optional[float] = Field(None, ge=0, le=100, description="Composite sleep score")
+
+    # Activity
+    steps: Optional[int] = Field(None, ge=0, description="Daily step count")
+    active_calories: Optional[float] = Field(None, ge=0, description="Active calories burned")
+    vo2_max: Optional[float] = Field(None, ge=10, le=90, description="Estimated VO2 max (ml/kg/min)")
+
+    # Stress / recovery
+    stress_score: Optional[float] = Field(None, ge=0, le=100, description="Stress score (0=calm, 100=high)")
+    recovery_score: Optional[float] = Field(None, ge=0, le=100, description="Recovery readiness score")
+    body_temperature_delta: Optional[float] = Field(None, ge=-3, le=3, description="Temp deviation from baseline (°C)")
