@@ -202,9 +202,9 @@ class DiseaseTrajectoryAnalyzer:
                 recommendations.append("Recheck HbA1c and fasting insulin in 3 months")
 
         if homa_ir is not None:
-            if homa_ir >= thresh["homa_ir"] and stage in ("normal", "early_metabolic_shift"):
-                if stage == "normal":
-                    stage = "insulin_resistance"
+            if homa_ir >= thresh["homa_ir"]:
+                if stage in ("normal", "early_metabolic_shift"):
+                    stage = "insulin_resistance" if stage == "normal" else stage
                 risk_level = _max_risk(risk_level, "MODERATE")
                 findings.append(
                     f"HOMA-IR {homa_ir} exceeds genotype-adjusted threshold "
@@ -425,7 +425,8 @@ class DiseaseTrajectoryAnalyzer:
         ast = available.get("ast")
         platelets = available.get("platelets")
 
-        if age is not None and age > 0 and ast and platelets and alt and alt > 0 and platelets > 0:
+        # FIB-4 = (age × AST) / (platelets × √ALT); requires ALT > 0 and platelets > 0
+        if age is not None and age > 0 and ast and platelets and platelets > 0 and alt and alt > 0:
             fib4 = round((age * ast) / (platelets * math.sqrt(alt)), 2)
             available["fib4_calculated"] = fib4
 
@@ -915,14 +916,20 @@ class DiseaseTrajectoryAnalyzer:
         Returns:
             List of disease trajectory result dicts, sorted by risk level.
         """
+        # Sanitize biomarker values — filter out NaN and None
+        clean_biomarkers = {
+            k: v for k, v in biomarkers.items()
+            if v is not None and not (isinstance(v, float) and v != v)  # v != v detects NaN
+        }
+
         results = []
 
-        results.append(self.analyze_type2_diabetes(biomarkers, genotypes))
-        results.append(self.analyze_cardiovascular(biomarkers, genotypes))
-        results.append(self.analyze_liver(biomarkers, genotypes, age=age))
-        results.append(self.analyze_thyroid(biomarkers, genotypes))
-        results.append(self.analyze_iron(biomarkers, genotypes, sex=sex))
-        results.append(self.analyze_nutritional(biomarkers, genotypes))
+        results.append(self.analyze_type2_diabetes(clean_biomarkers, genotypes))
+        results.append(self.analyze_cardiovascular(clean_biomarkers, genotypes))
+        results.append(self.analyze_liver(clean_biomarkers, genotypes, age=age))
+        results.append(self.analyze_thyroid(clean_biomarkers, genotypes))
+        results.append(self.analyze_iron(clean_biomarkers, genotypes, sex=sex))
+        results.append(self.analyze_nutritional(clean_biomarkers, genotypes))
 
         # Sort by risk level severity
         risk_order = {"CRITICAL": 0, "HIGH": 1, "MODERATE": 2, "LOW": 3}

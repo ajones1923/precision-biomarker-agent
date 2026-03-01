@@ -21,7 +21,7 @@ from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import JSONResponse, StreamingResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 router = APIRouter(prefix="/v1", tags=["analysis"])
 
@@ -47,6 +47,12 @@ class PatientProfileRequest(BaseModel):
         default_factory=dict,
         description="Gene -> star allele mapping (e.g., {'CYP2D6': '*1/*2'})",
     )
+
+    @model_validator(mode="after")
+    def _check_has_data(self) -> "PatientProfileRequest":
+        if not self.biomarkers and not self.genotypes and not self.star_alleles:
+            raise ValueError("At least one of biomarkers, genotypes, or star_alleles must be provided")
+        return self
 
 
 class BiologicalAgeRequest(BaseModel):
@@ -79,7 +85,7 @@ class PGxRequest(BaseModel):
 
 class QueryRequest(BaseModel):
     """Request for RAG Q&A query."""
-    question: str = Field(..., min_length=1, description="Natural-language question")
+    question: str = Field(..., min_length=1, max_length=5000, description="Natural-language question")
     patient_profile: Optional[PatientProfileRequest] = None
     collections: Optional[List[str]] = Field(None, description="Restrict to collections")
     year_min: Optional[int] = Field(None, ge=1990, le=2030)
@@ -253,15 +259,16 @@ def pharmacogenomics(request: PGxRequest, req: Request):
 
         # Extract critical findings
         critical = []
-        for pgx in results:
-            if pgx.phenotype.value in ("poor", "ultra_rapid"):
+        for pgx_result in results.get("gene_results", []):
+            phenotype = pgx_result.get("phenotype", "")
+            if phenotype and phenotype.lower().replace(" ", "_") in ("poor_metabolizer", "ultra-rapid_metabolizer", "poor", "ultra_rapid"):
                 critical.append(
-                    f"{pgx.gene} {pgx.star_alleles}: {pgx.phenotype.value} metabolizer"
+                    f"{pgx_result.get('gene', '')} {pgx_result.get('star_alleles', '')}: {phenotype}"
                 )
 
         return PGxResponse(
-            results=[p.model_dump() for p in results],
-            total_genes=len(results),
+            results=results.get("gene_results", []),
+            total_genes=results.get("genes_analyzed", 0),
             critical_findings=critical,
         )
     except Exception as e:
@@ -290,22 +297,22 @@ def rag_query(request: QueryRequest, req: Request):
             from src.models import PatientProfile
             patient_profile = PatientProfile(**request.patient_profile.model_dump())
 
-        answer = engine.query(
-            question=request.question,
-            patient_profile=patient_profile,
-            collections_filter=request.collections,
-            year_min=request.year_min,
-            year_max=request.year_max,
-        )
-
-        # Re-retrieve evidence for response metadata
+        # Retrieve evidence once, then generate
         from src.models import AgentQuery
+        from src.rag_engine import BIOMARKER_SYSTEM_PROMPT
         agent_query = AgentQuery(question=request.question, patient_profile=patient_profile)
         evidence = engine.retrieve(
             agent_query,
             collections_filter=request.collections,
             year_min=request.year_min,
             year_max=request.year_max,
+        )
+        prompt = engine._build_prompt(request.question, evidence, patient_profile)
+        answer = engine.llm.generate(
+            prompt=prompt,
+            system_prompt=BIOMARKER_SYSTEM_PROMPT,
+            max_tokens=2048,
+            temperature=0.7,
         )
 
         return QueryResponse(

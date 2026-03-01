@@ -219,6 +219,10 @@ class BiomarkerRAGEngine:
         Returns:
             LLM-generated response string.
         """
+        if not self.embedder:
+            raise RuntimeError("Embedding model not initialized. Cannot run query.")
+        if not self.llm:
+            raise RuntimeError("LLM client not initialized. Cannot generate response.")
         agent_query = AgentQuery(question=question, patient_profile=patient_profile)
         evidence = self.retrieve(agent_query, **kwargs)
         prompt = self._build_prompt(agent_query.question, evidence, patient_profile)
@@ -241,6 +245,10 @@ class BiomarkerRAGEngine:
         Yields:
             Dicts with type='evidence', type='token', or type='done'.
         """
+        if not self.embedder:
+            raise RuntimeError("Embedding model not initialized. Cannot run query.")
+        if not self.llm:
+            raise RuntimeError("LLM client not initialized. Cannot generate response.")
         agent_query = AgentQuery(question=question, patient_profile=patient_profile)
         evidence = self.retrieve(agent_query, **kwargs)
         yield {"type": "evidence", "content": evidence}
@@ -351,7 +359,7 @@ class BiomarkerRAGEngine:
 
             for r in results:
                 raw_score = r.get("score", 0.0)
-                weighted_score = raw_score * (1 + weight)
+                weighted_score = min(raw_score * (1 + weight), 1.0)
 
                 # Citation relevance scoring
                 if raw_score >= settings.CITATION_HIGH_THRESHOLD:
@@ -376,12 +384,15 @@ class BiomarkerRAGEngine:
         return all_hits
 
     def _merge_and_rank(self, hits: List[SearchHit]) -> List[SearchHit]:
-        """Deduplicate by ID, sort by score descending, cap at 30."""
-        seen = set()
+        """Deduplicate by ID and text content, sort by score descending, cap at 30."""
+        seen_ids = set()
+        seen_texts = set()
         unique = []
         for hit in hits:
-            if hit.id not in seen:
-                seen.add(hit.id)
+            text_key = hit.text[:200].strip().lower()
+            if hit.id not in seen_ids and text_key not in seen_texts:
+                seen_ids.add(hit.id)
+                seen_texts.add(text_key)
                 unique.append(hit)
         unique.sort(key=lambda h: h.score, reverse=True)
         return unique[:30]

@@ -6,6 +6,7 @@ Follows the same Pydantic BaseSettings pattern as cart_intelligence_agent/config
 from pathlib import Path
 from typing import Optional
 
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -65,6 +66,29 @@ class PrecisionBiomarkerSettings(BaseSettings):
     WEIGHT_AGING_MARKERS: float = 0.08
     WEIGHT_GENOTYPE_ADJUSTMENTS: float = 0.05
     WEIGHT_MONITORING: float = 0.05
+
+    # ── Timeouts ──
+    REQUEST_TIMEOUT_SECONDS: int = 60
+    MILVUS_TIMEOUT_SECONDS: int = 10
+    LLM_MAX_RETRIES: int = 3
+
+    # ── Port validation ──
+    @model_validator(mode="after")
+    def _validate_settings(self) -> "PrecisionBiomarkerSettings":
+        weights = [
+            self.WEIGHT_BIOMARKER_REF, self.WEIGHT_GENETIC_VARIANTS,
+            self.WEIGHT_PGX_RULES, self.WEIGHT_DISEASE_TRAJECTORIES,
+            self.WEIGHT_CLINICAL_EVIDENCE, self.WEIGHT_NUTRITION,
+            self.WEIGHT_DRUG_INTERACTIONS, self.WEIGHT_AGING_MARKERS,
+            self.WEIGHT_GENOTYPE_ADJUSTMENTS, self.WEIGHT_MONITORING,
+        ]
+        total = sum(weights)
+        if abs(total - 1.0) > 0.1:
+            import logging
+            logging.getLogger(__name__).warning(
+                f"Collection search weights sum to {total:.2f}, expected ~1.0"
+            )
+        return self
 
     # ── API Server ──
     API_HOST: str = "0.0.0.0"

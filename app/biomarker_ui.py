@@ -152,6 +152,7 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
 )
+st.caption("⚕️ Research Use Only — Not for clinical decision-making without healthcare provider review.")
 
 # =====================================================================
 # CUSTOM CSS -- NVIDIA Black + Green theme
@@ -252,6 +253,10 @@ with st.sidebar:
     for svc, ok in status_items.items():
         icon = "+" if ok else "x"
         st.text(f"[{icon}] {svc}")
+
+    if st.sidebar.button("🔄 Reconnect", key="reconnect_btn"):
+        st.cache_resource.clear()
+        st.rerun()
 
     st.markdown("---")
     st.markdown("### About")
@@ -357,6 +362,8 @@ with tab1:
         "Enter patient information, biomarker values, and genotype data for "
         "a comprehensive precision medicine analysis."
     )
+
+    patient_id = st.text_input("Patient ID", value="PATIENT-001", key="t1_patient_id")
 
     col_info1, col_info2 = st.columns(2)
     with col_info1:
@@ -589,6 +596,10 @@ with tab1:
 
     # -- Run Analysis --
     if st.button("Run Full Analysis", type="primary", key="t1_run"):
+        # Clear stale results from previous runs
+        for key in ["analysis_results", "patient_info", "report_markdown"]:
+            st.session_state.pop(key, None)
+
         if not biomarkers:
             st.warning("Please enter at least one biomarker value.")
         elif engine is None:
@@ -622,6 +633,7 @@ with tab1:
                 # Store results in session state
                 st.session_state["analysis_results"] = results
                 st.session_state["patient_info"] = {
+                    "patient_id": patient_id,
                     "age": patient_age,
                     "sex": patient_sex,
                     "biomarkers": biomarkers,
@@ -745,6 +757,8 @@ with tab2:
 with tab3:
     st.markdown("## Disease Risk Analysis")
     st.caption("Focused disease trajectory analysis with genotype-stratified thresholds.")
+
+    t3_age = st.number_input("Patient Age", min_value=1, max_value=120, value=45, key="t3_age_input")
 
     disease_options = {
         "Type 2 Diabetes": "type2_diabetes",
@@ -887,7 +901,7 @@ with tab3:
             method_map = {
                 "type2_diabetes": analyzer.analyze_type2_diabetes,
                 "cardiovascular": analyzer.analyze_cardiovascular,
-                "liver": lambda b, g: analyzer.analyze_liver(b, g, age=float(st.session_state.get("t1_age", 45))),
+                "liver": lambda b, g: analyzer.analyze_liver(b, g, age=float(t3_age)),
                 "thyroid": analyzer.analyze_thyroid,
                 "iron": lambda b, g: analyzer.analyze_iron(b, g, sex="male"),
                 "nutritional": analyzer.analyze_nutritional,
@@ -1142,144 +1156,184 @@ with tab6:
         )
     else:
         if st.button("Generate Full Report", type="primary", key="t6_gen"):
-            with st.spinner("Generating report..."):
-                report_sections = []
-
-                # Section 1: Executive Summary
-                report_sections.append("# Precision Biomarker Analysis Report")
-                report_sections.append(
-                    f"\n**Generated:** {datetime.now().strftime('%Y-%m-%d %H:%M')}"
+            with st.spinner("Generating 12-section report..."):
+                from src.models import (
+                    AnalysisResult,
+                    BiologicalAgeResult,
+                    DiseaseCategory,
+                    DiseaseTrajectoryResult,
+                    GenotypeAdjustmentResult,
+                    MetabolizerPhenotype,
+                    PatientProfile,
+                    PGxResult,
+                    RiskLevel,
                 )
-                report_sections.append(
-                    f"**Patient:** Age {patient['age']}, Sex {patient['sex']}"
-                )
-
-                # Section 2: Biological Age
-                if "biological_age" in results:
-                    ba = results["biological_age"]
-                    pheno = ba.get("phenoage", ba)
-                    report_sections.append("\n## 1. Biological Age Assessment")
-                    report_sections.append(
-                        f"- Chronological Age: {patient['age']} years"
-                    )
-                    report_sections.append(
-                        f"- Biological Age (PhenoAge): {pheno.get('biological_age', 'N/A')} years"
-                    )
-                    report_sections.append(
-                        f"- Age Acceleration: {pheno.get('age_acceleration', 'N/A')} years"
-                    )
-                    report_sections.append(
-                        f"- Mortality Risk: {pheno.get('mortality_risk', 'N/A')}"
-                    )
-
-                # Section 3-8: Disease Trajectories
-                if "disease_trajectories" in results:
-                    report_sections.append("\n## 2. Disease Trajectory Analysis")
-                    for i, traj in enumerate(results["disease_trajectories"]):
-                        report_sections.append(
-                            f"\n### 2.{i+1} {traj.get('display_name', '')}"
-                        )
-                        report_sections.append(
-                            f"- Risk Level: {traj.get('risk_level', 'N/A')}"
-                        )
-                        report_sections.append(
-                            f"- Stage: {traj.get('stage', 'N/A')}"
-                        )
-                        if traj.get("findings"):
-                            report_sections.append("\n**Findings:**")
-                            for f in traj["findings"]:
-                                report_sections.append(f"- {f}")
-                        if traj.get("recommendations"):
-                            report_sections.append("\n**Recommendations:**")
-                            for r in traj["recommendations"]:
-                                report_sections.append(f"- {r}")
-
-                # Section 9: Biomarker Summary
-                report_sections.append("\n## 3. Biomarker Values")
-                for name, val in patient.get("biomarkers", {}).items():
-                    report_sections.append(f"- {name}: {val}")
-
-                # Section 10: Genotypes
-                if patient.get("genotypes"):
-                    report_sections.append("\n## 4. Genotype Summary")
-                    for rsid, gt in patient["genotypes"].items():
-                        report_sections.append(f"- {rsid}: {gt}")
-
-                # Section 11: Star Alleles / PGx
-                if patient.get("star_alleles"):
-                    report_sections.append("\n## 5. Pharmacogenomic Profile")
-                    for gene, alleles in patient["star_alleles"].items():
-                        report_sections.append(f"- {gene}: {alleles}")
-
-                # Section 12: Disclaimer
-                report_sections.append("\n## Disclaimer")
-                report_sections.append(
-                    "This report is generated by the Precision Biomarker Agent "
-                    "(HCLS AI Factory) for research and educational purposes. "
-                    "It is not intended as medical advice. All clinical decisions "
-                    "should be made in consultation with qualified healthcare providers."
+                from src.report_generator import ReportGenerator
+                from src.export import (
+                    export_csv,
+                    export_fhir_diagnostic_report,
+                    export_pdf,
                 )
 
-                full_report = "\n".join(report_sections)
-                st.session_state["full_report"] = full_report
+                # Build PatientProfile model from session state
+                profile = PatientProfile(
+                    patient_id=patient.get("patient_id", "PATIENT"),
+                    age=int(patient["age"]),
+                    sex=patient["sex"],
+                    biomarkers=patient.get("biomarkers", {}),
+                    genotypes=patient.get("genotypes", {}),
+                    star_alleles=patient.get("star_alleles", {}),
+                )
 
-        # Display report
+                # Build BiologicalAgeResult from raw dict
+                ba_raw = results.get("biological_age", {})
+                pheno = ba_raw.get("phenoage", ba_raw)
+                bio_age_result = BiologicalAgeResult(
+                    chronological_age=int(patient["age"]),
+                    biological_age=float(pheno.get("biological_age", patient["age"])),
+                    age_acceleration=float(pheno.get("age_acceleration", 0)),
+                    phenoage_score=float(pheno.get("phenoage_score",
+                                                    pheno.get("mortality_risk", 0))),
+                    grimage_score=pheno.get("grimage_score"),
+                    mortality_risk=float(pheno.get("mortality_risk", 0)),
+                    aging_drivers=pheno.get("aging_drivers",
+                                            ba_raw.get("aging_drivers", [])),
+                )
+
+                # Build DiseaseTrajectoryResult list
+                disease_trajectories = []
+                disease_map = {
+                    "diabetes": DiseaseCategory.DIABETES,
+                    "cardiovascular": DiseaseCategory.CARDIOVASCULAR,
+                    "liver": DiseaseCategory.LIVER,
+                    "thyroid": DiseaseCategory.THYROID,
+                    "iron": DiseaseCategory.IRON,
+                    "nutritional": DiseaseCategory.NUTRITIONAL,
+                }
+                for traj_raw in results.get("disease_trajectories", []):
+                    disease_key = traj_raw.get("disease", "").lower()
+                    disease_cat = disease_map.get(disease_key)
+                    if not disease_cat:
+                        continue
+                    risk_val = traj_raw.get("risk_level", "normal").lower()
+                    try:
+                        risk_level = RiskLevel(risk_val)
+                    except ValueError:
+                        risk_level = RiskLevel.NORMAL
+                    disease_trajectories.append(DiseaseTrajectoryResult(
+                        disease=disease_cat,
+                        risk_level=risk_level,
+                        current_markers=traj_raw.get("current_markers", {}),
+                        genetic_risk_factors=traj_raw.get(
+                            "genetic_risk_factors",
+                            traj_raw.get("genetic_factors", []),
+                        ),
+                        years_to_onset_estimate=traj_raw.get(
+                            "years_to_onset_estimate"),
+                        intervention_recommendations=traj_raw.get(
+                            "intervention_recommendations",
+                            traj_raw.get("recommendations", []),
+                        ),
+                    ))
+
+                # Build PGx results from session (may come from PGx tab)
+                pgx_results = []
+                for pgx_raw in results.get("pgx_results", []):
+                    phenotype_val = pgx_raw.get("phenotype", "normal").lower()
+                    try:
+                        phenotype = MetabolizerPhenotype(phenotype_val)
+                    except ValueError:
+                        phenotype = MetabolizerPhenotype.NORMAL
+                    pgx_results.append(PGxResult(
+                        gene=pgx_raw.get("gene", ""),
+                        star_alleles=pgx_raw.get("star_alleles", ""),
+                        phenotype=phenotype,
+                        drugs_affected=pgx_raw.get("drugs_affected", []),
+                    ))
+
+                # Build genotype adjustments
+                genotype_adjustments = []
+                for adj_raw in results.get("genotype_adjustments", []):
+                    genotype_adjustments.append(GenotypeAdjustmentResult(
+                        biomarker=adj_raw.get("biomarker", ""),
+                        standard_range=adj_raw.get("standard_range", ""),
+                        adjusted_range=adj_raw.get("adjusted_range", ""),
+                        genotype=adj_raw.get("genotype", ""),
+                        gene=adj_raw.get("gene", ""),
+                        rationale=adj_raw.get("rationale", ""),
+                    ))
+
+                # Assemble AnalysisResult
+                analysis = AnalysisResult(
+                    patient_profile=profile,
+                    biological_age=bio_age_result,
+                    disease_trajectories=disease_trajectories,
+                    pgx_results=pgx_results,
+                    genotype_adjustments=genotype_adjustments,
+                    critical_alerts=results.get("critical_alerts", []),
+                )
+
+                # Generate the full 12-section report
+                generator = ReportGenerator()
+                report_md = generator.generate(analysis, profile)
+
+                # Store for display and export
+                st.session_state["full_report"] = report_md
+                st.session_state["report_analysis"] = analysis
+                st.session_state["report_profile"] = profile
+
+        # Display report and export buttons
         if "full_report" in st.session_state:
             st.markdown(st.session_state["full_report"])
 
             st.markdown("---")
             st.markdown("### Export Options")
 
-            # Export Markdown
-            c1, c2 = st.columns(2)
+            analysis = st.session_state.get("report_analysis")
+            profile = st.session_state.get("report_profile")
+
+            c1, c2, c3, c4 = st.columns(4)
+
             with c1:
                 st.download_button(
-                    "Export PDF",
+                    "Markdown",
                     data=st.session_state["full_report"].encode("utf-8"),
                     file_name=f"biomarker_report_{datetime.now().strftime('%Y%m%d_%H%M')}.md",
                     mime="text/markdown",
+                    key="t6_md",
+                )
+
+            with c2:
+                from src.export import export_pdf
+                pdf_bytes = export_pdf(st.session_state["full_report"])
+                st.download_button(
+                    "PDF Report",
+                    data=pdf_bytes,
+                    file_name=f"biomarker_report_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf",
+                    mime="application/pdf",
                     key="t6_pdf",
                 )
-            with c2:
-                # FHIR R4 export
-                fhir_bundle = {
-                    "resourceType": "Bundle",
-                    "type": "document",
-                    "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ"),
-                    "entry": [
-                        {
-                            "resource": {
-                                "resourceType": "Patient",
-                                "gender": "male" if patient["sex"] == "M" else "female",
-                                "birthDate": str(datetime.now().year - patient["age"]),
-                            }
-                        },
-                        {
-                            "resource": {
-                                "resourceType": "DiagnosticReport",
-                                "status": "final",
-                                "code": {
-                                    "text": "Precision Biomarker Analysis"
-                                },
-                                "conclusion": st.session_state["full_report"][:500],
-                            }
-                        },
-                    ],
-                }
-                for name, val in patient.get("biomarkers", {}).items():
-                    fhir_bundle["entry"].append({
-                        "resource": {
-                            "resourceType": "Observation",
-                            "status": "final",
-                            "code": {"text": name},
-                            "valueQuantity": {"value": val},
-                        }
-                    })
 
-                st.download_button(
-                    "Export FHIR R4",
-                    data=json.dumps(fhir_bundle, indent=2),
-                    file_name=f"biomarker_fhir_{datetime.now().strftime('%Y%m%d_%H%M')}.json",
-                    mime="application/json",
-                    key="t6_fhir",
-                )
+            with c3:
+                if analysis and profile:
+                    from src.export import export_fhir_diagnostic_report
+                    fhir_json = export_fhir_diagnostic_report(analysis, profile)
+                    st.download_button(
+                        "FHIR R4",
+                        data=fhir_json,
+                        file_name=f"biomarker_fhir_{datetime.now().strftime('%Y%m%d_%H%M')}.json",
+                        mime="application/json",
+                        key="t6_fhir",
+                    )
+
+            with c4:
+                if analysis:
+                    from src.export import export_csv
+                    csv_bytes = export_csv(analysis)
+                    st.download_button(
+                        "CSV",
+                        data=csv_bytes,
+                        file_name=f"biomarker_report_{datetime.now().strftime('%Y%m%d_%H%M')}.csv",
+                        mime="text/csv",
+                        key="t6_csv",
+                    )

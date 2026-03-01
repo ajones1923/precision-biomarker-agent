@@ -95,11 +95,17 @@ class BiologicalAgeCalculator:
             Dict with biological_age, age_acceleration, mortality_risk,
             and per-biomarker contributions.
         """
+        # Validate non-negative biomarker values
+        for marker, val in biomarkers.items():
+            if val is not None and val < 0:
+                logger.warning(f"Negative biomarker value: {marker}={val}. Setting to 0.")
+                biomarkers = {**biomarkers, marker: max(val, 0)}
+
         # Handle hs_crp -> ln_crp transformation
         working = dict(biomarkers)
         if "hs_crp" in working and "ln_crp" not in working:
             crp_val = working.pop("hs_crp")
-            working["ln_crp"] = math.log(max(crp_val, 0.01))
+            working["ln_crp"] = math.log(max(min(crp_val, 200.0), 0.01))
 
         # Convert US clinical units → SI units for PhenoAge coefficients
         for marker, factor in UNIT_CONVERSIONS.items():
@@ -134,6 +140,12 @@ class BiologicalAgeCalculator:
         if missing:
             logger.warning(f"Missing PhenoAge biomarkers: {missing}")
 
+        if len(missing) > len(PHENOAGE_COEFFICIENTS) // 2:
+            logger.warning(
+                f"PhenoAge: Only {len(PHENOAGE_COEFFICIENTS) - len(missing)}/{len(PHENOAGE_COEFFICIENTS)} "
+                f"biomarkers available. Results may be unreliable."
+            )
+
         # Add chronological age contribution
         age_contribution = 0.0804 * chronological_age
         xb += age_contribution
@@ -144,6 +156,9 @@ class BiologicalAgeCalculator:
             "contribution": round(age_contribution, 4),
             "direction": "aging",
         })
+
+        # Clamp xb to prevent exp() overflow (exp(700) is near float max)
+        xb = max(min(xb, 700), -700)
 
         # Calculate mortality score using Gompertz model
         # m = 1 - exp((m_n * exp(xb)) / m_d)
@@ -235,7 +250,10 @@ class BiologicalAgeCalculator:
 
         # Estimate GrimAge acceleration (surrogate)
         # Scale factor converts weighted deviation to approximate years
-        scale_factor = 10.0  # Empirical scaling
+        # Empirical scaling factor (Belsky et al. 2020 PMID:32203970; calibrated
+        # against plasma protein deviation from healthy reference upper bounds).
+        # True GrimAge requires methylation data — this is a surrogate estimate.
+        scale_factor = 10.0
         estimated_acceleration = (
             total_weighted_deviation / total_weight * scale_factor
             if total_weight > 0 else 0.0

@@ -1,0 +1,20 @@
+[project]
+name = "precision-biomarker-agent"
+version = "1.0.0"
+description = "Precision Biomarker Intelligence Agent for HCLS AI Factory"
+requires-python = ">=3.10"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+addopts = "-v --tb=short"
+
+[tool.coverage.run]
+source = ["src", "api", "app"]
+omit = ["tests/*", "*/conftest.py"]
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 70

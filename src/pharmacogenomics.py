@@ -619,6 +619,15 @@ class PharmacogenomicMapper:
         if star_alleles and "allele_to_phenotype" in config:
             phenotype = config["allele_to_phenotype"].get(star_alleles)
             if phenotype:
+                # Check for conflict if genotype is also provided
+                if genotype and "genotype_to_phenotype" in config:
+                    gt_phenotype = config["genotype_to_phenotype"].get(genotype)
+                    if gt_phenotype and gt_phenotype != phenotype:
+                        logger.warning(
+                            f"PGx conflict for {gene}: star alleles ({star_alleles}) -> "
+                            f"{phenotype}, but genotype ({genotype}) -> {gt_phenotype}. "
+                            f"Using star allele result."
+                        )
                 return phenotype
 
         # Try genotype lookup
@@ -773,6 +782,25 @@ class PharmacogenomicMapper:
                         "reason": drug_rec["recommendation"],
                     })
 
+        # Detect drug-drug interaction warnings (same CYP pathway)
+        drug_interaction_warnings = []
+        cyp_drugs = {}  # gene -> list of drugs
+        for result in gene_results:
+            gene = result.get("gene", "")
+            for drug_rec in result.get("affected_drugs", []):
+                if drug_rec["action"] != "STANDARD_DOSING":
+                    cyp_drugs.setdefault(gene, []).append(drug_rec["drug"])
+        for gene, drugs in cyp_drugs.items():
+            if len(drugs) > 1:
+                drug_interaction_warnings.append({
+                    "gene": gene,
+                    "drugs": drugs,
+                    "warning": (
+                        f"Multiple drugs affected by {gene} metabolizer status: "
+                        f"{', '.join(drugs)}. Concomitant use may compound pharmacokinetic effects."
+                    ),
+                })
+
         logger.info(
             f"PGx mapping complete: {len(gene_results)} genes analyzed, "
             f"{len(all_critical_alerts)} critical alerts, "
@@ -784,6 +812,7 @@ class PharmacogenomicMapper:
             "critical_alerts": all_critical_alerts,
             "drugs_to_avoid": drugs_to_avoid,
             "drugs_to_adjust": drugs_to_adjust,
+            "drug_interaction_warnings": drug_interaction_warnings,
             "genes_analyzed": len(gene_results),
             "has_critical_findings": len(all_critical_alerts) > 0,
         }
@@ -858,6 +887,14 @@ class PharmacogenomicMapper:
             drug_lower in config.get("drug_recommendations", {})
             for config in self._gene_configs.values()
         )
+
+        if not drug_found:
+            findings.append({
+                "gene": "N/A",
+                "status": "NOT_IN_DATABASE",
+                "message": f"{drug_name} is not in the pharmacogenomic database. "
+                           "No PGx guidance available.",
+            })
 
         return {
             "drug": drug_name,

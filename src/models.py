@@ -11,9 +11,9 @@ Date: March 2026
 
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -112,6 +112,14 @@ class BiomarkerReference(BaseModel):
         if self.genetic_modifiers:
             parts.append(f"Genetic modifiers: {self.genetic_modifiers}")
         return " ".join(parts)
+
+    @model_validator(mode="after")
+    def _check_ref_range(self) -> "BiomarkerReference":
+        if self.ref_range_max > 0 and self.ref_range_min > self.ref_range_max:
+            raise ValueError(
+                f"ref_range_min ({self.ref_range_min}) > ref_range_max ({self.ref_range_max})"
+            )
+        return self
 
 
 class GeneticVariant(BaseModel):
@@ -448,10 +456,21 @@ class BiologicalAgeResult(BaseModel):
         0.0, ge=0.0, le=1.0,
         description="Relative mortality risk multiplier",
     )
-    aging_drivers: List[Dict] = Field(
+    aging_drivers: List[Dict[str, Any]] = Field(
         default_factory=list,
         description="List of dicts with marker, value, contribution, direction",
     )
+
+    @model_validator(mode="after")
+    def _check_age_acceleration(self) -> "BiologicalAgeResult":
+        expected = round(self.biological_age - self.chronological_age, 1)
+        if abs(self.age_acceleration - expected) > 0.2:
+            import logging
+            logging.getLogger(__name__).warning(
+                f"age_acceleration ({self.age_acceleration}) doesn't match "
+                f"biological_age - chronological_age ({expected})"
+            )
+        return self
 
 
 class DiseaseTrajectoryResult(BaseModel):
@@ -480,7 +499,7 @@ class PGxResult(BaseModel):
     gene: str = Field(..., description="Pharmacogene (e.g., CYP2D6)")
     star_alleles: str = Field(..., description="Star allele result (e.g., *1/*2)")
     phenotype: MetabolizerPhenotype = MetabolizerPhenotype.NORMAL
-    drugs_affected: List[Dict] = Field(
+    drugs_affected: List[Dict[str, Any]] = Field(
         default_factory=list,
         description="List of dicts with drug, recommendation, cpic_level",
     )
@@ -513,7 +532,7 @@ class SearchHit(BaseModel):
     id: str
     score: float = Field(..., ge=0.0)
     text: str
-    metadata: Dict = Field(default_factory=dict)
+    metadata: Dict[str, Any] = Field(default_factory=dict)
 
 
 class CrossCollectionResult(BaseModel):

@@ -1,20 +1,30 @@
 """Tests for Precision Biomarker Agent export functions.
 
-Validates markdown export, JSON export, PDF export (bytes), and
-FHIR R4 bundle structure.
+Validates markdown export, JSON export, PDF export (bytes), CSV export,
+and FHIR R4 bundle structure using the real src.export module.
 
 Author: Adam Jones
 Date: March 2026
 """
 
+import csv
+import io
 import json
-from datetime import datetime
 
 import pytest
 
+from src.export import (
+    export_csv,
+    export_fhir_diagnostic_report,
+    export_json,
+    export_markdown,
+    export_pdf,
+    generate_filename,
+)
 from src.models import (
     AnalysisResult,
     BiologicalAgeResult,
+    CrossCollectionResult,
     DiseaseCategory,
     DiseaseTrajectoryResult,
     GenotypeAdjustmentResult,
@@ -22,7 +32,9 @@ from src.models import (
     PatientProfile,
     PGxResult,
     RiskLevel,
+    SearchHit,
 )
+from src.report_generator import ReportGenerator
 
 
 # =====================================================================
@@ -40,12 +52,23 @@ def simple_analysis(sample_patient_profile):
             biological_age=47.2,
             age_acceleration=2.2,
             phenoage_score=0.003,
+            mortality_risk=0.015,
+            aging_drivers=[
+                {"biomarker": "rdw", "value": 13.5, "contribution": 4.46, "direction": "aging"},
+            ],
         ),
         disease_trajectories=[
             DiseaseTrajectoryResult(
                 disease=DiseaseCategory.DIABETES,
                 risk_level=RiskLevel.HIGH,
                 current_markers={"hba1c": 5.9},
+                genetic_risk_factors=["TCF7L2 rs7903146 CT"],
+                intervention_recommendations=["Dietary optimization"],
+            ),
+            DiseaseTrajectoryResult(
+                disease=DiseaseCategory.CARDIOVASCULAR,
+                risk_level=RiskLevel.MODERATE,
+                current_markers={"ldl_c": 145},
             ),
         ],
         pgx_results=[
@@ -53,157 +76,70 @@ def simple_analysis(sample_patient_profile):
                 gene="CYP2D6",
                 star_alleles="*1/*4",
                 phenotype=MetabolizerPhenotype.INTERMEDIATE,
+                drugs_affected=[
+                    {"drug": "Codeine", "recommendation": "Use with caution"},
+                ],
+            ),
+        ],
+        genotype_adjustments=[
+            GenotypeAdjustmentResult(
+                biomarker="ALT",
+                standard_range="0-56 U/L",
+                adjusted_range="0-45 U/L",
+                genotype="CG",
+                gene="PNPLA3",
+                rationale="PNPLA3 CG carrier",
             ),
         ],
         critical_alerts=["HbA1c 5.9% pre-diabetic"],
     )
 
 
+@pytest.fixture
+def simple_evidence():
+    """Return a CrossCollectionResult for markdown export testing."""
+    return CrossCollectionResult(
+        query="What biomarkers indicate pre-diabetes risk?",
+        hits=[
+            SearchHit(
+                collection="biomarker_reference",
+                id="ref-hba1c",
+                score=0.92,
+                text="HbA1c reflects average blood glucose over 2-3 months.",
+                metadata={"name": "HbA1c", "unit": "%"},
+            ),
+        ],
+        total_collections_searched=10,
+        search_time_ms=42.5,
+    )
+
+
+@pytest.fixture
+def report_markdown(simple_analysis):
+    """Generate a full markdown report for PDF testing."""
+    return ReportGenerator().generate(simple_analysis)
+
+
 # =====================================================================
-# EXPORT HELPERS (inline, matching the UI pattern)
+# FILENAME GENERATION
 # =====================================================================
 
 
-def export_markdown(analysis: AnalysisResult) -> str:
-    """Export analysis as markdown report."""
-    sections = []
-    sections.append("# Precision Biomarker Analysis Report\n")
-    sections.append(f"**Generated:** {datetime.now().strftime('%Y-%m-%d %H:%M')}")
-    sections.append(f"**Patient:** {analysis.patient_profile.patient_id}, "
-                    f"Age {analysis.patient_profile.age}, Sex {analysis.patient_profile.sex}\n")
+class TestFilenameGeneration:
+    """Tests for generate_filename()."""
 
-    if analysis.critical_alerts:
-        sections.append("## Critical Alerts\n")
-        for alert in analysis.critical_alerts:
-            sections.append(f"- **ALERT:** {alert}")
-        sections.append("")
+    def test_md_extension(self):
+        name = generate_filename("md")
+        assert name.startswith("biomarker_report_")
+        assert name.endswith(".md")
 
-    sections.append("## Biological Age\n")
-    ba = analysis.biological_age
-    sections.append(f"- Biological Age: {ba.biological_age} years")
-    sections.append(f"- Acceleration: {ba.age_acceleration:+.1f} years\n")
+    def test_pdf_extension(self):
+        name = generate_filename("pdf")
+        assert name.endswith(".pdf")
 
-    sections.append("## Disease Trajectories\n")
-    for traj in analysis.disease_trajectories:
-        sections.append(f"- {traj.disease.value}: {traj.risk_level.value.upper()}")
-
-    if analysis.pgx_results:
-        sections.append("\n## PGx Profile\n")
-        for pgx in analysis.pgx_results:
-            sections.append(f"- {pgx.gene} ({pgx.star_alleles}): {pgx.phenotype.value}")
-
-    sections.append("\n## Disclaimer\n")
-    sections.append("Not intended as medical advice.")
-
-    return "\n".join(sections)
-
-
-def export_json(analysis: AnalysisResult) -> str:
-    """Export analysis as JSON string."""
-    data = {
-        "patient_id": analysis.patient_profile.patient_id,
-        "age": analysis.patient_profile.age,
-        "sex": analysis.patient_profile.sex,
-        "biological_age": {
-            "chronological": analysis.biological_age.chronological_age,
-            "biological": analysis.biological_age.biological_age,
-            "acceleration": analysis.biological_age.age_acceleration,
-        },
-        "disease_trajectories": [
-            {
-                "disease": t.disease.value,
-                "risk_level": t.risk_level.value,
-                "markers": t.current_markers,
-            }
-            for t in analysis.disease_trajectories
-        ],
-        "pgx_results": [
-            {
-                "gene": p.gene,
-                "star_alleles": p.star_alleles,
-                "phenotype": p.phenotype.value,
-            }
-            for p in analysis.pgx_results
-        ],
-        "critical_alerts": analysis.critical_alerts,
-        "timestamp": analysis.timestamp,
-    }
-    return json.dumps(data, indent=2)
-
-
-def export_pdf_bytes(analysis: AnalysisResult) -> bytes:
-    """Export analysis as PDF bytes (simplified stub for testing)."""
-    # In production, this uses reportlab; here we generate minimal PDF
-    content = export_markdown(analysis)
-    # Minimal PDF structure
-    pdf = b"%PDF-1.4\n"
-    pdf += b"1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n"
-    pdf += b"2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj\n"
-    pdf += b"3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 612 792]>>endobj\n"
-    pdf += b"xref\n0 4\ntrailer<</Size 4/Root 1 0 R>>\nstartxref\n0\n%%EOF"
-    return pdf
-
-
-def export_fhir(analysis: AnalysisResult) -> dict:
-    """Export analysis as FHIR R4 Bundle."""
-    patient = analysis.patient_profile
-    bundle = {
-        "resourceType": "Bundle",
-        "type": "document",
-        "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ"),
-        "entry": [
-            {
-                "resource": {
-                    "resourceType": "Patient",
-                    "identifier": [{"value": patient.patient_id}],
-                    "gender": "male" if patient.sex == "M" else "female",
-                    "birthDate": str(datetime.now().year - patient.age),
-                }
-            },
-            {
-                "resource": {
-                    "resourceType": "DiagnosticReport",
-                    "status": "final",
-                    "code": {
-                        "coding": [
-                            {
-                                "system": "http://loinc.org",
-                                "code": "100746-7",
-                                "display": "Precision Biomarker Analysis",
-                            }
-                        ],
-                        "text": "Precision Biomarker Analysis",
-                    },
-                    "conclusion": f"Biological age {analysis.biological_age.biological_age}, "
-                                  f"acceleration {analysis.biological_age.age_acceleration:+.1f} years",
-                }
-            },
-        ],
-    }
-
-    # Add observations for biomarkers
-    for name, val in patient.biomarkers.items():
-        bundle["entry"].append({
-            "resource": {
-                "resourceType": "Observation",
-                "status": "final",
-                "code": {"text": name},
-                "valueQuantity": {"value": val},
-            }
-        })
-
-    # Add PGx molecular sequence entries
-    for pgx in analysis.pgx_results:
-        bundle["entry"].append({
-            "resource": {
-                "resourceType": "MolecularSequence",
-                "type": "dna",
-                "patient": {"reference": f"Patient/{patient.patient_id}"},
-                "performer": [{"display": f"{pgx.gene} {pgx.star_alleles}"}],
-            }
-        })
-
-    return bundle
+    def test_csv_extension(self):
+        name = generate_filename("csv")
+        assert name.endswith(".csv")
 
 
 # =====================================================================
@@ -212,53 +148,45 @@ def export_fhir(analysis: AnalysisResult) -> dict:
 
 
 class TestExportMarkdown:
-    """Tests for markdown export."""
+    """Tests for export_markdown()."""
 
-    def test_returns_string(self, simple_analysis):
-        """export_markdown() returns a string."""
-        md = export_markdown(simple_analysis)
+    def test_returns_string(self, simple_evidence):
+        md = export_markdown("test query", "test response", evidence=simple_evidence)
         assert isinstance(md, str)
 
-    def test_contains_patient_info(self, simple_analysis):
-        """Markdown contains patient ID and demographics."""
-        md = export_markdown(simple_analysis)
-        assert "HG002" in md
-        assert "45" in md
+    def test_contains_query(self, simple_evidence):
+        md = export_markdown("What about HbA1c?", "Response here", evidence=simple_evidence)
+        assert "What about HbA1c?" in md
 
-    def test_contains_biological_age(self, simple_analysis):
-        """Markdown contains biological age values."""
-        md = export_markdown(simple_analysis)
+    def test_contains_response(self, simple_evidence):
+        md = export_markdown("q", "The response text", evidence=simple_evidence)
+        assert "The response text" in md
+
+    def test_contains_evidence_section(self, simple_evidence):
+        md = export_markdown("q", "r", evidence=simple_evidence)
+        assert "Evidence Sources" in md
+        assert "ref-hba1c" in md
+
+    def test_contains_search_metrics(self, simple_evidence):
+        md = export_markdown("q", "r", evidence=simple_evidence)
+        assert "Search Metrics" in md
+        assert "42" in md
+
+    def test_contains_analysis_summary(self, simple_analysis, simple_evidence):
+        md = export_markdown("q", "r", evidence=simple_evidence, analysis=simple_analysis)
+        assert "Patient Analysis Summary" in md
         assert "47.2" in md
-        assert "+2.2" in md
 
-    def test_contains_disease_trajectories(self, simple_analysis):
-        """Markdown contains disease trajectory results."""
-        md = export_markdown(simple_analysis)
-        assert "diabetes" in md
+    def test_contains_footer(self):
+        md = export_markdown("q", "r")
+        assert "Precision Biomarker Agent" in md
 
-    def test_contains_pgx_profile(self, simple_analysis):
-        """Markdown contains PGx gene results."""
-        md = export_markdown(simple_analysis)
-        assert "CYP2D6" in md
-
-    def test_contains_critical_alerts(self, simple_analysis):
-        """Markdown contains critical alerts."""
-        md = export_markdown(simple_analysis)
-        assert "ALERT" in md
-        assert "HbA1c" in md
-
-    def test_contains_disclaimer(self, simple_analysis):
-        """Markdown contains disclaimer section."""
-        md = export_markdown(simple_analysis)
-        assert "Disclaimer" in md
-
-    def test_valid_markdown_headers(self, simple_analysis):
-        """All headers use proper markdown syntax."""
-        md = export_markdown(simple_analysis)
+    def test_valid_markdown_headers(self, simple_evidence):
+        md = export_markdown("q", "r", evidence=simple_evidence)
         lines = md.split("\n")
-        headers = [l for l in lines if l.startswith("#")]
+        headers = [line for line in lines if line.startswith("#")]
         for h in headers:
-            assert h.startswith("# ") or h.startswith("## ")
+            assert h.startswith("# ") or h.startswith("## ") or h.startswith("### ")
 
 
 # =====================================================================
@@ -267,53 +195,40 @@ class TestExportMarkdown:
 
 
 class TestExportJSON:
-    """Tests for JSON export."""
+    """Tests for export_json()."""
 
     def test_returns_valid_json(self, simple_analysis):
-        """export_json() returns a valid JSON string."""
-        json_str = export_json(simple_analysis)
+        json_str = export_json(analysis_result=simple_analysis)
         data = json.loads(json_str)
         assert isinstance(data, dict)
 
-    def test_contains_patient_id(self, simple_analysis):
-        """JSON contains patient_id field."""
-        data = json.loads(export_json(simple_analysis))
-        assert data["patient_id"] == "HG002"
+    def test_contains_report_type(self, simple_analysis):
+        data = json.loads(export_json(analysis_result=simple_analysis))
+        assert data["report_type"] == "precision_biomarker_analysis"
 
-    def test_contains_biological_age(self, simple_analysis):
-        """JSON contains biological age values."""
-        data = json.loads(export_json(simple_analysis))
-        assert data["biological_age"]["biological"] == 47.2
-        assert data["biological_age"]["acceleration"] == 2.2
+    def test_contains_version(self, simple_analysis):
+        data = json.loads(export_json(analysis_result=simple_analysis))
+        assert data["version"] == "1.0.0"
 
-    def test_contains_disease_trajectories(self, simple_analysis):
-        """JSON contains disease trajectory array."""
-        data = json.loads(export_json(simple_analysis))
-        assert len(data["disease_trajectories"]) >= 1
-        assert data["disease_trajectories"][0]["disease"] == "diabetes"
+    def test_contains_analysis_data(self, simple_analysis):
+        data = json.loads(export_json(analysis_result=simple_analysis))
+        assert "analysis" in data
+        assert "biological_age" in data["analysis"]
 
-    def test_contains_pgx_results(self, simple_analysis):
-        """JSON contains PGx results array."""
-        data = json.loads(export_json(simple_analysis))
-        assert len(data["pgx_results"]) >= 1
-        assert data["pgx_results"][0]["gene"] == "CYP2D6"
-
-    def test_contains_critical_alerts(self, simple_analysis):
-        """JSON contains critical alerts array."""
-        data = json.loads(export_json(simple_analysis))
-        assert len(data["critical_alerts"]) >= 1
+    def test_contains_query_and_response(self):
+        data = json.loads(export_json(query="test q", response_text="test r"))
+        assert data["query"] == "test q"
+        assert data["response"] == "test r"
 
     def test_contains_timestamp(self, simple_analysis):
-        """JSON contains timestamp field."""
-        data = json.loads(export_json(simple_analysis))
-        assert "timestamp" in data
-        assert "T" in data["timestamp"]
+        data = json.loads(export_json(analysis_result=simple_analysis))
+        assert "generated_at" in data
+        assert "T" in data["generated_at"]
 
     def test_roundtrip_serialization(self, simple_analysis):
-        """JSON can be serialized and deserialized without data loss."""
-        json_str = export_json(simple_analysis)
+        json_str = export_json(analysis_result=simple_analysis)
         data = json.loads(json_str)
-        json_str2 = json.dumps(data, indent=2)
+        json_str2 = json.dumps(data, indent=2, default=str)
         data2 = json.loads(json_str2)
         assert data == data2
 
@@ -324,27 +239,101 @@ class TestExportJSON:
 
 
 class TestExportPDF:
-    """Tests for PDF export."""
+    """Tests for export_pdf()."""
 
-    def test_returns_bytes(self, simple_analysis):
-        """export_pdf_bytes() returns bytes."""
-        pdf = export_pdf_bytes(simple_analysis)
+    def test_returns_bytes(self, report_markdown):
+        pdf = export_pdf(report_markdown)
         assert isinstance(pdf, bytes)
 
-    def test_starts_with_pdf_header(self, simple_analysis):
-        """PDF bytes should start with %PDF header."""
-        pdf = export_pdf_bytes(simple_analysis)
+    def test_starts_with_pdf_header(self, report_markdown):
+        pdf = export_pdf(report_markdown)
         assert pdf.startswith(b"%PDF")
 
-    def test_ends_with_eof_marker(self, simple_analysis):
-        """PDF bytes should end with %%EOF marker."""
-        pdf = export_pdf_bytes(simple_analysis)
-        assert b"%%EOF" in pdf
+    def test_ends_with_eof_marker(self, report_markdown):
+        pdf = export_pdf(report_markdown)
+        assert pdf.rstrip().endswith(b"%%EOF")
 
-    def test_non_empty_output(self, simple_analysis):
-        """PDF should be non-empty."""
-        pdf = export_pdf_bytes(simple_analysis)
-        assert len(pdf) > 50
+    def test_substantial_output(self, report_markdown):
+        """A full 12-section report should produce a non-trivial PDF."""
+        pdf = export_pdf(report_markdown)
+        assert len(pdf) > 1000
+
+    def test_contains_table_data(self, report_markdown):
+        """PDF should contain rendered table content (not skip tables)."""
+        # The markdown has table content like "Metric" and "Value"
+        # which should be rendered in the PDF stream
+        pdf = export_pdf(report_markdown)
+        # reportlab embeds text; check the PDF is substantial
+        assert len(pdf) > 5000
+
+    def test_simple_markdown(self):
+        """Even a simple markdown string should produce a valid PDF."""
+        pdf = export_pdf("# Test\n\nHello world.")
+        assert pdf.startswith(b"%PDF")
+
+
+# =====================================================================
+# CSV EXPORT
+# =====================================================================
+
+
+class TestExportCSV:
+    """Tests for export_csv()."""
+
+    def test_returns_bytes(self, simple_analysis):
+        result = export_csv(simple_analysis)
+        assert isinstance(result, bytes)
+
+    def test_decodable_utf8(self, simple_analysis):
+        result = export_csv(simple_analysis)
+        text = result.decode("utf-8")
+        assert len(text) > 0
+
+    def test_parseable_csv(self, simple_analysis):
+        text = export_csv(simple_analysis).decode("utf-8")
+        reader = csv.reader(io.StringIO(text))
+        rows = list(reader)
+        assert len(rows) > 10
+
+    def test_contains_patient_info(self, simple_analysis):
+        text = export_csv(simple_analysis).decode("utf-8")
+        assert "Patient Info" in text
+        assert "HG002" in text
+
+    def test_contains_biological_age(self, simple_analysis):
+        text = export_csv(simple_analysis).decode("utf-8")
+        assert "Biological Age" in text
+        assert "47.2" in text
+
+    def test_contains_disease_trajectories(self, simple_analysis):
+        text = export_csv(simple_analysis).decode("utf-8")
+        assert "Disease Trajectories" in text
+        assert "diabetes" in text
+
+    def test_contains_pgx_profile(self, simple_analysis):
+        text = export_csv(simple_analysis).decode("utf-8")
+        assert "PGx Profile" in text
+        assert "CYP2D6" in text
+
+    def test_contains_genotype_adjustments(self, simple_analysis):
+        text = export_csv(simple_analysis).decode("utf-8")
+        assert "Genotype Adjustments" in text
+        assert "PNPLA3" in text
+
+    def test_contains_critical_alerts(self, simple_analysis):
+        text = export_csv(simple_analysis).decode("utf-8")
+        assert "Critical Alerts" in text
+        assert "HbA1c" in text
+
+    def test_contains_biomarker_values(self, simple_analysis):
+        text = export_csv(simple_analysis).decode("utf-8")
+        assert "Biomarker Values" in text
+        assert "albumin" in text
+
+    def test_aging_drivers_section(self, simple_analysis):
+        text = export_csv(simple_analysis).decode("utf-8")
+        assert "Aging Drivers" in text
+        assert "rdw" in text
 
 
 # =====================================================================
@@ -353,82 +342,112 @@ class TestExportPDF:
 
 
 class TestExportFHIR:
-    """Tests for FHIR R4 bundle export."""
+    """Tests for export_fhir_diagnostic_report()."""
 
-    def test_returns_dict(self, simple_analysis):
-        """export_fhir() returns a dict."""
-        fhir = export_fhir(simple_analysis)
-        assert isinstance(fhir, dict)
+    def test_returns_valid_json(self, simple_analysis):
+        fhir_str = export_fhir_diagnostic_report(
+            simple_analysis, simple_analysis.patient_profile
+        )
+        bundle = json.loads(fhir_str)
+        assert isinstance(bundle, dict)
 
     def test_resource_type_is_bundle(self, simple_analysis):
-        """FHIR root resourceType should be Bundle."""
-        fhir = export_fhir(simple_analysis)
-        assert fhir["resourceType"] == "Bundle"
+        bundle = json.loads(export_fhir_diagnostic_report(
+            simple_analysis, simple_analysis.patient_profile
+        ))
+        assert bundle["resourceType"] == "Bundle"
 
-    def test_bundle_type_is_document(self, simple_analysis):
-        """FHIR bundle type should be 'document'."""
-        fhir = export_fhir(simple_analysis)
-        assert fhir["type"] == "document"
-
-    def test_contains_patient_resource(self, simple_analysis):
-        """FHIR bundle should contain a Patient resource."""
-        fhir = export_fhir(simple_analysis)
-        patient_entries = [
-            e for e in fhir["entry"]
-            if e["resource"]["resourceType"] == "Patient"
-        ]
-        assert len(patient_entries) == 1
-        assert patient_entries[0]["resource"]["gender"] == "male"
+    def test_bundle_type_is_collection(self, simple_analysis):
+        bundle = json.loads(export_fhir_diagnostic_report(
+            simple_analysis, simple_analysis.patient_profile
+        ))
+        assert bundle["type"] == "collection"
 
     def test_contains_diagnostic_report(self, simple_analysis):
-        """FHIR bundle should contain a DiagnosticReport resource."""
-        fhir = export_fhir(simple_analysis)
+        bundle = json.loads(export_fhir_diagnostic_report(
+            simple_analysis, simple_analysis.patient_profile
+        ))
         reports = [
-            e for e in fhir["entry"]
+            e for e in bundle["entry"]
             if e["resource"]["resourceType"] == "DiagnosticReport"
         ]
         assert len(reports) == 1
         assert reports[0]["resource"]["status"] == "final"
 
-    def test_contains_observations_for_biomarkers(self, simple_analysis):
-        """FHIR bundle should contain Observation resources for biomarkers."""
-        fhir = export_fhir(simple_analysis)
-        observations = [
-            e for e in fhir["entry"]
+    def test_contains_biological_age_observation(self, simple_analysis):
+        bundle = json.loads(export_fhir_diagnostic_report(
+            simple_analysis, simple_analysis.patient_profile
+        ))
+        bio_obs = [
+            e for e in bundle["entry"]
             if e["resource"]["resourceType"] == "Observation"
+            and "Biological Age" in e["resource"]["code"].get("text", "")
         ]
-        # Patient has many biomarkers
-        assert len(observations) > 0
+        assert len(bio_obs) == 1
+        assert bio_obs[0]["resource"]["valueQuantity"]["value"] == 47.2
 
-    def test_contains_molecular_sequence_for_pgx(self, simple_analysis):
-        """FHIR bundle should contain MolecularSequence for PGx results."""
-        fhir = export_fhir(simple_analysis)
-        sequences = [
-            e for e in fhir["entry"]
-            if e["resource"]["resourceType"] == "MolecularSequence"
+    def test_contains_disease_trajectory_observations(self, simple_analysis):
+        bundle = json.loads(export_fhir_diagnostic_report(
+            simple_analysis, simple_analysis.patient_profile
+        ))
+        traj_obs = [
+            e for e in bundle["entry"]
+            if e["resource"]["resourceType"] == "Observation"
+            and "Risk Assessment" in e["resource"]["code"].get("text", "")
         ]
-        assert len(sequences) >= 1
+        assert len(traj_obs) == 2  # diabetes + cardiovascular
 
-    def test_timestamp_present(self, simple_analysis):
-        """FHIR bundle should have a timestamp."""
-        fhir = export_fhir(simple_analysis)
-        assert "timestamp" in fhir
-        assert "T" in fhir["timestamp"]
+    def test_contains_pgx_observation(self, simple_analysis):
+        bundle = json.loads(export_fhir_diagnostic_report(
+            simple_analysis, simple_analysis.patient_profile
+        ))
+        pgx_obs = [
+            e for e in bundle["entry"]
+            if e["resource"]["resourceType"] == "Observation"
+            and "Pharmacogenomic" in e["resource"]["code"].get("text", "")
+        ]
+        assert len(pgx_obs) == 1
+        # valueString contains star alleles + phenotype; gene is in components
+        assert "*1/*4" in pgx_obs[0]["resource"]["valueString"]
+        gene_components = [
+            c for c in pgx_obs[0]["resource"]["component"]
+            if c["code"]["text"] == "Gene"
+        ]
+        assert gene_components[0]["valueString"] == "CYP2D6"
 
-    def test_valid_json_serialization(self, simple_analysis):
-        """FHIR bundle should be JSON-serializable."""
-        fhir = export_fhir(simple_analysis)
-        json_str = json.dumps(fhir, indent=2)
-        assert len(json_str) > 100
-        # Verify roundtrip
-        reparsed = json.loads(json_str)
-        assert reparsed["resourceType"] == "Bundle"
-
-    def test_diagnostic_report_contains_conclusion(self, simple_analysis):
-        """DiagnosticReport should have a conclusion with biological age."""
-        fhir = export_fhir(simple_analysis)
+    def test_diagnostic_report_has_conclusion(self, simple_analysis):
+        bundle = json.loads(export_fhir_diagnostic_report(
+            simple_analysis, simple_analysis.patient_profile
+        ))
         report = next(
-            e for e in fhir["entry"]
+            e for e in bundle["entry"]
             if e["resource"]["resourceType"] == "DiagnosticReport"
         )
-        assert "47.2" in report["resource"]["conclusion"]
+        conclusion = report["resource"]["conclusion"]
+        assert "47.2" in conclusion
+
+    def test_diagnostic_report_has_result_refs(self, simple_analysis):
+        bundle = json.loads(export_fhir_diagnostic_report(
+            simple_analysis, simple_analysis.patient_profile
+        ))
+        report = next(
+            e for e in bundle["entry"]
+            if e["resource"]["resourceType"] == "DiagnosticReport"
+        )
+        assert len(report["resource"]["result"]) >= 3
+
+    def test_timestamp_present(self, simple_analysis):
+        bundle = json.loads(export_fhir_diagnostic_report(
+            simple_analysis, simple_analysis.patient_profile
+        ))
+        assert "timestamp" in bundle
+        assert "T" in bundle["timestamp"]
+
+    def test_valid_json_roundtrip(self, simple_analysis):
+        fhir_str = export_fhir_diagnostic_report(
+            simple_analysis, simple_analysis.patient_profile
+        )
+        bundle = json.loads(fhir_str)
+        json_str2 = json.dumps(bundle, indent=2)
+        bundle2 = json.loads(json_str2)
+        assert bundle == bundle2

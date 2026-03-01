@@ -233,7 +233,7 @@ class ReportGenerator:
         ])
 
         for adj in analysis.genotype_adjustments:
-            rationale_short = adj.rationale[:80] + "..." if len(adj.rationale) > 80 else adj.rationale
+            rationale_short = adj.rationale[:150] + "..." if len(adj.rationale) > 150 else adj.rationale
             lines.append(
                 f"| {adj.biomarker} | {adj.gene} | {adj.genotype} | "
                 f"{adj.standard_range} | {adj.adjusted_range} | {rationale_short} |"
@@ -553,7 +553,11 @@ class ReportGenerator:
             for i, (timeline, action) in enumerate(actions[:10], 1):
                 lines.append(f"| {i} | {timeline} | {action} |")
         else:
-            lines.append("No urgent actions required. Continue routine monitoring.")
+            lines.append("No urgent actions identified. Recommended baseline actions:")
+            lines.append("")
+            lines.append("1. Continue routine annual bloodwork (CBC, CMP, lipid panel)")
+            lines.append("2. Maintain current exercise and dietary habits")
+            lines.append("3. Recheck PhenoAge biomarkers in 6-12 months")
 
         return "\n".join(lines)
 
@@ -619,6 +623,15 @@ class ReportGenerator:
         ]
 
         genotypes = profile.genotypes
+        # Normalize genotype keys: support both "rs1801133" and "MTHFR_rs1801133" formats
+        normalized = {}
+        for key, val in genotypes.items():
+            normalized[key] = val
+            # Extract rsID from compound keys like "MTHFR_rs1801133"
+            if "_rs" in key:
+                rs_id = key.split("_rs", 1)[1]
+                normalized[f"rs{rs_id}"] = val
+        genotypes = normalized
         supplements = []
 
         # MTHFR-guided folate

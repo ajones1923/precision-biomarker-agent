@@ -7,8 +7,6 @@ Author: Adam Jones
 Date: March 2026
 """
 
-import json
-
 import pytest
 
 from src.models import (
@@ -22,6 +20,7 @@ from src.models import (
     PGxResult,
     RiskLevel,
 )
+from src.report_generator import ReportGenerator
 
 
 # =====================================================================
@@ -41,9 +40,9 @@ def full_analysis(sample_patient_profile):
             phenoage_score=0.003,
             mortality_risk=0.015,
             aging_drivers=[
-                {"marker": "rdw", "value": 13.5, "contribution": 4.46, "direction": "aging"},
-                {"marker": "glucose", "value": 105.0, "contribution": 2.05, "direction": "aging"},
-                {"marker": "albumin", "value": 4.2, "contribution": -0.14, "direction": "protective"},
+                {"biomarker": "rdw", "value": 13.5, "contribution": 4.46, "direction": "aging"},
+                {"biomarker": "glucose", "value": 105.0, "contribution": 2.05, "direction": "aging"},
+                {"biomarker": "albumin", "value": 4.2, "contribution": -0.14, "direction": "protective"},
             ],
         ),
         disease_trajectories=[
@@ -84,7 +83,7 @@ def full_analysis(sample_patient_profile):
                 star_alleles="*1/*4",
                 phenotype=MetabolizerPhenotype.INTERMEDIATE,
                 drugs_affected=[
-                    {"drug": "Codeine", "recommendation": "Use with caution"},
+                    {"drug": "Codeine", "recommendation": "Use with caution", "cpic_level": "1A"},
                 ],
             ),
             PGxResult(
@@ -92,7 +91,7 @@ def full_analysis(sample_patient_profile):
                 star_alleles="*1/*2",
                 phenotype=MetabolizerPhenotype.INTERMEDIATE,
                 drugs_affected=[
-                    {"drug": "Clopidogrel", "recommendation": "Consider alternative"},
+                    {"drug": "Clopidogrel", "recommendation": "Consider alternative", "cpic_level": "1A"},
                 ],
             ),
         ],
@@ -103,7 +102,7 @@ def full_analysis(sample_patient_profile):
                 adjusted_range="0-45 U/L",
                 genotype="CG",
                 gene="PNPLA3",
-                rationale="PNPLA3 CG carrier",
+                rationale="PNPLA3 CG carrier has 2x NAFLD risk; tighter ALT threshold warranted.",
             ),
         ],
         critical_alerts=[
@@ -113,83 +112,10 @@ def full_analysis(sample_patient_profile):
     )
 
 
-def generate_report_markdown(analysis: AnalysisResult) -> str:
-    """Generate a markdown report from an AnalysisResult (mirrors UI logic)."""
-    sections = []
-
-    # 1. Executive Summary
-    sections.append("# Precision Biomarker Analysis Report\n")
-    sections.append(f"**Patient:** {analysis.patient_profile.patient_id}, "
-                    f"Age {analysis.patient_profile.age}, Sex {analysis.patient_profile.sex}\n")
-
-    # 2. Critical Alerts
-    if analysis.critical_alerts:
-        sections.append("## Critical Alerts\n")
-        for alert in analysis.critical_alerts:
-            sections.append(f"- **ALERT:** {alert}")
-        sections.append("")
-
-    # 3. Biological Age
-    sections.append("## Biological Age Assessment\n")
-    ba = analysis.biological_age
-    sections.append(f"- Chronological Age: {ba.chronological_age} years")
-    sections.append(f"- Biological Age: {ba.biological_age} years")
-    sections.append(f"- Age Acceleration: {ba.age_acceleration:+.1f} years")
-    sections.append("")
-
-    # 4. Aging Drivers
-    sections.append("## Top Aging Drivers\n")
-    for driver in ba.aging_drivers:
-        sections.append(
-            f"- {driver['marker']}: {driver['value']} "
-            f"(contribution: {driver['contribution']}, {driver['direction']})"
-        )
-    sections.append("")
-
-    # 5-10. Disease Trajectories
-    sections.append("## Disease Trajectory Analysis\n")
-    for traj in analysis.disease_trajectories:
-        sections.append(f"### {traj.disease.value.replace('_', ' ').title()}")
-        sections.append(f"- Risk Level: {traj.risk_level.value.upper()}")
-        if traj.current_markers:
-            for k, v in traj.current_markers.items():
-                sections.append(f"- {k}: {v}")
-        if traj.genetic_risk_factors:
-            sections.append("- Genetic Risk Factors: " + ", ".join(traj.genetic_risk_factors))
-        if traj.intervention_recommendations:
-            sections.append("- Recommendations:")
-            for r in traj.intervention_recommendations:
-                sections.append(f"  - {r}")
-        sections.append("")
-
-    # 11. PGx Profile
-    if analysis.pgx_results:
-        sections.append("## Pharmacogenomic Profile\n")
-        for pgx in analysis.pgx_results:
-            sections.append(f"### {pgx.gene} ({pgx.star_alleles})")
-            sections.append(f"- Phenotype: {pgx.phenotype.value}")
-            for drug in pgx.drugs_affected:
-                sections.append(f"- {drug['drug']}: {drug['recommendation']}")
-        sections.append("")
-
-    # 12. Genotype Adjustments
-    if analysis.genotype_adjustments:
-        sections.append("## Genotype-Adjusted Reference Ranges\n")
-        for adj in analysis.genotype_adjustments:
-            sections.append(
-                f"- {adj.biomarker} ({adj.gene} {adj.genotype}): "
-                f"{adj.standard_range} -> {adj.adjusted_range}"
-            )
-        sections.append("")
-
-    # Disclaimer
-    sections.append("## Disclaimer\n")
-    sections.append(
-        "This report is generated for research and educational purposes. "
-        "Not intended as medical advice."
-    )
-
-    return "\n".join(sections)
+@pytest.fixture
+def generator():
+    """Return a ReportGenerator instance."""
+    return ReportGenerator()
 
 
 # =====================================================================
@@ -200,34 +126,39 @@ def generate_report_markdown(analysis: AnalysisResult) -> str:
 class TestReportSections:
     """Tests for report section completeness."""
 
-    def test_all_12_sections_present(self, full_analysis):
+    def test_all_12_sections_present(self, generator, full_analysis):
         """Report should contain all 12 sections."""
-        report = generate_report_markdown(full_analysis)
-        assert "# Precision Biomarker Analysis Report" in report
-        assert "## Critical Alerts" in report
-        assert "## Biological Age Assessment" in report
-        assert "## Top Aging Drivers" in report
-        assert "## Disease Trajectory Analysis" in report
-        assert "## Pharmacogenomic Profile" in report
-        assert "## Genotype-Adjusted Reference Ranges" in report
-        assert "## Disclaimer" in report
+        report = generator.generate(full_analysis)
+        assert "# Precision Biomarker Intelligence Report" in report
+        assert "## 1. Biological Age Assessment" in report
+        assert "## 2. Executive Findings" in report
+        assert "## 3. Biomarker-Gene Correlation Map" in report
+        assert "## 4. Disease Trajectory Analysis" in report
+        assert "## 5. Pharmacogenomic Profile" in report
+        assert "## 6. Nutritional Genomics Analysis" in report
+        assert "## 7. Interconnected Pathways" in report
+        assert "## 8. Prioritized Action Plan" in report
+        assert "## 9. Monitoring Schedule" in report
+        assert "## 10. Supplement Protocol Summary" in report
+        assert "## 11. Clinical Summary for Healthcare Provider" in report
+        assert "## 12. References" in report
 
-    def test_patient_info_in_header(self, full_analysis):
+    def test_patient_info_in_header(self, generator, full_analysis):
         """Report header should include patient ID, age, and sex."""
-        report = generate_report_markdown(full_analysis)
+        report = generator.generate(full_analysis)
         assert "HG002" in report
         assert "45" in report
         assert "M" in report
 
-    def test_biological_age_values_present(self, full_analysis):
+    def test_biological_age_values_present(self, generator, full_analysis):
         """Report should contain biological age values."""
-        report = generate_report_markdown(full_analysis)
+        report = generator.generate(full_analysis)
         assert "47.2" in report
         assert "+2.2" in report
 
-    def test_disease_trajectories_all_listed(self, full_analysis):
+    def test_disease_trajectories_all_listed(self, generator, full_analysis):
         """All 6 disease categories should appear in the report."""
-        report = generate_report_markdown(full_analysis)
+        report = generator.generate(full_analysis)
         assert "Diabetes" in report
         assert "Cardiovascular" in report
         assert "Liver" in report
@@ -235,18 +166,37 @@ class TestReportSections:
         assert "Iron" in report
         assert "Nutritional" in report
 
-    def test_pgx_genes_listed(self, full_analysis):
+    def test_pgx_genes_listed(self, generator, full_analysis):
         """PGx gene results should appear in the report."""
-        report = generate_report_markdown(full_analysis)
+        report = generator.generate(full_analysis)
         assert "CYP2D6" in report
         assert "CYP2C19" in report
         assert "*1/*4" in report
 
-    def test_genotype_adjustments_listed(self, full_analysis):
+    def test_genotype_adjustments_listed(self, generator, full_analysis):
         """Genotype adjustments should appear in the report."""
-        report = generate_report_markdown(full_analysis)
+        report = generator.generate(full_analysis)
         assert "PNPLA3" in report
         assert "0-45 U/L" in report
+
+    def test_aging_drivers_table(self, generator, full_analysis):
+        """Report should contain an aging drivers table."""
+        report = generator.generate(full_analysis)
+        assert "Top Aging Drivers" in report
+        assert "rdw" in report
+        assert "glucose" in report
+
+    def test_monitoring_schedule_present(self, generator, full_analysis):
+        """Report should contain monitoring schedule with disease-specific panels."""
+        report = generator.generate(full_analysis)
+        assert "PhenoAge Panel" in report
+        assert "Every 3 months" in report or "Every 6 months" in report
+
+    def test_references_contain_citations(self, generator, full_analysis):
+        """Report should contain key academic references."""
+        report = generator.generate(full_analysis)
+        assert "Levine ME" in report
+        assert "CPIC" in report
 
 
 # =====================================================================
@@ -257,24 +207,24 @@ class TestReportSections:
 class TestCriticalAlertFormatting:
     """Tests for critical alert highlighting in reports."""
 
-    def test_critical_alerts_highlighted(self, full_analysis):
-        """Critical alerts should be highlighted with ALERT prefix."""
-        report = generate_report_markdown(full_analysis)
-        assert "**ALERT:**" in report
+    def test_critical_alerts_highlighted(self, generator, full_analysis):
+        """Critical alerts should appear in executive findings."""
+        report = generator.generate(full_analysis)
+        assert "CRITICAL" in report
 
-    def test_alert_contains_hba1c_warning(self, full_analysis):
+    def test_alert_contains_hba1c_warning(self, generator, full_analysis):
         """HbA1c pre-diabetic alert should be in report."""
-        report = generate_report_markdown(full_analysis)
+        report = generator.generate(full_analysis)
         assert "HbA1c" in report
         assert "pre-diabetic" in report
 
-    def test_alert_contains_lpa_warning(self, full_analysis):
+    def test_alert_contains_lpa_warning(self, generator, full_analysis):
         """Lp(a) elevation alert should be in report."""
-        report = generate_report_markdown(full_analysis)
+        report = generator.generate(full_analysis)
         assert "Lp(a)" in report
 
-    def test_no_alerts_when_none(self, sample_patient_profile):
-        """Report without critical alerts should not have alert section."""
+    def test_no_alerts_when_none(self, generator, sample_patient_profile):
+        """Report without critical alerts should still generate."""
         analysis = AnalysisResult(
             patient_profile=sample_patient_profile,
             biological_age=BiologicalAgeResult(
@@ -284,8 +234,8 @@ class TestCriticalAlertFormatting:
                 phenoage_score=0.002,
             ),
         )
-        report = generate_report_markdown(analysis)
-        assert "## Critical Alerts" not in report
+        report = generator.generate(analysis)
+        assert "No critical or high-priority findings" in report
 
 
 # =====================================================================
@@ -296,16 +246,62 @@ class TestCriticalAlertFormatting:
 class TestPGxWarningFormatting:
     """Tests for PGx warning formatting in reports."""
 
-    def test_pgx_phenotype_displayed(self, full_analysis):
+    def test_pgx_phenotype_displayed(self, generator, full_analysis):
         """PGx phenotype should be displayed in report."""
-        report = generate_report_markdown(full_analysis)
-        assert "intermediate" in report
+        report = generator.generate(full_analysis)
+        assert "Intermediate" in report
 
-    def test_pgx_drug_recommendations_displayed(self, full_analysis):
-        """Drug-specific recommendations should appear in report."""
-        report = generate_report_markdown(full_analysis)
+    def test_pgx_drug_recommendations_for_poor_metabolizer(self, generator, sample_patient_profile):
+        """Drug-specific recommendations should appear for poor metabolizers."""
+        analysis = AnalysisResult(
+            patient_profile=sample_patient_profile,
+            biological_age=BiologicalAgeResult(
+                chronological_age=45,
+                biological_age=45.0,
+                age_acceleration=0.0,
+                phenoage_score=0.002,
+            ),
+            pgx_results=[
+                PGxResult(
+                    gene="CYP2D6",
+                    star_alleles="*4/*4",
+                    phenotype=MetabolizerPhenotype.POOR,
+                    drugs_affected=[
+                        {"drug": "Codeine", "recommendation": "Avoid",
+                         "cpic_level": "1A"},
+                    ],
+                ),
+            ],
+        )
+        report = generator.generate(analysis)
         assert "Codeine" in report
-        assert "Clopidogrel" in report
+        assert "Avoid" in report
+
+    def test_poor_metabolizer_triggers_alert(self, generator, sample_patient_profile):
+        """Poor metabolizers should get HIGH alert level."""
+        analysis = AnalysisResult(
+            patient_profile=sample_patient_profile,
+            biological_age=BiologicalAgeResult(
+                chronological_age=45,
+                biological_age=45.0,
+                age_acceleration=0.0,
+                phenoage_score=0.002,
+            ),
+            pgx_results=[
+                PGxResult(
+                    gene="CYP2D6",
+                    star_alleles="*4/*4",
+                    phenotype=MetabolizerPhenotype.POOR,
+                    drugs_affected=[
+                        {"drug": "Codeine", "recommendation": "Avoid",
+                         "cpic_level": "1A"},
+                    ],
+                ),
+            ],
+        )
+        report = generator.generate(analysis)
+        assert "HIGH" in report
+        assert "CYP2D6" in report
 
 
 # =====================================================================
@@ -316,33 +312,37 @@ class TestPGxWarningFormatting:
 class TestMarkdownValidity:
     """Tests for markdown format validity."""
 
-    def test_report_is_string(self, full_analysis):
+    def test_report_is_string(self, generator, full_analysis):
         """Report should be a non-empty string."""
-        report = generate_report_markdown(full_analysis)
+        report = generator.generate(full_analysis)
         assert isinstance(report, str)
-        assert len(report) > 0
+        assert len(report) > 500
 
-    def test_headers_have_proper_format(self, full_analysis):
+    def test_headers_have_proper_format(self, generator, full_analysis):
         """All headers should use proper markdown # syntax."""
-        report = generate_report_markdown(full_analysis)
+        report = generator.generate(full_analysis)
         lines = report.split("\n")
-        headers = [l for l in lines if l.startswith("#")]
+        headers = [line for line in lines if line.startswith("#")]
         for h in headers:
-            # Header should have space after #
             assert h.startswith("# ") or h.startswith("## ") or h.startswith("### ")
 
-    def test_bullet_points_properly_formatted(self, full_analysis):
-        """Bullet points should use '- ' prefix."""
-        report = generate_report_markdown(full_analysis)
+    def test_tables_have_header_and_separator(self, generator, full_analysis):
+        """Markdown tables should have header rows and separator rows."""
+        report = generator.generate(full_analysis)
         lines = report.split("\n")
-        bullets = [l for l in lines if l.strip().startswith("-")]
-        assert len(bullets) > 0
-        for b in bullets:
-            stripped = b.strip()
-            assert stripped.startswith("- ") or stripped.startswith("- **")
+        table_headers = [line for line in lines if line.startswith("|") and "---" not in line]
+        table_seps = [line for line in lines if line.startswith("|") and "---" in line]
+        assert len(table_headers) > 0
+        assert len(table_seps) > 0
 
-    def test_no_unclosed_bold_markers(self, full_analysis):
+    def test_no_unclosed_bold_markers(self, generator, full_analysis):
         """Bold markers (**) should appear in pairs."""
-        report = generate_report_markdown(full_analysis)
+        report = generator.generate(full_analysis)
         bold_count = report.count("**")
         assert bold_count % 2 == 0
+
+    def test_footer_present(self, generator, full_analysis):
+        """Report should end with a footer disclaimer."""
+        report = generator.generate(full_analysis)
+        assert "HCLS AI Factory" in report
+        assert "healthcare provider" in report.lower()

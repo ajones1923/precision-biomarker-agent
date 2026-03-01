@@ -1,15 +1,17 @@
-"""Export Precision Biomarker Agent results to Markdown, JSON, PDF, and FHIR R4.
+"""Export Precision Biomarker Agent results to Markdown, JSON, PDF, CSV, and FHIR R4.
 
 Provides public functions:
   - export_markdown()            -- human-readable report with evidence tables
   - export_json()                -- machine-readable structured data
   - export_pdf()                 -- styled PDF report via reportlab Platypus
+  - export_csv()                 -- tabular CSV export for spreadsheet analysis
   - export_fhir_diagnostic_report() -- FHIR R4 DiagnosticReport JSON bundle
 
 Author: Adam Jones
 Date: March 2026
 """
 
+import csv
 import io
 import json
 import re
@@ -32,16 +34,18 @@ VERSION = "1.0.0"
 
 
 def generate_filename(extension: str) -> str:
-    """Generate a timestamped filename for export.
+    """Generate a timestamped filename with UUID suffix for export.
 
     Args:
         extension: File extension without dot (e.g. "md", "json")
 
     Returns:
-        Filename like biomarker_report_20260301T143025Z.md
+        Filename like biomarker_report_20260301T143025Z_a1b2.md
     """
+    import uuid
     ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    return f"biomarker_report_{ts}.{extension}"
+    suffix = uuid.uuid4().hex[:4]
+    return f"biomarker_report_{ts}_{suffix}.{extension}"
 
 
 def export_markdown(
@@ -202,7 +206,8 @@ def export_pdf(report_markdown: str) -> bytes:
     """Export a markdown report as a styled PDF.
 
     Uses reportlab Platypus for professional formatting with HCLS AI Factory
-    branding. Falls back to plain-text PDF if reportlab styles fail.
+    branding (NVIDIA green accent, dark header bars, zebra-striped tables).
+    Falls back to plain-text PDF if reportlab is not installed.
 
     Args:
         report_markdown: Complete markdown report string.
@@ -212,14 +217,14 @@ def export_pdf(report_markdown: str) -> bytes:
     """
     try:
         from reportlab.lib import colors
-        from reportlab.lib.enums import TA_LEFT
+        from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_JUSTIFY
         from reportlab.lib.pagesizes import letter
         from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
         from reportlab.lib.units import inch
         from reportlab.platypus import (
             BaseDocTemplate,
             Frame,
-            PageBreak,
+            KeepTogether,
             PageTemplate,
             Paragraph,
             Spacer,
@@ -227,37 +232,42 @@ def export_pdf(report_markdown: str) -> bytes:
             TableStyle,
         )
 
-        # Color palette
+        # Color palette (matches drug-discovery-pipeline branding)
         NVIDIA_GREEN = colors.HexColor("#76B900")
         DARK_BG = colors.HexColor("#1B1B2F")
+        HEADER_ROW_BG = colors.HexColor("#2d2d44")
+        ZEBRA_LIGHT = colors.HexColor("#f5f5f5")
+        BORDER_COLOR = colors.HexColor("#dddddd")
+        GRID_COLOR = colors.HexColor("#eeeeee")
         WHITE = colors.white
         TEXT_PRIMARY = colors.HexColor("#1E293B")
+        TEXT_MUTED = colors.HexColor("#94A3B8")
 
         PAGE_W, PAGE_H = letter
         MARGIN = 0.65 * inch
+        CONTENT_W = PAGE_W - 2 * MARGIN
 
         buf = io.BytesIO()
 
         def _first_page(canvas, doc):
             canvas.saveState()
-            # Header bar
             canvas.setFillColor(DARK_BG)
             canvas.rect(0, PAGE_H - 62, PAGE_W, 62, fill=1, stroke=0)
             canvas.setFillColor(NVIDIA_GREEN)
             canvas.rect(0, PAGE_H - 65, PAGE_W, 3, fill=1, stroke=0)
-            # Title
             canvas.setFillColor(WHITE)
             canvas.setFont("Helvetica-Bold", 18)
-            canvas.drawString(MARGIN, PAGE_H - 42, "Precision Biomarker Intelligence Report")
+            canvas.drawString(MARGIN, PAGE_H - 42,
+                              "Precision Biomarker Intelligence Report")
             canvas.setFont("Helvetica", 8)
             canvas.setFillColor(NVIDIA_GREEN)
             canvas.drawRightString(PAGE_W - MARGIN, PAGE_H - 30, f"v{VERSION}")
-            # Footer
             canvas.setFillColor(NVIDIA_GREEN)
             canvas.rect(0, 30, PAGE_W, 2, fill=1, stroke=0)
             canvas.setFont("Helvetica", 7)
-            canvas.setFillColor(colors.HexColor("#94A3B8"))
-            canvas.drawString(MARGIN, 18, "HCLS AI Factory -- Precision Biomarker Agent")
+            canvas.setFillColor(TEXT_MUTED)
+            canvas.drawString(MARGIN, 18,
+                              "HCLS AI Factory -- Precision Biomarker Agent")
             canvas.drawRightString(PAGE_W - MARGIN, 18, f"Page {doc.page}")
             canvas.restoreState()
 
@@ -270,17 +280,16 @@ def export_pdf(report_markdown: str) -> bytes:
             canvas.setFillColor(WHITE)
             canvas.setFont("Helvetica-Bold", 9)
             canvas.drawString(MARGIN, PAGE_H - 19, "Precision Biomarker Report")
-            # Footer
             canvas.setFillColor(NVIDIA_GREEN)
             canvas.rect(0, 30, PAGE_W, 2, fill=1, stroke=0)
             canvas.setFont("Helvetica", 7)
-            canvas.setFillColor(colors.HexColor("#94A3B8"))
+            canvas.setFillColor(TEXT_MUTED)
             canvas.drawRightString(PAGE_W - MARGIN, 18, f"Page {doc.page}")
             canvas.restoreState()
 
-        frame_first = Frame(MARGIN, MARGIN + 20, PAGE_W - 2 * MARGIN,
+        frame_first = Frame(MARGIN, MARGIN + 20, CONTENT_W,
                             PAGE_H - 2 * MARGIN - 65, id="first")
-        frame_later = Frame(MARGIN, MARGIN + 20, PAGE_W - 2 * MARGIN,
+        frame_later = Frame(MARGIN, MARGIN + 20, CONTENT_W,
                             PAGE_H - 2 * MARGIN - 30, id="later")
 
         doc = BaseDocTemplate(buf, pagesize=letter)
@@ -289,39 +298,184 @@ def export_pdf(report_markdown: str) -> bytes:
             PageTemplate(id="later", frames=[frame_later], onPage=_later_pages),
         ])
 
+        # -- Custom styles ------------------------------------------------
         styles = getSampleStyleSheet()
-        story = []
 
-        # Parse markdown into PDF elements
-        for line in report_markdown.split("\n"):
-            stripped = line.strip()
+        styles.add(ParagraphStyle(
+            name="SectionHeader",
+            parent=styles["Heading2"],
+            fontSize=14,
+            spaceBefore=16,
+            spaceAfter=8,
+            textColor=NVIDIA_GREEN,
+            fontName="Helvetica-Bold",
+        ))
+
+        styles.add(ParagraphStyle(
+            name="SubSection",
+            parent=styles["Heading3"],
+            fontSize=11,
+            spaceBefore=12,
+            spaceAfter=6,
+            textColor=TEXT_PRIMARY,
+            fontName="Helvetica-Bold",
+        ))
+
+        styles.add(ParagraphStyle(
+            name="CellText",
+            parent=styles["BodyText"],
+            fontSize=8,
+            leading=10,
+            fontName="Helvetica",
+        ))
+
+        styles.add(ParagraphStyle(
+            name="CellBold",
+            parent=styles["BodyText"],
+            fontSize=8,
+            leading=10,
+            fontName="Helvetica-Bold",
+        ))
+
+        def _md_to_rl(text: str) -> str:
+            """Convert markdown inline formatting to reportlab XML."""
+            text = re.sub(r'\*\*(.+?)\*\*', r'<b>\1</b>', text)
+            text = re.sub(r'\*(.+?)\*', r'<i>\1</i>', text)
+            return text
+
+        def _build_table(rows: List[List[str]]) -> Table:
+            """Build a styled reportlab Table from parsed markdown rows."""
+            cell_style = styles["CellText"]
+            header_style = styles["CellBold"]
+
+            # Convert cells to Paragraphs for text wrapping
+            table_data = []
+            for row_idx, row in enumerate(rows):
+                style = header_style if row_idx == 0 else cell_style
+                table_data.append([
+                    Paragraph(_md_to_rl(cell.strip()), style) for cell in row
+                ])
+
+            ncols = len(rows[0]) if rows else 1
+            col_width = CONTENT_W / ncols
+            tbl = Table(table_data, colWidths=[col_width] * ncols,
+                        repeatRows=1)
+
+            # Styling
+            cmds = [
+                # Header row
+                ("BACKGROUND", (0, 0), (-1, 0), HEADER_ROW_BG),
+                ("TEXTCOLOR", (0, 0), (-1, 0), WHITE),
+                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                ("FONTSIZE", (0, 0), (-1, 0), 8),
+                # Data rows
+                ("FONTSIZE", (0, 1), (-1, -1), 8),
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                ("TOPPADDING", (0, 0), (-1, -1), 4),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+                ("LEFTPADDING", (0, 0), (-1, -1), 6),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 6),
+                # Borders
+                ("BOX", (0, 0), (-1, -1), 0.75, BORDER_COLOR),
+                ("INNERGRID", (0, 0), (-1, -1), 0.5, GRID_COLOR),
+                ("LINEBELOW", (0, 0), (-1, 0), 1, NVIDIA_GREEN),
+            ]
+            # Zebra stripe data rows
+            for i in range(1, len(rows)):
+                if i % 2 == 0:
+                    cmds.append(("BACKGROUND", (0, i), (-1, i), ZEBRA_LIGHT))
+            tbl.setStyle(TableStyle(cmds))
+            return tbl
+
+        # -- Parse markdown into PDF story ---------------------------------
+        story: List = []
+        lines = report_markdown.split("\n")
+        i = 0
+        while i < len(lines):
+            stripped = lines[i].strip()
+
+            # Blank line
             if not stripped:
                 story.append(Spacer(1, 6))
-            elif stripped.startswith("# ") and not stripped.startswith("## "):
-                story.append(Paragraph(stripped[2:], styles["Title"]))
+                i += 1
+                continue
+
+            # H1 title
+            if stripped.startswith("# ") and not stripped.startswith("## "):
+                story.append(Paragraph(_md_to_rl(stripped[2:]), styles["Title"]))
                 story.append(Spacer(1, 12))
-            elif stripped.startswith("## "):
-                story.append(Spacer(1, 8))
-                story.append(Paragraph(stripped[3:], styles["Heading2"]))
-                story.append(Spacer(1, 6))
-            elif stripped.startswith("### "):
-                story.append(Paragraph(stripped[4:], styles["Heading3"]))
+                i += 1
+                continue
+
+            # H2 section header
+            if stripped.startswith("## "):
                 story.append(Spacer(1, 4))
-            elif stripped.startswith("- ") or stripped.startswith("* "):
-                bullet_text = stripped[2:]
-                # Convert **bold** to <b>bold</b>
-                bullet_text = re.sub(r'\*\*(.+?)\*\*', r'<b>\1</b>', bullet_text)
-                story.append(Paragraph(f"  \u2022 {bullet_text}", styles["BodyText"]))
-            elif stripped.startswith("|") and "---" not in stripped:
-                # Skip markdown table formatting rows
-                pass
-            elif stripped.startswith("---"):
-                story.append(Spacer(1, 12))
-            else:
-                # Regular paragraph -- convert markdown bold
-                text = re.sub(r'\*\*(.+?)\*\*', r'<b>\1</b>', stripped)
-                text = re.sub(r'\*(.+?)\*', r'<i>\1</i>', text)
-                story.append(Paragraph(text, styles["BodyText"]))
+                story.append(Paragraph(_md_to_rl(stripped[3:]),
+                                       styles["SectionHeader"]))
+                story.append(Spacer(1, 4))
+                i += 1
+                continue
+
+            # H3 subsection
+            if stripped.startswith("### "):
+                story.append(Paragraph(_md_to_rl(stripped[4:]),
+                                       styles["SubSection"]))
+                story.append(Spacer(1, 3))
+                i += 1
+                continue
+
+            # Markdown table: collect consecutive | rows
+            if stripped.startswith("|"):
+                table_rows: List[List[str]] = []
+                while i < len(lines) and lines[i].strip().startswith("|"):
+                    row_text = lines[i].strip()
+                    # Skip separator rows (|---|---|)
+                    if re.match(r'^\|[\s\-:|]+\|$', row_text):
+                        i += 1
+                        continue
+                    cells = [c.strip() for c in re.split(r'(?<!\\)\|', row_text)]
+                    # Remove empty first/last from leading/trailing |
+                    if cells and cells[0] == "":
+                        cells = cells[1:]
+                    if cells and cells[-1] == "":
+                        cells = cells[:-1]
+                    if cells:
+                        table_rows.append(cells)
+                    i += 1
+                if table_rows:
+                    story.append(KeepTogether([
+                        _build_table(table_rows),
+                        Spacer(1, 8),
+                    ]))
+                continue
+
+            # Bullet list items
+            if stripped.startswith("- ") or stripped.startswith("* "):
+                bullet_text = _md_to_rl(stripped[2:])
+                story.append(Paragraph(f"\u2022  {bullet_text}",
+                                       styles["BodyText"]))
+                i += 1
+                continue
+
+            # Numbered list items
+            if re.match(r'^\d+\.\s', stripped):
+                text = _md_to_rl(re.sub(r'^\d+\.\s', '', stripped))
+                num = stripped.split(".")[0]
+                story.append(Paragraph(f"{num}.  {text}",
+                                       styles["BodyText"]))
+                i += 1
+                continue
+
+            # Horizontal rule
+            if stripped.startswith("---"):
+                story.append(Spacer(1, 10))
+                i += 1
+                continue
+
+            # Regular paragraph
+            text = _md_to_rl(stripped)
+            story.append(Paragraph(text, styles["BodyText"]))
+            i += 1
 
         doc.build(story)
         return buf.getvalue()
@@ -329,6 +483,111 @@ def export_pdf(report_markdown: str) -> bytes:
     except ImportError:
         # Fallback: plain text as bytes
         return report_markdown.encode("utf-8")
+
+
+def export_csv(analysis: AnalysisResult) -> bytes:
+    """Export analysis result as CSV for spreadsheet analysis.
+
+    Produces labeled sections: Patient Info, Biological Age, Disease
+    Trajectories, Pharmacogenomic Profile, Genotype Adjustments, and
+    Critical Alerts.
+
+    Args:
+        analysis: AnalysisResult from patient analysis.
+
+    Returns:
+        CSV content as UTF-8 bytes.
+    """
+    buf = io.StringIO()
+    writer = csv.writer(buf)
+    profile = analysis.patient_profile
+    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+
+    # -- Patient Info --
+    writer.writerow(["Section", "Field", "Value"])
+    writer.writerow(["Patient Info", "Patient ID", profile.patient_id])
+    writer.writerow(["Patient Info", "Age", profile.age])
+    writer.writerow(["Patient Info", "Sex", profile.sex])
+    writer.writerow(["Patient Info", "Generated", timestamp])
+    writer.writerow([])
+
+    # -- Biological Age --
+    ba = analysis.biological_age
+    writer.writerow(["Biological Age", "Chronological Age", ba.chronological_age])
+    writer.writerow(["Biological Age", "Biological Age (PhenoAge)",
+                     f"{ba.biological_age:.1f}"])
+    writer.writerow(["Biological Age", "Age Acceleration",
+                     f"{ba.age_acceleration:+.1f}"])
+    writer.writerow(["Biological Age", "Mortality Risk",
+                     f"{ba.mortality_risk:.4f}"])
+    if ba.grimage_score is not None:
+        writer.writerow(["Biological Age", "GrimAge Surrogate",
+                         f"{ba.grimage_score:.1f}"])
+    writer.writerow([])
+
+    # -- Aging Drivers --
+    if ba.aging_drivers:
+        writer.writerow(["Aging Drivers", "Biomarker", "Value", "Direction",
+                         "Contribution"])
+        for d in ba.aging_drivers:
+            writer.writerow([
+                "",
+                d.get("biomarker", d.get("marker", "")),
+                d.get("value", ""),
+                d.get("direction", ""),
+                d.get("contribution", ""),
+            ])
+        writer.writerow([])
+
+    # -- Disease Trajectories --
+    writer.writerow(["Disease Trajectories", "Disease", "Risk Level",
+                     "Est. Years to Onset", "Genetic Risk Factors",
+                     "Interventions"])
+    for traj in analysis.disease_trajectories:
+        years = (f"{traj.years_to_onset_estimate:.0f}"
+                 if traj.years_to_onset_estimate else "N/A")
+        factors = "; ".join(traj.genetic_risk_factors) or "None"
+        interventions = "; ".join(traj.intervention_recommendations) or "None"
+        writer.writerow(["", traj.disease.value, traj.risk_level.value,
+                         years, factors, interventions])
+    writer.writerow([])
+
+    # -- PGx Profile --
+    if analysis.pgx_results:
+        writer.writerow(["PGx Profile", "Gene", "Star Alleles", "Phenotype",
+                         "Drugs Affected"])
+        for pgx in analysis.pgx_results:
+            drugs = "; ".join(
+                d.get("drug", "") for d in pgx.drugs_affected
+            ) or "None"
+            writer.writerow(["", pgx.gene, pgx.star_alleles,
+                             pgx.phenotype.value, drugs])
+        writer.writerow([])
+
+    # -- Genotype Adjustments --
+    if analysis.genotype_adjustments:
+        writer.writerow(["Genotype Adjustments", "Biomarker", "Gene",
+                         "Genotype", "Standard Range", "Adjusted Range",
+                         "Rationale"])
+        for adj in analysis.genotype_adjustments:
+            writer.writerow(["", adj.biomarker, adj.gene, adj.genotype,
+                             adj.standard_range, adj.adjusted_range,
+                             adj.rationale])
+        writer.writerow([])
+
+    # -- Critical Alerts --
+    if analysis.critical_alerts:
+        writer.writerow(["Critical Alerts", "Alert"])
+        for alert in analysis.critical_alerts:
+            writer.writerow(["", alert])
+        writer.writerow([])
+
+    # -- Biomarker Values --
+    writer.writerow(["Biomarker Values", "Biomarker", "Value"])
+    for name, val in sorted(profile.biomarkers.items()):
+        writer.writerow(["", name, val])
+
+    return buf.getvalue().encode("utf-8")
 
 
 def export_fhir_diagnostic_report(
