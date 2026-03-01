@@ -16,11 +16,13 @@ Date: March 2026
 
 from __future__ import annotations
 
+import threading
 import time
 import uuid
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
+from loguru import logger
 from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel, Field
 
@@ -34,6 +36,7 @@ router = APIRouter(prefix="/v1/events", tags=["events"])
 _inbound_events: List[Dict[str, Any]] = []
 _outbound_alerts: List[Dict[str, Any]] = []
 _MAX_STORED_EVENTS = 1000
+_events_lock = threading.Lock()
 
 
 # =====================================================================
@@ -141,11 +144,12 @@ async def receive_cross_modal_event(event: CrossModalEvent, req: Request):
         "timestamp": timestamp,
         "status": "received",
     }
-    _inbound_events.append(record)
+    with _events_lock:
+        _inbound_events.append(record)
 
-    # Evict oldest events if store exceeds max size
-    if len(_inbound_events) > _MAX_STORED_EVENTS:
-        _inbound_events[:] = _inbound_events[-_MAX_STORED_EVENTS:]
+        # Evict oldest events if store exceeds max size
+        if len(_inbound_events) > _MAX_STORED_EVENTS:
+            _inbound_events[:] = _inbound_events[-_MAX_STORED_EVENTS:]
 
     # Determine actions based on event type
     actions_triggered = []
@@ -177,8 +181,17 @@ async def receive_cross_modal_event(event: CrossModalEvent, req: Request):
     else:
         actions_triggered.append("event_logged")
 
+    for action in actions_triggered:
+        logger.info(f"Cross-modal action triggered: {action} for patient {event.patient_id} (event_id={event_id})")
+
     record["status"] = "processed"
     record["actions_triggered"] = actions_triggered
+
+    # In production, these would publish to a message bus (Redis, Kafka, etc.)
+    # Publish to app.state event queue if available
+    event_queue = getattr(req.app.state, "event_queue", None)
+    if event_queue is not None:
+        event_queue.append(record)
 
     return CrossModalEventResponse(
         event_id=event_id,
@@ -225,11 +238,12 @@ async def send_biomarker_alert(alert: BiomarkerAlert, req: Request):
         "timestamp": timestamp,
         "status": "sent",
     }
-    _outbound_alerts.append(record)
+    with _events_lock:
+        _outbound_alerts.append(record)
 
-    # Evict oldest alerts if store exceeds max size
-    if len(_outbound_alerts) > _MAX_STORED_EVENTS:
-        _outbound_alerts[:] = _outbound_alerts[-_MAX_STORED_EVENTS:]
+        # Evict oldest alerts if store exceeds max size
+        if len(_outbound_alerts) > _MAX_STORED_EVENTS:
+            _outbound_alerts[:] = _outbound_alerts[-_MAX_STORED_EVENTS:]
 
     # In production: publish to message bus
     # await message_bus.publish(alert.target_agent, record)
@@ -253,7 +267,8 @@ async def list_inbound_events(
 
     Supports filtering by patient_id and event_type.
     """
-    filtered = _inbound_events
+    with _events_lock:
+        filtered = list(_inbound_events)
     if patient_id:
         filtered = [e for e in filtered if e.get("patient_id") == patient_id]
     if event_type:
@@ -285,7 +300,8 @@ async def list_outbound_alerts(
 
     Supports filtering by patient_id and alert_type.
     """
-    filtered = _outbound_alerts
+    with _events_lock:
+        filtered = list(_outbound_alerts)
     if patient_id:
         filtered = [e for e in filtered if e.get("patient_id") == patient_id]
     if alert_type:

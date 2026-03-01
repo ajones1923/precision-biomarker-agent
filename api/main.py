@@ -231,9 +231,25 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=_cors_origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization", "X-API-Key", "Accept"],
 )
+
+
+
+# -- API key authentication middleware --
+@app.middleware("http")
+async def _check_api_key(request: Request, call_next):
+    """Validate API key if API_KEY is configured in settings."""
+    api_key = getattr(settings, "API_KEY", None)
+    if api_key:
+        # Skip auth for health, metrics, and docs endpoints
+        skip_paths = {"/health", "/metrics", "/docs", "/openapi.json", "/redoc"}
+        if request.url.path not in skip_paths:
+            provided_key = request.headers.get("X-API-Key", "")
+            if provided_key != api_key:
+                return JSONResponse(status_code=401, content={"detail": "Invalid or missing API key"})
+    return await call_next(request)
 
 
 # -- Request size limit middleware --

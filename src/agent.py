@@ -5,7 +5,7 @@ VAST AI OS AgentEngine model. The agent integrates four analysis modules
 (biological age, disease trajectory, pharmacogenomics, genotype adjustment)
 alongside the multi-collection RAG engine.
 
-Key differences from CAR-T Intelligence Agent:
+Key differences from other Precision Biomarker Agent designs:
 - Integrates 4 analysis modules alongside RAG (not RAG-only)
 - Patient profile drives module execution (biological age, trajectories, PGx)
 - Critical alerts extracted across all analysis results
@@ -27,6 +27,8 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Dict, List, Optional
 
+from loguru import logger
+
 from .biological_age import BiologicalAgeCalculator
 from .disease_trajectory import DiseaseTrajectoryAnalyzer
 from .pharmacogenomics import PharmacogenomicMapper
@@ -41,6 +43,7 @@ from .models import (
     DiseaseCategory,
     DiseaseTrajectoryResult,
     GenotypeAdjustmentResult,
+    MetabolizerPhenotype,
     PatientProfile,
     PGxResult,
     RiskLevel,
@@ -116,6 +119,8 @@ class PrecisionBiomarkerAgent:
         Returns:
             AgentResponse with answer, evidence, and analysis results.
         """
+        logger.info(f"Agent run started: question='{question[:80]}...', has_profile={patient_profile is not None}")
+
         # Phase 1: If patient profile provided, run analysis modules
         analysis = None
         if patient_profile:
@@ -181,6 +186,10 @@ class PrecisionBiomarkerAgent:
         Returns:
             AnalysisResult combining all sub-analyses with critical alerts.
         """
+        logger.info(f"Analyzing patient {profile.patient_id}: age={profile.age}, sex={profile.sex}, "
+                     f"biomarkers={len(profile.biomarkers)}, genotypes={len(profile.genotypes)}, "
+                     f"star_alleles={len(profile.star_alleles)}")
+
         # 1. Biological age calculation
         bio_age_raw = self.bio_age.calculate(profile.age, profile.biomarkers)
         bio_age = BiologicalAgeResult(
@@ -196,18 +205,80 @@ class PrecisionBiomarkerAgent:
             aging_drivers=bio_age_raw.get("phenoage", {}).get("top_aging_drivers", []),
         )
 
-        # 2. Disease trajectory analysis
-        trajectories = self.trajectory.analyze_all(
+        # 2. Disease trajectory analysis (returns List[Dict], convert to model objects)
+        trajectory_dicts = self.trajectory.analyze_all(
             profile.biomarkers, profile.genotypes, profile.age, profile.sex,
         )
+        # Map disease_trajectory.py disease strings to DiseaseCategory enum values
+        _disease_str_map = {
+            "type2_diabetes": "diabetes",
+        }
+        trajectories: List[DiseaseTrajectoryResult] = []
+        for td in trajectory_dicts:
+            try:
+                disease_str = td.get("disease", "")
+                disease_str = _disease_str_map.get(disease_str, disease_str)
+                disease = DiseaseCategory(disease_str) if disease_str in [e.value for e in DiseaseCategory] else None
+                if disease is None:
+                    continue
+                risk_str = td.get("risk_level", "LOW").lower()
+                risk_level = RiskLevel(risk_str) if risk_str in [e.value for e in RiskLevel] else RiskLevel.NORMAL
+                # Extract genetic risk factor labels from list of dicts
+                genetic_factors = [
+                    f"{grf.get('gene', '')} {grf.get('genotype', '')}"
+                    for grf in td.get("genetic_risk_factors", [])
+                ]
+                trajectories.append(DiseaseTrajectoryResult(
+                    disease=disease,
+                    risk_level=risk_level,
+                    current_markers=td.get("current_markers", {}),
+                    genetic_risk_factors=genetic_factors,
+                    years_to_onset_estimate=td.get("years_to_onset_estimate"),
+                    intervention_recommendations=td.get("recommendations", []),
+                ))
+            except Exception:
+                pass  # Skip malformed trajectory results
 
-        # 3. Pharmacogenomic mapping
-        pgx_results = self.pgx.map_all(profile.star_alleles, profile.genotypes)
+        # 3. Pharmacogenomic mapping (returns Dict, convert to PGxResult model objects)
+        pgx_raw = self.pgx.map_all(profile.star_alleles, profile.genotypes)
+        pgx_results: List[PGxResult] = []
+        for gr in pgx_raw.get("gene_results", []):
+            try:
+                phenotype_str = gr.get("phenotype", "normal_metabolizer")
+                if phenotype_str is None:
+                    continue
+                # Normalize phenotype string to enum value
+                phenotype_val = phenotype_str.lower().replace(" ", "_").replace("-", "_")
+                phenotype = MetabolizerPhenotype(phenotype_val) if phenotype_val in [e.value for e in MetabolizerPhenotype] else MetabolizerPhenotype.NORMAL
+                pgx_results.append(PGxResult(
+                    gene=gr.get("gene", ""),
+                    star_alleles=gr.get("star_alleles", "") or "",
+                    phenotype=phenotype,
+                    drugs_affected=gr.get("affected_drugs", []),
+                ))
+            except Exception:
+                pass  # Skip malformed PGx results
 
-        # 4. Genotype-adjusted reference ranges
-        adjustments = self.adjuster.adjust_all(
+        # 4. Genotype-adjusted reference ranges (returns Dict, convert to model objects)
+        adj_raw = self.adjuster.adjust_all(
             profile.biomarkers, profile.genotypes,
         )
+        adjustments: List[GenotypeAdjustmentResult] = []
+        for adj in adj_raw.get("adjustments", []):
+            try:
+                std_range = adj.get("standard_range", {})
+                adj_range = adj.get("adjusted_range", {})
+                unit = adj.get("unit", "")
+                adjustments.append(GenotypeAdjustmentResult(
+                    biomarker=adj.get("biomarker", ""),
+                    standard_range=f"{std_range.get('lower', '')}-{std_range.get('upper', '')} {unit}".strip(),
+                    adjusted_range=f"{adj_range.get('lower', '')}-{adj_range.get('upper', '')} {unit}".strip(),
+                    genotype=adj.get("genotype_value", ""),
+                    gene=adj.get("gene_display_name", ""),
+                    rationale=adj.get("rationale", ""),
+                ))
+            except Exception:
+                pass  # Skip malformed adjustment results
 
         # 5. Extract critical alerts
         critical_alerts = self._extract_critical_alerts(
@@ -341,6 +412,8 @@ class PrecisionBiomarkerAgent:
         Returns:
             List of critical alert strings.
         """
+        logger.info(f"Extracting critical alerts: trajectories={len(trajectories)}, pgx_results={len(pgx_results)}")
+
         alerts = []
 
         # Biological age alerts

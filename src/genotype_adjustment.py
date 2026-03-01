@@ -4,6 +4,16 @@ Adjusts standard biomarker reference ranges based on individual genotype,
 enabling earlier detection of clinically meaningful deviations. Pure
 computation — no LLM or database calls.
 
+NOTE: Reference ranges are currently static and do not account for
+age-specific or ethnicity-specific variations. Population-level norms
+may differ by age group (e.g., pediatric vs. geriatric) and ancestry
+(e.g., ferritin reference ranges differ across ethnic groups). These
+adjustments should be layered in future versions.
+
+TODO: Implement age-stratified and ethnicity-stratified reference range
+adjustments. See PMID:31504418 (ESC/EAS guidelines discuss population
+differences) and PMID:30586774 (ACC/AHA note race-based risk factors).
+
 Author: Adam Jones
 Date: March 2026
 """
@@ -12,12 +22,16 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from loguru import logger
 
+from src.knowledge import GENOTYPE_THRESHOLDS
+
 
 # ---------------------------------------------------------------------------
 # Adjustment rule definitions: genotype -> biomarker reference range shifts
 # ---------------------------------------------------------------------------
 
 ADJUSTMENT_RULES = {
+    # Romeo et al. 2008 PMID:18820127; Sookoian & Pirola 2011 PMID:21520172
+    # ALT thresholds: Prati et al. 2002 PMID:12029600
     "PNPLA3_rs738409": {
         "display_name": "PNPLA3 (rs738409)",
         "description": "Patatin-like phospholipase domain-containing 3 — hepatic lipid metabolism",
@@ -25,14 +39,14 @@ ADJUSTMENT_RULES = {
         "affected_biomarkers": {
             "alt": {
                 "unit": "U/L",
-                "standard_range": {"lower": 7, "upper": 56},
+                "standard_range": {"lower": 7, "upper": GENOTYPE_THRESHOLDS["PNPLA3_alt_upper"]["CC"]},  # Prati et al. 2002 PMID:12029600
                 "adjustments": {
                     "CC": {
-                        "adjusted_range": {"lower": 7, "upper": 56},
+                        "adjusted_range": {"lower": 7, "upper": GENOTYPE_THRESHOLDS["PNPLA3_alt_upper"]["CC"]},
                         "rationale": "No PNPLA3 risk alleles. Standard ALT reference range applies.",
                     },
                     "CG": {
-                        "adjusted_range": {"lower": 7, "upper": 45},
+                        "adjusted_range": {"lower": 7, "upper": GENOTYPE_THRESHOLDS["PNPLA3_alt_upper"]["CG"]},
                         "rationale": (
                             "PNPLA3 CG heterozygote: ~1.5x increased NAFLD risk. "
                             "ALT upper limit adjusted to 45 U/L for earlier detection "
@@ -40,7 +54,7 @@ ADJUSTMENT_RULES = {
                         ),
                     },
                     "GG": {
-                        "adjusted_range": {"lower": 7, "upper": 35},
+                        "adjusted_range": {"lower": 7, "upper": GENOTYPE_THRESHOLDS["PNPLA3_alt_upper"]["GG"]},
                         "rationale": (
                             "PNPLA3 GG homozygote: 2-3x increased NAFLD risk. "
                             "ALT upper limit adjusted to 35 U/L. Values above this "
@@ -52,6 +66,8 @@ ADJUSTMENT_RULES = {
             },
         },
     },
+    # Florez et al. 2012 PMID:22399527; Grant et al. 2006 PMID:16415884
+    # ADA Standards of Care 2024; PMID:38078589
     "TCF7L2_rs7903146": {
         "display_name": "TCF7L2 (rs7903146)",
         "description": "Transcription factor 7-like 2 — beta-cell function and glucose homeostasis",
@@ -59,14 +75,14 @@ ADJUSTMENT_RULES = {
         "affected_biomarkers": {
             "fasting_glucose": {
                 "unit": "mg/dL",
-                "standard_range": {"lower": 70, "upper": 100},
+                "standard_range": {"lower": 70, "upper": GENOTYPE_THRESHOLDS["TCF7L2_fasting_glucose"][0]},  # ADA Standards of Care 2024; PMID:38078589
                 "adjustments": {
                     "CC": {
-                        "adjusted_range": {"lower": 70, "upper": 100},
+                        "adjusted_range": {"lower": 70, "upper": GENOTYPE_THRESHOLDS["TCF7L2_fasting_glucose"][0]},
                         "rationale": "No TCF7L2 risk alleles. Standard fasting glucose range applies.",
                     },
                     "CT": {
-                        "adjusted_range": {"lower": 70, "upper": 95},
+                        "adjusted_range": {"lower": 70, "upper": GENOTYPE_THRESHOLDS["TCF7L2_fasting_glucose"][1]},
                         "rationale": (
                             "TCF7L2 CT heterozygote: ~1.4x increased T2D risk. "
                             "Fasting glucose threshold tightened to 95 mg/dL for "
@@ -74,7 +90,7 @@ ADJUSTMENT_RULES = {
                         ),
                     },
                     "TT": {
-                        "adjusted_range": {"lower": 70, "upper": 90},
+                        "adjusted_range": {"lower": 70, "upper": GENOTYPE_THRESHOLDS["TCF7L2_fasting_glucose"][2]},
                         "rationale": (
                             "TCF7L2 TT homozygote: ~2x increased T2D risk (strongest "
                             "common genetic risk factor for T2D). Fasting glucose "
@@ -86,21 +102,21 @@ ADJUSTMENT_RULES = {
             },
             "hba1c": {
                 "unit": "%",
-                "standard_range": {"lower": 4.0, "upper": 6.0},
+                "standard_range": {"lower": 4.0, "upper": GENOTYPE_THRESHOLDS["TCF7L2_hba1c"][0]},  # ADA Standards of Care 2024; PMID:38078589
                 "adjustments": {
                     "CC": {
-                        "adjusted_range": {"lower": 4.0, "upper": 6.0},
+                        "adjusted_range": {"lower": 4.0, "upper": GENOTYPE_THRESHOLDS["TCF7L2_hba1c"][0]},
                         "rationale": "No TCF7L2 risk alleles. Standard HbA1c range applies.",
                     },
                     "CT": {
-                        "adjusted_range": {"lower": 4.0, "upper": 5.8},
+                        "adjusted_range": {"lower": 4.0, "upper": GENOTYPE_THRESHOLDS["TCF7L2_hba1c"][1]},
                         "rationale": (
                             "TCF7L2 CT heterozygote: HbA1c threshold tightened to 5.8%. "
                             "Earlier intervention recommended given genetic predisposition."
                         ),
                     },
                     "TT": {
-                        "adjusted_range": {"lower": 4.0, "upper": 5.5},
+                        "adjusted_range": {"lower": 4.0, "upper": GENOTYPE_THRESHOLDS["TCF7L2_hba1c"][2]},
                         "rationale": (
                             "TCF7L2 TT homozygote: HbA1c threshold tightened to 5.5%. "
                             "HbA1c 5.5-5.7% in this genotype warrants proactive lifestyle "
@@ -111,6 +127,8 @@ ADJUSTMENT_RULES = {
             },
         },
     },
+    # Bennet et al. 2007 PMID:17327455
+    # ACC/AHA 2019 Cholesterol Guideline PMID:30586774
     "APOE": {
         "display_name": "APOE",
         "description": "Apolipoprotein E — lipid transport and Alzheimer's disease risk",
@@ -118,7 +136,7 @@ ADJUSTMENT_RULES = {
         "affected_biomarkers": {
             "ldl_c": {
                 "unit": "mg/dL",
-                "standard_range": {"lower": 0, "upper": 130},
+                "standard_range": {"lower": 0, "upper": 130},  # ACC/AHA 2019 Cholesterol Guideline PMID:30586774
                 "adjustments": {
                     "E2/E2": {
                         "adjusted_range": {"lower": 0, "upper": 130},
@@ -166,6 +184,8 @@ ADJUSTMENT_RULES = {
             },
         },
     },
+    # Panicker et al. 2009 PMID:19820026; Castagna et al. 2017 PMID:28100792
+    # ATA 2017 Guidelines PMID:28056690
     "DIO2_rs225014": {
         "display_name": "DIO2 (rs225014, Thr92Ala)",
         "description": "Type 2 deiodinase — T4 to T3 conversion in tissues",
@@ -173,14 +193,14 @@ ADJUSTMENT_RULES = {
         "affected_biomarkers": {
             "tsh": {
                 "unit": "mIU/L",
-                "standard_range": {"lower": 0.4, "upper": 4.0},
+                "standard_range": {"lower": 0.4, "upper": GENOTYPE_THRESHOLDS["DIO2_tsh_upper"]["GG"]},  # ATA 2017 Guidelines PMID:28056690
                 "adjustments": {
                     "GG": {
-                        "adjusted_range": {"lower": 0.4, "upper": 4.0},
+                        "adjusted_range": {"lower": 0.4, "upper": GENOTYPE_THRESHOLDS["DIO2_tsh_upper"]["GG"]},
                         "rationale": "DIO2 GG (Thr/Thr): Normal T4-to-T3 conversion. Standard TSH range applies.",
                     },
                     "GA": {
-                        "adjusted_range": {"lower": 0.4, "upper": 3.5},
+                        "adjusted_range": {"lower": 0.4, "upper": GENOTYPE_THRESHOLDS["DIO2_tsh_upper"]["GA"]},
                         "rationale": (
                             "DIO2 GA (Thr/Ala) heterozygote: Mildly impaired T4-to-T3 "
                             "conversion. TSH upper limit adjusted to 3.5 mIU/L. "
@@ -188,7 +208,7 @@ ADJUSTMENT_RULES = {
                         ),
                     },
                     "AA": {
-                        "adjusted_range": {"lower": 0.4, "upper": 3.0},
+                        "adjusted_range": {"lower": 0.4, "upper": GENOTYPE_THRESHOLDS["DIO2_tsh_upper"]["AA"]},
                         "rationale": (
                             "DIO2 AA (Ala/Ala) homozygote: Significantly impaired T4-to-T3 "
                             "conversion. TSH upper limit adjusted to 3.0 mIU/L. Patient "
@@ -228,6 +248,8 @@ ADJUSTMENT_RULES = {
             },
         },
     },
+    # WHO Ferritin Guidelines 2020; EASL HFE Guidelines PMID:20471131
+    # Adams et al. 2005 PMID:15729334; European Clinical Practice Guidelines PMID:20471131
     "HFE_rs1800562": {
         "display_name": "HFE (rs1800562, C282Y)",
         "description": "Homeostatic iron regulator — hereditary hemochromatosis",
@@ -235,8 +257,8 @@ ADJUSTMENT_RULES = {
         "affected_biomarkers": {
             "ferritin": {
                 "unit": "ng/mL",
-                "standard_range_male": {"lower": 30, "upper": 400},
-                "standard_range_female": {"lower": 15, "upper": 150},
+                "standard_range_male": {"lower": 30, "upper": 400},  # WHO Ferritin Guidelines 2020; EASL HFE Guidelines PMID:20471131
+                "standard_range_female": {"lower": 15, "upper": 150},  # WHO Ferritin Guidelines 2020; EASL HFE Guidelines PMID:20471131
                 "adjustments_male": {
                     "GG": {
                         "adjusted_range": {"lower": 30, "upper": 400},
@@ -288,6 +310,7 @@ ADJUSTMENT_RULES = {
             },
         },
     },
+    # Harris & von Schacky 2004 PMID:14676843 (Omega-3 Index 8% target)
     "FADS1_rs174546": {
         "display_name": "FADS1 (rs174546)",
         "description": "Fatty acid desaturase 1 — omega-3/omega-6 conversion",
@@ -295,7 +318,7 @@ ADJUSTMENT_RULES = {
         "affected_biomarkers": {
             "omega3_index": {
                 "unit": "%",
-                "standard_range": {"lower": 8, "upper": 12},
+                "standard_range": {"lower": 8, "upper": 12},  # Harris & von Schacky 2004 PMID:14676843
                 "adjustments": {
                     "TT": {
                         "adjusted_range": {"lower": 8, "upper": 12},
@@ -388,6 +411,7 @@ class GenotypeAdjuster:
 
         adjustment = adjustments.get(genotype_value)
         if not adjustment:
+            logger.debug(f"No genotype adjustment found for {biomarker}/{genotype_value}. Skipping.")
             return None
 
         adjusted_range = adjustment["adjusted_range"]

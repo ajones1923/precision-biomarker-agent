@@ -261,7 +261,7 @@ def pharmacogenomics(request: PGxRequest, req: Request):
         critical = []
         for pgx_result in results.get("gene_results", []):
             phenotype = pgx_result.get("phenotype", "")
-            if phenotype and phenotype.lower().replace(" ", "_") in ("poor_metabolizer", "ultra-rapid_metabolizer", "poor", "ultra_rapid"):
+            if phenotype and phenotype.lower().replace(" ", "_").replace("-", "_") in ("poor_metabolizer", "ultra_rapid_metabolizer", "poor", "ultra_rapid"):
                 critical.append(
                     f"{pgx_result.get('gene', '')} {pgx_result.get('star_alleles', '')}: {phenotype}"
                 )
@@ -347,17 +347,21 @@ def rag_query_stream(request: QueryRequest, req: Request):
 
     def event_generator():
         import json as _json
-        for chunk in engine.query_stream(
-            question=request.question,
-            patient_profile=patient_profile,
-            collections_filter=request.collections,
-            year_min=request.year_min,
-            year_max=request.year_max,
-        ):
-            if chunk["type"] == "token":
-                yield f"data: {_json.dumps({'type': 'token', 'content': chunk['content']})}\n\n"
-            elif chunk["type"] == "done":
-                yield f"data: {_json.dumps({'type': 'done'})}\n\n"
+        try:
+            for chunk in engine.query_stream(
+                question=request.question,
+                patient_profile=patient_profile,
+                collections_filter=request.collections,
+                year_min=request.year_min,
+                year_max=request.year_max,
+            ):
+                if chunk["type"] == "token":
+                    yield f"data: {_json.dumps({'type': 'token', 'content': chunk['content']})}\n\n"
+                elif chunk["type"] == "done":
+                    yield f"data: {_json.dumps({'type': 'done'})}\n\n"
+        except Exception as e:
+            logger.exception(f"Streaming query failed: {e}")
+            yield f"data: {_json.dumps({'type': 'error', 'message': str(e)})}\n\n"
 
     return StreamingResponse(
         event_generator(),

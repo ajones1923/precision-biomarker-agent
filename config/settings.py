@@ -113,6 +113,9 @@ class PrecisionBiomarkerSettings(BaseSettings):
     # ── Request Limits ──
     MAX_REQUEST_SIZE_MB: int = 10
 
+    # ── Authentication ──
+    API_KEY: str = ""  # Optional API key; empty = no auth required
+
     model_config = SettingsConfigDict(
         env_prefix="BIOMARKER_",
         case_sensitive=False,

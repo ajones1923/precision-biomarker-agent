@@ -12,6 +12,9 @@ Date: March 2026
 from __future__ import annotations
 
 import io
+import json
+import re
+import threading
 import time
 
 from loguru import logger
@@ -32,6 +35,7 @@ router = APIRouter(prefix="/v1/report", tags=["reports"])
 
 _report_store: Dict[str, Dict[str, Any]] = {}
 _MAX_STORED_REPORTS = 100
+_report_lock = threading.Lock()
 
 
 # =====================================================================
@@ -122,23 +126,24 @@ def generate_report(request: ReportGenerateRequest, req: Request):
         report_id = uuid.uuid4().hex[:12]
         timestamp = datetime.now(timezone.utc).isoformat()
 
-        _report_store[report_id] = {
-            "report_id": report_id,
-            "patient_id": profile.patient_id,
-            "markdown": report_markdown,
-            "analysis": analysis,
-            "profile": profile,
-            "generated_at": timestamp,
-        }
+        with _report_lock:
+            _report_store[report_id] = {
+                "report_id": report_id,
+                "patient_id": profile.patient_id,
+                "markdown": report_markdown,
+                "analysis": analysis,
+                "profile": profile,
+                "generated_at": timestamp,
+            }
 
-        # Evict oldest reports if store exceeds max size
-        if len(_report_store) > _MAX_STORED_REPORTS:
-            oldest_keys = sorted(
-                _report_store.keys(),
-                key=lambda k: _report_store[k].get("generated_at", ""),
-            )[:len(_report_store) - _MAX_STORED_REPORTS]
-            for k in oldest_keys:
-                del _report_store[k]
+            # Evict oldest reports if store exceeds max size
+            if len(_report_store) > _MAX_STORED_REPORTS:
+                oldest_keys = sorted(
+                    _report_store.keys(),
+                    key=lambda k: _report_store[k].get("generated_at", ""),
+                )[:len(_report_store) - _MAX_STORED_REPORTS]
+                for k in oldest_keys:
+                    del _report_store[k]
 
         # Format output
         if request.format == "json":
@@ -178,18 +183,20 @@ def download_pdf(report_id: str):
     The report must have been generated first via POST /v1/report/generate.
     Uses reportlab for professional PDF formatting with HCLS AI Factory branding.
     """
-    if report_id not in _report_store:
-        raise HTTPException(status_code=404, detail=f"Report '{report_id}' not found")
+    with _report_lock:
+        if report_id not in _report_store:
+            raise HTTPException(status_code=404, detail=f"Report '{report_id}' not found")
+        stored = _report_store[report_id]
+        markdown = stored["markdown"]
 
     try:
         from src.export import export_pdf
 
-        stored = _report_store[report_id]
-        markdown = stored["markdown"]
         pdf_bytes = export_pdf(markdown)
 
         patient_id = stored["patient_id"]
-        filename = f"biomarker_report_{patient_id}_{report_id}.pdf"
+        safe_patient_id = re.sub(r'[^a-zA-Z0-9_-]', '', patient_id)[:50]
+        filename = f"biomarker_report_{safe_patient_id}_{report_id}.pdf"
 
         return StreamingResponse(
             io.BytesIO(pdf_bytes),
@@ -245,7 +252,7 @@ def export_fhir(request: FHIRExportRequest, req: Request):
                 "format": "fhir_r4",
                 "resource_type": "Bundle",
                 "patient_id": profile.patient_id,
-                "bundle": __import__("json").loads(fhir_json),
+                "bundle": json.loads(fhir_json),
             }
         )
 

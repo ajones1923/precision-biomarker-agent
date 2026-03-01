@@ -721,7 +721,7 @@ with tab2:
                 "wbc": t2_wbc,
             }
 
-            result = engine["bio_age_calc"].calculate_phenoage(
+            result = engine["bio_age_calc"].calculate(
                 chronological_age=float(t2_age),
                 biomarkers=pheno_biomarkers,
             )

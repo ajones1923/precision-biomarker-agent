@@ -20,6 +20,20 @@ from typing import Any, Dict, List, Optional
 
 
 # =============================================================================
+# 0. SHARED CLINICAL THRESHOLDS -- for cross-module consistency
+# =============================================================================
+
+# Shared clinical thresholds for cross-module consistency
+# Florez et al. 2012 PMID:22399527; Grant et al. 2006 PMID:16415884
+GENOTYPE_THRESHOLDS = {
+    "TCF7L2_hba1c": {0: 6.0, 1: 5.8, 2: 5.5},  # risk_alleles: threshold (%)
+    "TCF7L2_fasting_glucose": {0: 100, 1: 95, 2: 90},  # mg/dL
+    "PNPLA3_alt_upper": {"CC": 56, "CG": 45, "GG": 35},  # U/L; Romeo et al. 2008 PMID:18820127; Sookoian & Pirola 2011 PMID:21520172
+    "DIO2_tsh_upper": {"GG": 4.0, "GA": 3.5, "AA": 3.0},  # mIU/L; Panicker et al. 2009 PMID:19820026; Castagna et al. 2017 PMID:28100792
+}
+
+
+# =============================================================================
 # 1. BIOMARKER_DOMAINS -- 6 disease domain knowledge graphs
 # =============================================================================
 

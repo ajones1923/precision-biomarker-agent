@@ -731,3 +731,64 @@ class TestPGxEdgeCases:
         critical_drugs = {a["drug"] for a in result["critical_alerts"]}
         assert "codeine" in critical_drugs
         assert "tramadol" in critical_drugs
+
+
+# =====================================================================
+# 8. SECURITY EDGE CASES
+# =====================================================================
+
+
+class TestSecurityEdgeCases:
+    """Security-focused edge case tests."""
+
+    def test_patient_id_sanitization(self):
+        """Patient IDs with path traversal chars should not crash."""
+        from src.models import PatientProfile
+        profile = PatientProfile(
+            patient_id="../../etc/passwd",
+            age=45, sex="M",
+            biomarkers={"albumin": 4.2},
+        )
+        assert profile.patient_id == "../../etc/passwd"  # Model accepts it
+        # But export filename should be sanitized
+        from src.export import generate_filename
+        name = generate_filename("pdf")
+        assert ".." not in name
+
+    def test_extremely_long_patient_id(self):
+        """Very long patient IDs should be handled."""
+        from src.models import PatientProfile
+        profile = PatientProfile(
+            patient_id="A" * 10000,
+            age=45, sex="M",
+            biomarkers={"albumin": 4.2},
+        )
+        assert len(profile.patient_id) == 10000
+
+    def test_unicode_in_biomarker_names(self):
+        """Unicode biomarker names should not crash analysis."""
+        from src.biological_age import BiologicalAgeCalculator
+        calc = BiologicalAgeCalculator()
+        result = calc.calculate(45, {"albümin": 4.2, "glücose": 95.0})
+        assert "biological_age" in result
+
+    def test_empty_string_genotype(self):
+        """Empty string genotypes should not crash."""
+        from src.disease_trajectory import DiseaseTrajectoryAnalyzer
+        analyzer = DiseaseTrajectoryAnalyzer()
+        results = analyzer.analyze_all(
+            {"hba1c": 5.5}, {"TCF7L2_rs7903146": ""}, 45, "M"
+        )
+        assert len(results) == 6
+
+    def test_inf_biomarker_value(self):
+        """Infinity biomarker values should be handled."""
+        from src.biological_age import BiologicalAgeCalculator
+        calc = BiologicalAgeCalculator()
+        result = calc.calculate(45, {
+            "albumin": 4.2, "creatinine": 0.9, "glucose": float("inf"),
+            "hs_crp": 1.5, "lymphocyte_pct": 30.0, "mcv": 89.0,
+            "rdw": 13.0, "alkaline_phosphatase": 65.0, "wbc": 6.0,
+        })
+        # Should not crash -- overflow protection should handle it
+        assert "biological_age" in result

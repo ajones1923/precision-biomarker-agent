@@ -439,6 +439,11 @@ class ReportGenerator:
     # -- Section 7: Interconnected Pathways --------------------------------
 
     def _section_7_interconnected_pathways(self, analysis: AnalysisResult) -> str:
+        # NOTE: Pathway connections are currently hardcoded based on known
+        # cross-domain interactions. In future versions these should be
+        # driven dynamically from the knowledge graph, allowing new pathway
+        # links to be discovered as the graph is enriched with clinical
+        # evidence and patient data.
         lines = [
             "## 7. Interconnected Pathways",
             "",
@@ -494,6 +499,34 @@ class ReportGenerator:
                 "**Pharmacogenomics -> Treatment Selection:** PGx profile must be considered "
                 "when selecting medications for any identified disease trajectories. "
                 "Metabolizer status affects drug efficacy and safety."
+            )
+
+        # Check for thyroid-cardiovascular connection
+        thyroid_risk = any(
+            t.disease.value == "thyroid" and t.risk_level in (RiskLevel.HIGH, RiskLevel.MODERATE)
+            for t in analysis.disease_trajectories
+        )
+        cardio_risk = any(
+            t.disease.value == "cardiovascular" and t.risk_level in (RiskLevel.HIGH, RiskLevel.MODERATE)
+            for t in analysis.disease_trajectories
+        )
+        if thyroid_risk and cardio_risk:
+            connections.append(
+                "**Thyroid <-> Cardiovascular:** TSH abnormalities directly affect lipid "
+                "metabolism. Subclinical hypothyroidism elevates LDL-C and triglycerides. "
+                "Optimizing thyroid function may improve cardiovascular lipid profile."
+            )
+
+        # Check for iron-liver connection
+        iron_risk = any(
+            t.disease.value == "iron" and t.risk_level in (RiskLevel.HIGH, RiskLevel.MODERATE)
+            for t in analysis.disease_trajectories
+        )
+        if iron_risk and liver_risk:
+            connections.append(
+                "**Iron <-> Liver:** Iron overload causes hepatic damage through oxidative "
+                "stress and can accelerate fibrosis progression. Ferritin and transferrin "
+                "saturation should be monitored alongside liver function markers."
             )
 
         if connections:

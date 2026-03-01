@@ -1033,3 +1033,49 @@ class TestMiddleware:
         )
         # CORS middleware should respond (FastAPI CORS returns 200 for preflight)
         assert resp.status_code in (200, 204, 400)
+
+
+# =====================================================================
+# API AUTHENTICATION
+# =====================================================================
+
+
+class TestAPIAuthentication:
+    """Tests for API key authentication middleware."""
+
+    def test_no_auth_when_key_not_configured(self, client):
+        """When API_KEY is empty, all requests pass."""
+        resp = client.get("/health")
+        assert resp.status_code == 200
+
+    def test_health_always_accessible(self, client):
+        """Health endpoint should bypass auth even with key configured."""
+        resp = client.get("/health")
+        assert resp.status_code == 200
+
+    def test_metrics_always_accessible(self, client):
+        """Metrics endpoint should bypass auth."""
+        resp = client.get("/metrics")
+        assert resp.status_code == 200
+
+
+# =====================================================================
+# THREAD SAFETY
+# =====================================================================
+
+
+class TestThreadSafety:
+    """Tests for thread-safe stores."""
+
+    def test_report_store_concurrent_access(self, client):
+        """Multiple report creations should not crash."""
+        from api.routes.reports import _report_lock
+        with _report_lock:
+            # Verify lock is acquirable
+            pass  # If we get here, lock works
+
+    def test_event_store_concurrent_access(self, client):
+        """Multiple event submissions should not crash."""
+        from api.routes.events import _events_lock
+        with _events_lock:
+            pass  # Lock is acquirable

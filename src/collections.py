@@ -815,6 +815,7 @@ class BiomarkerCollectionManager:
         self.port = port or int(os.environ.get("MILVUS_PORT", "19530"))
         self.embedding_dim = embedding_dim
         self._collections: Dict[str, Collection] = {}
+        self._executor = ThreadPoolExecutor(max_workers=11)
 
     def connect(self) -> None:
         """Connect to the Milvus server."""
@@ -826,8 +827,14 @@ class BiomarkerCollectionManager:
         )
         logger.info("Connected to Milvus")
 
+    def close(self):
+        """Shut down the thread pool executor."""
+        if hasattr(self, '_executor'):
+            self._executor.shutdown(wait=False)
+
     def disconnect(self) -> None:
         """Disconnect from the Milvus server."""
+        self.close()
         connections.disconnect("default")
         self._collections.clear()
         logger.info("Disconnected from Milvus")
@@ -1105,21 +1112,21 @@ class BiomarkerCollectionManager:
                 score_threshold=score_threshold,
             )
 
-        with ThreadPoolExecutor(max_workers=len(collections)) as executor:
-            futures = {
-                executor.submit(_search_one, name): name
-                for name in collections
-            }
-            for future in as_completed(futures):
-                coll_name = futures[future]
-                try:
-                    name, hits = future.result()
-                    all_results[name] = hits
-                except Exception as e:
-                    logger.warning(
-                        f"Search failed for collection '{coll_name}': {e}"
-                    )
-                    all_results[coll_name] = []
+        executor = self._executor
+        futures = {
+            executor.submit(_search_one, name): name
+            for name in collections
+        }
+        for future in as_completed(futures):
+            coll_name = futures[future]
+            try:
+                name, hits = future.result()
+                all_results[name] = hits
+            except Exception as e:
+                logger.warning(
+                    f"Search failed for collection '{coll_name}': {e}"
+                )
+                all_results[coll_name] = []
 
         total = sum(len(v) for v in all_results.values())
         logger.info(

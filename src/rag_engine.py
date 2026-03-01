@@ -153,6 +153,10 @@ class BiomarkerRAGEngine:
         # Optionally prepend conversation context for follow-up queries
         search_text = query.question
         if conversation_context:
+            # Limit context to prevent token overflow (rough estimate: 4 chars ≈ 1 token)
+            max_context_chars = 2000
+            if len(conversation_context) > max_context_chars:
+                conversation_context = conversation_context[-max_context_chars:]
             search_text = f"{conversation_context}\n\nCurrent question: {query.question}"
 
         # Step 1: Embed query

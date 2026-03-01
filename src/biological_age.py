@@ -57,6 +57,7 @@ UNIT_CONVERSIONS = {
 }
 
 # GrimAge surrogate markers and weights (simplified from Lu et al. 2019)
+# Lu et al. 2019 PMID:30669119; Hillary et al. 2020 PMID:32941527
 GRIMAGE_MARKERS = {
     "gdf15": {"weight": 0.15, "unit": "pg/mL", "ref_max": 1200.0},
     "cystatin_c": {"weight": 0.12, "unit": "mg/L", "ref_max": 1.0},
@@ -95,11 +96,15 @@ class BiologicalAgeCalculator:
             Dict with biological_age, age_acceleration, mortality_risk,
             and per-biomarker contributions.
         """
-        # Validate non-negative biomarker values
+        # Validate non-negative biomarker values — create sanitized copy
+        sanitized = {}
         for marker, val in biomarkers.items():
             if val is not None and val < 0:
                 logger.warning(f"Negative biomarker value: {marker}={val}. Setting to 0.")
-                biomarkers = {**biomarkers, marker: max(val, 0)}
+                sanitized[marker] = 0
+            else:
+                sanitized[marker] = val
+        biomarkers = sanitized
 
         # Handle hs_crp -> ln_crp transformation
         working = dict(biomarkers)
@@ -178,9 +183,10 @@ class BiologicalAgeCalculator:
         age_acceleration = biological_age - chronological_age
 
         # Classify mortality risk
-        if age_acceleration > 5:
+        # Levine et al. 2018 PMID:29676998; Liu et al. 2019 PMID:30567591
+        if age_acceleration > 5:  # Levine et al. 2018 PMID:29676998; Liu et al. 2019 PMID:30567591
             risk = "HIGH"
-        elif age_acceleration > 2:
+        elif age_acceleration > 2:  # Levine et al. 2018 PMID:29676998; Liu et al. 2019 PMID:30567591
             risk = "MODERATE"
         elif age_acceleration > -2:
             risk = "NORMAL"
@@ -268,7 +274,11 @@ class BiologicalAgeCalculator:
             "marker_details": marker_details,
             "markers_available": len(marker_details),
             "markers_total": len(GRIMAGE_MARKERS),
-            "note": "Surrogate estimation from plasma proteins. True GrimAge requires methylation data.",
+            "note": (
+                "Surrogate estimation from plasma proteins. True GrimAge requires "
+                "methylation data and includes smoking pack-years (a major component "
+                "not captured by plasma surrogates). Interpret with caution."
+            ),
         }
 
     def calculate(

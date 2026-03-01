@@ -15,6 +15,31 @@ from loguru import logger
 # ---------------------------------------------------------------------------
 # PGx gene configurations: star alleles -> phenotype -> drug recommendations
 # All mappings follow CPIC Level 1A guidelines
+#
+# Phenotype naming convention:
+#   - CYP enzymes (CYP2D6, CYP2C19, CYP2C9, TPMT, DPYD): use CPIC standard
+#     metabolizer terms: "Normal Metabolizer", "Intermediate Metabolizer",
+#     "Poor Metabolizer", "Ultra-rapid Metabolizer", "Rapid Metabolizer"
+#   - SLCO1B1: uses transporter function terms ("Normal Function",
+#     "Intermediate Function", "Poor Function") -- transport activity, not metabolism
+#   - MTHFR: uses enzyme activity terms ("Normal Activity",
+#     "Intermediate Activity", "Reduced Activity") -- folate enzyme activity
+#   - VKORC1: uses drug sensitivity terms ("Normal Sensitivity",
+#     "Intermediate Sensitivity", "High Sensitivity") -- warfarin target sensitivity
+#   - HLA genes (HLA-B*57:01, HLA-B*58:01): "Negative" / "Positive"
+#   - G6PD: "Normal" / "Intermediate" / "Deficient"
+#
+# Drug recommendation format:
+#   Each drug entry maps phenotype -> {recommendation, action, alert_level}
+#   - recommendation: Free-text clinical recommendation string
+#   - action: Clinical decision support category, one of:
+#       STANDARD_DOSING   -- no change needed
+#       DOSE_REDUCTION    -- reduce dose per recommendation
+#       DOSE_ADJUSTMENT   -- adjust dose (up or down) based on context
+#       CONSIDER_ALTERNATIVE -- current drug may work but alternative preferred
+#       AVOID             -- do not use this drug
+#       CONTRAINDICATED   -- absolute contraindication (FDA/EMA mandated)
+#   - alert_level: INFO (routine), WARNING (clinical review), CRITICAL (immediate action)
 # ---------------------------------------------------------------------------
 
 PGX_GENE_CONFIGS = {
@@ -581,15 +606,191 @@ PGX_GENE_CONFIGS = {
             },
         },
     },
+    # -----------------------------------------------------------------------
+    # DPYD — CPIC Level 1A for fluoropyrimidines (5-FU, capecitabine)
+    # Key variant: *2A (c.1905+1G>A, rs3918290) — most common pathogenic allele
+    # CPIC Guideline: Amstutz et al., Clin Pharmacol Ther, 2018
+    # NOTE for agent.py: Add critical alert for DPYD Poor Metabolizer —
+    #   fluoropyrimidines are CONTRAINDICATED (life-threatening toxicity).
+    #   Alert text: "DPYD *2A/*2A: 5-FU and capecitabine are CONTRAINDICATED
+    #   — risk of lethal DPD deficiency toxicity (mucositis, myelosuppression,
+    #   neurotoxicity, death)."
+    # -----------------------------------------------------------------------
+    "DPYD": {
+        "display_name": "DPYD",
+        "description": "Dihydropyrimidine dehydrogenase — fluoropyrimidine metabolism",
+        "allele_to_phenotype": {
+            "*1/*1": "Normal Metabolizer",
+            "*1/*2A": "Intermediate Metabolizer",
+            "*2A/*2A": "Poor Metabolizer",
+        },
+        "drug_recommendations": {
+            "5-fluorouracil": {
+                "Normal Metabolizer": {
+                    "recommendation": "Use 5-fluorouracil per standard dosing",
+                    "action": "STANDARD_DOSING",
+                    "alert_level": "INFO",
+                },
+                "Intermediate Metabolizer": {
+                    "recommendation": "Reduce 5-fluorouracil dose by 50%. DPYD *1/*2A carriers have partial DPD deficiency with increased risk of severe toxicity (mucositis, diarrhea, myelosuppression). Monitor closely",
+                    "action": "DOSE_REDUCTION",
+                    "alert_level": "WARNING",
+                },
+                "Poor Metabolizer": {
+                    "recommendation": "CONTRAINDICATED: Do NOT administer 5-fluorouracil. DPYD *2A/*2A — complete DPD deficiency. Life-threatening toxicity (severe mucositis, myelosuppression, neurotoxicity, death). Use alternative non-fluoropyrimidine regimen",
+                    "action": "CONTRAINDICATED",
+                    "alert_level": "CRITICAL",
+                },
+            },
+            "capecitabine": {
+                "Normal Metabolizer": {
+                    "recommendation": "Use capecitabine per standard dosing",
+                    "action": "STANDARD_DOSING",
+                    "alert_level": "INFO",
+                },
+                "Intermediate Metabolizer": {
+                    "recommendation": "Reduce capecitabine dose by 50%. DPYD *1/*2A carriers have partial DPD deficiency with increased risk of severe toxicity (hand-foot syndrome, diarrhea, myelosuppression). Monitor closely",
+                    "action": "DOSE_REDUCTION",
+                    "alert_level": "WARNING",
+                },
+                "Poor Metabolizer": {
+                    "recommendation": "CONTRAINDICATED: Do NOT administer capecitabine. DPYD *2A/*2A — complete DPD deficiency. Life-threatening toxicity (capecitabine is converted to 5-FU in vivo). Use alternative non-fluoropyrimidine regimen",
+                    "action": "CONTRAINDICATED",
+                    "alert_level": "CRITICAL",
+                },
+            },
+        },
+    },
+    # -----------------------------------------------------------------------
+    # G6PD — Important for rasburicase, dapsone, primaquine
+    # X-linked gene: males are hemizygous (normal or deficient),
+    # females can be heterozygous (intermediate).
+    # Uses genotype_field approach for simplicity.
+    # CPIC Guideline: Relling et al., Clin Pharmacol Ther, 2014
+    # NOTE for agent.py: Add critical alert for G6PD Deficient —
+    #   rasburicase is CONTRAINDICATED (risk of severe hemolytic anemia).
+    #   Alert text: "G6PD Deficient: Rasburicase is CONTRAINDICATED —
+    #   risk of severe hemolytic anemia and methemoglobinemia.
+    #   Dapsone and primaquine should also be avoided."
+    # -----------------------------------------------------------------------
+    "G6PD": {
+        "display_name": "G6PD",
+        "description": "Glucose-6-phosphate dehydrogenase — X-linked enzyme protecting against oxidative damage",
+        "genotype_field": "G6PD",
+        "genotype_to_phenotype": {
+            "normal": "Normal",
+            "Normal": "Normal",
+            "deficient": "Deficient",
+            "Deficient": "Deficient",
+            "intermediate": "Intermediate",
+            "Intermediate": "Intermediate",
+        },
+        "drug_recommendations": {
+            "rasburicase": {
+                "Normal": {
+                    "recommendation": "Use rasburicase per standard dosing for tumor lysis syndrome prophylaxis/treatment",
+                    "action": "STANDARD_DOSING",
+                    "alert_level": "INFO",
+                },
+                "Intermediate": {
+                    "recommendation": "Use rasburicase with caution in G6PD intermediate patients (heterozygous females). Monitor for hemolysis (LDH, haptoglobin, reticulocyte count, peripheral smear). Consider alternative urate-lowering strategy",
+                    "action": "CONSIDER_ALTERNATIVE",
+                    "alert_level": "WARNING",
+                },
+                "Deficient": {
+                    "recommendation": "CONTRAINDICATED: Do NOT administer rasburicase. G6PD deficiency — risk of severe hemolytic anemia and methemoglobinemia. Use alternative urate-lowering therapy (allopurinol, febuxostat with hydration)",
+                    "action": "CONTRAINDICATED",
+                    "alert_level": "CRITICAL",
+                },
+            },
+            "dapsone": {
+                "Normal": {
+                    "recommendation": "Use dapsone per standard dosing",
+                    "action": "STANDARD_DOSING",
+                    "alert_level": "INFO",
+                },
+                "Intermediate": {
+                    "recommendation": "Use dapsone with caution. Monitor for hemolysis (CBC, reticulocyte count, methemoglobin). Consider alternative prophylaxis (atovaquone, pentamidine)",
+                    "action": "CONSIDER_ALTERNATIVE",
+                    "alert_level": "WARNING",
+                },
+                "Deficient": {
+                    "recommendation": "AVOID dapsone — G6PD deficiency increases risk of dose-dependent hemolytic anemia. Use alternative agents (atovaquone for PCP prophylaxis, alternative for dermatitis herpetiformis)",
+                    "action": "AVOID",
+                    "alert_level": "CRITICAL",
+                },
+            },
+            "primaquine": {
+                "Normal": {
+                    "recommendation": "Use primaquine per standard dosing for P. vivax/ovale radical cure",
+                    "action": "STANDARD_DOSING",
+                    "alert_level": "INFO",
+                },
+                "Intermediate": {
+                    "recommendation": "Use primaquine with caution. Consider extended 8-week regimen (0.75 mg/kg weekly) with close hemolysis monitoring. Alternative: tafenoquine is also contraindicated in G6PD deficiency",
+                    "action": "DOSE_ADJUSTMENT",
+                    "alert_level": "WARNING",
+                },
+                "Deficient": {
+                    "recommendation": "AVOID primaquine — G6PD deficiency causes severe, potentially fatal hemolytic anemia with primaquine. Tafenoquine is also contraindicated. Consider chloroquine prophylaxis without radical cure, or consult infectious disease specialist",
+                    "action": "AVOID",
+                    "alert_level": "CRITICAL",
+                },
+            },
+        },
+    },
+    # -----------------------------------------------------------------------
+    # HLA-B*58:01 — CPIC Level 1A for allopurinol
+    # Associated with allopurinol hypersensitivity syndrome (AHS):
+    # Stevens-Johnson syndrome (SJS) / toxic epidermal necrolysis (TEN).
+    # Prevalence: ~6-8% in Southeast Asian, ~3.8% in African American,
+    # ~1-2% in European populations.
+    # CPIC Guideline: Hershfield et al., Clin Pharmacol Ther, 2013
+    # NOTE for agent.py: Add critical alert for HLA-B*58:01 Positive —
+    #   allopurinol is CONTRAINDICATED (SJS/TEN risk).
+    #   Alert text: "HLA-B*58:01 Positive: Allopurinol is CONTRAINDICATED —
+    #   risk of Stevens-Johnson syndrome / toxic epidermal necrolysis.
+    #   Higher prevalence in Southeast Asian and African American populations.
+    #   Use febuxostat or probenecid as alternatives."
+    # -----------------------------------------------------------------------
+    "HLA-B*58:01": {
+        "display_name": "HLA-B*58:01",
+        "description": "Human leukocyte antigen B*58:01 — allopurinol hypersensitivity (SJS/TEN)",
+        "genotype_field": "HLA_B_5801",
+        "genotype_to_phenotype": {
+            "negative": "Negative",
+            "Negative": "Negative",
+            "positive": "Positive",
+            "Positive": "Positive",
+            "carrier": "Positive",
+            "Carrier": "Positive",
+        },
+        "drug_recommendations": {
+            "allopurinol": {
+                "Negative": {
+                    "recommendation": "Allopurinol use is permitted. HLA-B*58:01 negative — low risk of allopurinol hypersensitivity syndrome",
+                    "action": "STANDARD_DOSING",
+                    "alert_level": "INFO",
+                },
+                "Positive": {
+                    "recommendation": "CONTRAINDICATED: Do NOT prescribe allopurinol. HLA-B*58:01 positive — high risk of Stevens-Johnson syndrome (SJS) / toxic epidermal necrolysis (TEN). Especially high prevalence in Southeast Asian and African American populations. Use febuxostat or probenecid as urate-lowering alternatives",
+                    "action": "CONTRAINDICATED",
+                    "alert_level": "CRITICAL",
+                },
+            },
+        },
+    },
 }
 
 
 class PharmacogenomicMapper:
     """Maps star alleles and genotypes to drug recommendations.
 
-    Follows CPIC Level 1A guidelines for 8 pharmacogenes covering
+    Follows CPIC Level 1A guidelines for 11 pharmacogenes covering
     major drug classes including analgesics, antiplatelets, statins,
-    anticoagulants, antimetabolites, thiopurines, and antiretrovirals.
+    anticoagulants, antimetabolites, thiopurines, antiretrovirals,
+    fluoropyrimidines, oxidative hemolysis triggers, and xanthine
+    oxidase inhibitors.
     """
 
     def __init__(self) -> None:

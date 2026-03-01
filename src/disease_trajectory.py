@@ -13,6 +13,8 @@ from typing import Any, Dict, List, Optional
 
 from loguru import logger
 
+from src.knowledge import GENOTYPE_THRESHOLDS
+
 
 # ---------------------------------------------------------------------------
 # Disease configuration: biomarkers, genetic modifiers, thresholds, stages
@@ -92,7 +94,20 @@ def _count_risk_alleles(genotype: str, risk_allele: str) -> int:
 
 
 def _calculate_homa_ir(fasting_insulin: float, fasting_glucose: float) -> float:
-    """Calculate HOMA-IR = (insulin uIU/mL * glucose mg/dL) / 405."""
+    """Calculate HOMA-IR (Homeostatic Model Assessment of Insulin Resistance).
+
+    Requires: insulin in µIU/mL, glucose in mg/dL.
+    Formula: (insulin × glucose) / 405.0
+
+    Note: If glucose is provided in mmol/L (typical values 3-7),
+    results will be ~18x too low. This function assumes mg/dL.
+    """
+    if fasting_glucose < 20:
+        logger.warning(
+            f"HOMA-IR: fasting_glucose={fasting_glucose} appears to be in mmol/L "
+            f"(expected mg/dL, typical range 70-130). Converting."
+        )
+        fasting_glucose = fasting_glucose * 18.016
     return (fasting_insulin * fasting_glucose) / 405.0
 
 
@@ -147,11 +162,24 @@ class DiseaseTrajectoryAnalyzer:
         tcf7l2 = genotypes.get("TCF7L2_rs7903146", "")
         risk_allele_count = _count_risk_alleles(tcf7l2, "T")
 
-        # Genotype-stratified thresholds (ADA 2024 Standards of Care; Florez 2012 PMID:22315325)
+        # Genotype-stratified thresholds (shared constants from knowledge.py)
+        # Florez et al. 2012 PMID:22399527; Grant et al. 2006 PMID:16415884
         thresholds = {
-            2: {"hba1c": 5.5, "homa_ir": 3.0, "fasting_glucose": 90},   # TT: tightest
-            1: {"hba1c": 5.8, "homa_ir": 3.5, "fasting_glucose": 95},   # CT: intermediate
-            0: {"hba1c": 6.0, "homa_ir": 4.0, "fasting_glucose": 100},  # CC: standard ADA
+            2: {  # TT: tightest
+                "hba1c": GENOTYPE_THRESHOLDS["TCF7L2_hba1c"][2],  # ADA Standards of Care 2024; PMID:38078589
+                "homa_ir": 3.0,   # Matthews et al. 1985 PMID:3899825
+                "fasting_glucose": GENOTYPE_THRESHOLDS["TCF7L2_fasting_glucose"][2],  # ADA Standards of Care 2024; PMID:38078589
+            },
+            1: {  # CT: intermediate
+                "hba1c": GENOTYPE_THRESHOLDS["TCF7L2_hba1c"][1],  # ADA Standards of Care 2024; PMID:38078589
+                "homa_ir": 3.5,   # Matthews et al. 1985 PMID:3899825
+                "fasting_glucose": GENOTYPE_THRESHOLDS["TCF7L2_fasting_glucose"][1],  # ADA Standards of Care 2024; PMID:38078589
+            },
+            0: {  # CC: standard ADA
+                "hba1c": GENOTYPE_THRESHOLDS["TCF7L2_hba1c"][0],  # ADA Standards of Care 2024; PMID:38078589
+                "homa_ir": 4.0,   # Matthews et al. 1985 PMID:3899825
+                "fasting_glucose": GENOTYPE_THRESHOLDS["TCF7L2_fasting_glucose"][0],  # ADA Standards of Care 2024; PMID:38078589
+            },
         }
         thresh = thresholds.get(risk_allele_count, thresholds[0])
 
@@ -180,12 +208,12 @@ class DiseaseTrajectoryAnalyzer:
         fasting_glucose = available.get("fasting_glucose")
 
         if hba1c is not None:
-            if hba1c >= 6.5:
+            if hba1c >= 6.5:  # ADA Standards of Care 2024; PMID:38078589
                 stage = "diabetic"
                 risk_level = "CRITICAL"
                 findings.append(f"HbA1c {hba1c}% is in diabetic range (>=6.5%)")
                 recommendations.append("Immediate endocrinology referral for diabetes management")
-            elif hba1c >= 5.7:
+            elif hba1c >= 5.7:  # ADA Standards of Care 2024; PMID:38078589
                 stage = "pre_diabetic"
                 risk_level = "HIGH"
                 findings.append(f"HbA1c {hba1c}% is in pre-diabetic range (5.7-6.4%)")
@@ -263,7 +291,8 @@ class DiseaseTrajectoryAnalyzer:
 
         # Determine APOE genotype and LDL threshold
         apoe = genotypes.get("APOE", "")
-        # APOE-stratified LDL targets (Bennet 2007 PMID:17327455; ACC/AHA 2018 guidelines)
+        # APOE-stratified LDL targets; Bennet et al. 2007 PMID:17327455
+        # ACC/AHA 2019 Cholesterol Guideline PMID:30586774
         ldl_thresholds = {
             "E4/E4": 100, "E3/E4": 115, "E4/E3": 115,
             "E3/E3": 130, "E2/E3": 130, "E3/E2": 130,
@@ -299,16 +328,17 @@ class DiseaseTrajectoryAnalyzer:
         findings = []
         recommendations = []
 
-        # Lp(a) — genetically determined, >50 nmol/L is elevated
+        # Lp(a) — genetically determined
+        # ESC/EAS 2019 Guidelines PMID:31504418; >50 nmol/L is elevated
         lpa = available.get("lpa")
         if lpa is not None:
-            if lpa > 125:
+            if lpa > 125:  # Nordestgaard et al. 2010 PMID:20031622
                 stage = "high_risk"
                 risk_level = "HIGH"
                 findings.append(f"Lp(a) {lpa} nmol/L is very elevated (>125, strongly genetic)")
                 recommendations.append("Lp(a) is largely genetic; aggressive LDL lowering recommended")
                 recommendations.append("Consider PCSK9 inhibitor therapy")
-            elif lpa > 50:
+            elif lpa > 50:  # ESC/EAS 2019 Guidelines PMID:31504418
                 stage = "elevated_risk"
                 risk_level = "MODERATE"
                 findings.append(f"Lp(a) {lpa} nmol/L is elevated (>50)")
@@ -317,7 +347,7 @@ class DiseaseTrajectoryAnalyzer:
         # LDL-C with APOE-adjusted threshold
         ldl = available.get("ldl_c")
         if ldl is not None:
-            if ldl >= 190:
+            if ldl >= 190:  # ACC/AHA 2019 Cholesterol Guideline PMID:30586774
                 stage = "high_risk"
                 risk_level = "HIGH"
                 findings.append(f"LDL-C {ldl} mg/dL is very high (>=190)")
@@ -401,8 +431,12 @@ class DiseaseTrajectoryAnalyzer:
         # PNPLA3 genotype determines ALT upper limit
         pnpla3 = genotypes.get("PNPLA3_rs738409", "")
         pnpla3_risk = _count_risk_alleles(pnpla3, "G")
-        # PNPLA3-adjusted ALT limits (Romeo 2008 PMID:18820647; Sookoian 2015 PMID:25251399)
-        alt_upper = {0: 56, 1: 45, 2: 35}.get(pnpla3_risk, 56)
+        # PNPLA3-adjusted ALT limits
+        # Romeo et al. 2008 PMID:18820127; Sookoian & Pirola 2011 PMID:21520172
+        # ALT thresholds: Prati et al. 2002 PMID:12029600
+        alt_upper = GENOTYPE_THRESHOLDS["PNPLA3_alt_upper"].get(
+            "GG" if pnpla3_risk == 2 else "CG" if pnpla3_risk == 1 else "CC", 56
+        )
 
         genetic_risk_factors = []
         for gene_key, config in DISEASE_CONFIGS["liver"]["genetic_modifiers"].items():
@@ -460,12 +494,12 @@ class DiseaseTrajectoryAnalyzer:
 
         # FIB-4 staging
         if fib4 is not None:
-            if fib4 > 2.67:
+            if fib4 > 2.67:  # Sterling et al. 2006 PMID:16702586; AASLD 2023 Practice Guidelines
                 stage = "advanced_fibrosis"
                 risk_level = "HIGH"
                 findings.append(f"FIB-4 score {fib4} suggests advanced fibrosis (>2.67)")
                 recommendations.append("Urgent hepatology referral; consider FibroScan or liver biopsy")
-            elif fib4 > 1.30:
+            elif fib4 > 1.30:  # Sterling et al. 2006 PMID:16702586; AASLD 2023 Practice Guidelines
                 if stage != "advanced_fibrosis":
                     stage = "early_fibrosis"
                 risk_level = _max_risk(risk_level, "MODERATE")
@@ -533,8 +567,10 @@ class DiseaseTrajectoryAnalyzer:
         dio2 = genotypes.get("DIO2_rs225014", "")
         dio2_risk = _count_risk_alleles(dio2, "A")
 
-        # DIO2-adjusted reference ranges (Panicker 2009 PMID:19190113; Castagna 2017 PMID:28371814)
-        tsh_upper = {0: 4.0, 1: 3.5, 2: 3.0}.get(dio2_risk, 4.0)
+        # DIO2-adjusted reference ranges
+        # Panicker et al. 2009 PMID:19820026; Castagna et al. 2017 PMID:28100792
+        dio2_label = "AA" if dio2_risk == 2 else "GA" if dio2_risk == 1 else "GG"
+        tsh_upper = GENOTYPE_THRESHOLDS["DIO2_tsh_upper"].get(dio2_label, 4.0)  # ATA 2017 Guidelines PMID:28056690
         ft3_lower = {0: 2.3, 1: 2.5, 2: 2.8}.get(dio2_risk, 2.3)
 
         genetic_risk_factors = []
@@ -653,11 +689,13 @@ class DiseaseTrajectoryAnalyzer:
         hfe_c282y = genotypes.get("HFE_rs1800562", "")
         c282y_risk = _count_risk_alleles(hfe_c282y, "A")
 
-        # HFE-adjusted ferritin limits (Adams 2005 PMID:16103830; EASL HFE guidelines 2010)
+        # HFE-adjusted ferritin limits
+        # WHO Ferritin Guidelines 2020; EASL HFE Guidelines PMID:20471131
+        # Adams et al. 2005 PMID:15729334; European Clinical Practice Guidelines PMID:20471131
         if sex.lower() == "female":
-            ferritin_upper = {0: 150, 1: 120, 2: 100}.get(c282y_risk, 150)
+            ferritin_upper = {0: 150, 1: 120, 2: 100}.get(c282y_risk, 150)  # WHO Ferritin Guidelines 2020; EASL HFE Guidelines PMID:20471131
         else:
-            ferritin_upper = {0: 400, 1: 300, 2: 200}.get(c282y_risk, 400)
+            ferritin_upper = {0: 400, 1: 300, 2: 200}.get(c282y_risk, 400)  # WHO Ferritin Guidelines 2020; EASL HFE Guidelines PMID:20471131
 
         genetic_risk_factors = []
         for gene_key, config in DISEASE_CONFIGS["iron"]["genetic_modifiers"].items():
@@ -714,7 +752,7 @@ class DiseaseTrajectoryAnalyzer:
             )
             recommendations.append("Annual ferritin + transferrin saturation monitoring")
             recommendations.append("Liver MRI for iron quantification if ferritin >500")
-            if ferritin is not None and ferritin > 200:
+            if ferritin is not None and ferritin > 200:  # Adams et al. 2005 PMID:15729334; European Clinical Practice Guidelines PMID:20471131
                 stage = "iron_overload"
                 risk_level = "HIGH"
                 recommendations.append("Consider therapeutic phlebotomy")
@@ -762,7 +800,7 @@ class DiseaseTrajectoryAnalyzer:
         fads1 = genotypes.get("FADS1_rs174546", "")
         fads1_risk = _count_risk_alleles(fads1, "C")
         # FADS1-adjusted omega-3 targets (Schaeffer 2006 PMID:16825694; Harris 2018 PMID:29215303)
-        omega3_target = {0: 8.0, 1: 6.0, 2: 5.0}.get(fads1_risk, 8.0)
+        omega3_target = {0: 8.0, 1: 6.0, 2: 5.0}.get(fads1_risk, 8.0)  # Harris & von Schacky 2004 PMID:14676843
 
         # MTHFR genotype for folate metabolism
         mthfr = genotypes.get("MTHFR_rs1801133", "")
@@ -815,7 +853,7 @@ class DiseaseTrajectoryAnalyzer:
                 deficiencies.append("vitamin_d")
                 findings.append(f"Vitamin D {vit_d} ng/mL is deficient (<20)")
                 recommendations.append("Vitamin D3 supplementation: 2000-5000 IU/day with K2")
-            elif vit_d < 30:
+            elif vit_d < 30:  # Endocrine Society 2024 PMID:38828931
                 findings.append(f"Vitamin D {vit_d} ng/mL is insufficient (20-30)")
                 recommendations.append("Vitamin D3 supplementation: 1000-2000 IU/day")
 
@@ -830,7 +868,7 @@ class DiseaseTrajectoryAnalyzer:
                 findings.append(f"Vitamin B12 {b12} pg/mL is suboptimal (<400)")
                 recommendations.append("Consider B12 supplementation: methylcobalamin 500-1000 mcg/day")
 
-        # Folate with MTHFR adjustment
+        # Folate with MTHFR adjustment; Frosst et al. 1995 PMID:7647779
         folate = available.get("folate")
         if folate is not None:
             if mthfr_risk == 2:
