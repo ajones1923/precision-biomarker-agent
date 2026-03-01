@@ -26,6 +26,8 @@ from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import JSONResponse, PlainTextResponse, StreamingResponse
 from pydantic import BaseModel, Field
 
+from src.audit import audit_log, AuditAction
+
 router = APIRouter(prefix="/v1/report", tags=["reports"])
 
 
@@ -35,7 +37,19 @@ router = APIRouter(prefix="/v1/report", tags=["reports"])
 
 _report_store: Dict[str, Dict[str, Any]] = {}
 _MAX_STORED_REPORTS = 100
+_REPORT_TTL_SECONDS = 3600
 _report_lock = threading.Lock()
+
+
+def _cleanup_expired_reports():
+    """Remove reports older than TTL."""
+    now = datetime.now(timezone.utc)
+    expired = [
+        k for k, v in _report_store.items()
+        if (now - datetime.fromisoformat(v["generated_at"])).total_seconds() > _REPORT_TTL_SECONDS
+    ]
+    for k in expired:
+        del _report_store[k]
 
 
 # =====================================================================
@@ -127,6 +141,8 @@ def generate_report(request: ReportGenerateRequest, req: Request):
         timestamp = datetime.now(timezone.utc).isoformat()
 
         with _report_lock:
+            _cleanup_expired_reports()
+
             _report_store[report_id] = {
                 "report_id": report_id,
                 "patient_id": profile.patient_id,
@@ -136,14 +152,10 @@ def generate_report(request: ReportGenerateRequest, req: Request):
                 "generated_at": timestamp,
             }
 
-            # Evict oldest reports if store exceeds max size
+            # Safety-net eviction if store still exceeds max size
             if len(_report_store) > _MAX_STORED_REPORTS:
-                oldest_keys = sorted(
-                    _report_store.keys(),
-                    key=lambda k: _report_store[k].get("generated_at", ""),
-                )[:len(_report_store) - _MAX_STORED_REPORTS]
-                for k in oldest_keys:
-                    del _report_store[k]
+                oldest_key = next(iter(_report_store))
+                del _report_store[oldest_key]
 
         # Format output
         if request.format == "json":
@@ -164,6 +176,13 @@ def generate_report(request: ReportGenerateRequest, req: Request):
             processing_time_ms=round(elapsed, 1),
         )
 
+        audit_log(
+            AuditAction.REPORT_GENERATED,
+            patient_id=profile.patient_id,
+            source_ip=req.client.host if req.client else None,
+            details={"report_id": report_id, "format": request.format},
+        )
+
         return ReportGenerateResponse(
             meta=meta,
             report=report_content,
@@ -173,11 +192,11 @@ def generate_report(request: ReportGenerateRequest, req: Request):
         raise
     except Exception as e:
         logger.exception(f"Report generation failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Report generation failed: {e}")
+        raise HTTPException(status_code=500, detail="Internal analysis error. Check server logs.")
 
 
 @router.get("/{report_id}/pdf")
-def download_pdf(report_id: str):
+def download_pdf(report_id: str, req: Request):
     """Download a previously generated report as a styled PDF.
 
     The report must have been generated first via POST /v1/report/generate.
@@ -188,11 +207,19 @@ def download_pdf(report_id: str):
             raise HTTPException(status_code=404, detail=f"Report '{report_id}' not found")
         stored = _report_store[report_id]
         markdown = stored["markdown"]
+        report_data = stored
 
     try:
         from src.export import export_pdf
 
         pdf_bytes = export_pdf(markdown)
+
+        audit_log(
+            AuditAction.REPORT_EXPORTED,
+            patient_id=report_data.get("patient_id"),
+            source_ip=req.client.host if req.client else None,
+            details={"report_id": report_id, "format": "pdf"},
+        )
 
         patient_id = stored["patient_id"]
         safe_patient_id = re.sub(r'[^a-zA-Z0-9_-]', '', patient_id)[:50]
@@ -210,7 +237,7 @@ def download_pdf(report_id: str):
         raise
     except Exception as e:
         logger.exception(f"PDF export failed: {e}")
-        raise HTTPException(status_code=500, detail=f"PDF export failed: {e}")
+        raise HTTPException(status_code=500, detail="Internal analysis error. Check server logs.")
 
 
 @router.post("/fhir")
@@ -247,6 +274,12 @@ def export_fhir(request: FHIRExportRequest, req: Request):
         # Export as FHIR
         fhir_json = export_fhir_diagnostic_report(analysis, profile)
 
+        audit_log(
+            AuditAction.FHIR_EXPORTED,
+            patient_id=request.patient_profile.patient_id,
+            source_ip=req.client.host if req.client else None,
+        )
+
         return JSONResponse(
             content={
                 "format": "fhir_r4",
@@ -260,4 +293,4 @@ def export_fhir(request: FHIRExportRequest, req: Request):
         raise
     except Exception as e:
         logger.exception(f"FHIR export failed: {e}")
-        raise HTTPException(status_code=500, detail=f"FHIR export failed: {e}")
+        raise HTTPException(status_code=500, detail="Internal analysis error. Check server logs.")

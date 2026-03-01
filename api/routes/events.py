@@ -58,6 +58,7 @@ class CrossModalEvent(BaseModel):
     )
     urgency: str = Field(
         "moderate",
+        pattern="^(critical|high|moderate|low)$",
         description="Urgency level: critical, high, moderate, low",
     )
     correlation_id: Optional[str] = Field(
@@ -85,7 +86,7 @@ class BiomarkerAlert(BaseModel):
                     "iron_overload, accelerated_aging",
     )
     severity: str = Field(
-        ..., description="Severity: critical, high, moderate, low",
+        ..., pattern="^(critical|high|moderate|low)$", description="Severity: critical, high, moderate, low",
     )
     target_agent: str = Field(
         ..., description="Target agent to receive this alert",
@@ -129,6 +130,9 @@ async def receive_cross_modal_event(event: CrossModalEvent, req: Request):
     The event is logged and relevant actions are triggered based on
     the event type and payload.
     """
+    if not event.source_agent or not event.source_agent.strip():
+        raise HTTPException(status_code=400, detail="source_agent is required")
+
     event_id = uuid.uuid4().hex[:12]
     timestamp = datetime.now(timezone.utc).isoformat()
 

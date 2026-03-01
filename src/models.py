@@ -439,6 +439,11 @@ class PatientProfile(BaseModel):
         default_factory=dict,
         description="Gene -> star allele mapping (e.g., {'CYP2D6': '*1/*2'})",
     )
+    ancestry: Optional[str] = Field(
+        None,
+        description="Self-reported ancestry for population-specific adjustments (e.g., 'european', 'african', 'east_asian', 'south_asian', 'hispanic')",
+        pattern="^(european|african|east_asian|south_asian|hispanic|mixed|other)$",
+    )
 
 
 class BiologicalAgeResult(BaseModel):
@@ -458,7 +463,15 @@ class BiologicalAgeResult(BaseModel):
     )
     aging_drivers: List[Dict[str, Any]] = Field(
         default_factory=list,
-        description="List of dicts with marker, value, contribution, direction",
+        description="List of dicts with biomarker, value, contribution, direction",
+    )
+    confidence_interval: Optional[Dict[str, Any]] = Field(
+        None,
+        description="95% CI with lower, upper, confidence_level, standard_error, note",
+    )
+    risk_confidence: Optional[str] = Field(
+        None,
+        description="Confidence qualifier for risk classification: high, moderate, or low",
     )
 
     @model_validator(mode="after")
@@ -561,7 +574,7 @@ class CrossCollectionResult(BaseModel):
 
 class AgentQuery(BaseModel):
     """Input to the Precision Biomarker Agent."""
-    question: str
+    question: str = Field(..., max_length=10000, description="Natural language biomarker question")
     patient_profile: Optional[PatientProfile] = None
     include_genomic: bool = True  # Also search genomic_evidence collection
 

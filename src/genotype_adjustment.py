@@ -5,14 +5,15 @@ enabling earlier detection of clinically meaningful deviations. Pure
 computation — no LLM or database calls.
 
 NOTE: Reference ranges are currently static and do not account for
-age-specific or ethnicity-specific variations. Population-level norms
-may differ by age group (e.g., pediatric vs. geriatric) and ancestry
-(e.g., ferritin reference ranges differ across ethnic groups). These
-adjustments should be layered in future versions.
+age-specific variations. Population-level norms may differ by age group
+(e.g., pediatric vs. geriatric). Age-stratified adjustments should be
+layered in future versions.
 
-TODO: Implement age-stratified and ethnicity-stratified reference range
-adjustments. See PMID:31504418 (ESC/EAS guidelines discuss population
-differences) and PMID:30586774 (ACC/AHA note race-based risk factors).
+Ancestry-aware adjustments are implemented via apply_ancestry_adjustments()
+using the ANCESTRY_ADJUSTMENTS knowledge base (NHANES III, UK Biobank, MESA).
+See PMID:31504418 (ESC/EAS guidelines) and PMID:30586774 (ACC/AHA).
+
+TODO: Implement age-stratified reference range adjustments.
 
 Author: Adam Jones
 Date: March 2026
@@ -23,6 +24,18 @@ from typing import Any, Dict, List, Optional, Tuple
 from loguru import logger
 
 from src.knowledge import GENOTYPE_THRESHOLDS
+
+
+def _get_age_bracket(age: int) -> str:
+    """Map age to bracket string for reference range lookup."""
+    if age < 18:
+        return "18-49"  # Use adult ranges as floor
+    elif age <= 49:
+        return "18-49"
+    elif age <= 69:
+        return "50-69"
+    else:
+        return "70+"
 
 
 # ---------------------------------------------------------------------------
@@ -580,6 +593,90 @@ class GenotypeAdjuster:
                 }
 
         return ranges
+
+    def get_age_sex_ranges(
+        self,
+        biomarkers: Dict[str, float],
+        age: int,
+        sex: str,
+    ) -> List[Dict[str, Any]]:
+        """Look up age- and sex-stratified reference ranges for biomarkers.
+
+        Args:
+            biomarkers: Dict of biomarker name -> value.
+            age: Patient age in years.
+            sex: Patient sex ("M" or "F").
+
+        Returns:
+            List of dicts with biomarker, value, reference_range, status, and source.
+        """
+        from src.knowledge import AGE_SEX_REFERENCE_RANGES
+
+        bracket = _get_age_bracket(age)
+        results = []
+
+        for biomarker, value in biomarkers.items():
+            if biomarker in AGE_SEX_REFERENCE_RANGES:
+                sex_ranges = AGE_SEX_REFERENCE_RANGES[biomarker].get(sex, {})
+                ref_range = sex_ranges.get(bracket)
+                if ref_range:
+                    lower, upper = ref_range
+                    if value < lower:
+                        status = "low"
+                    elif value > upper:
+                        status = "high"
+                    else:
+                        status = "normal"
+                    results.append({
+                        "biomarker": biomarker,
+                        "value": value,
+                        "reference_lower": lower,
+                        "reference_upper": upper,
+                        "age_bracket": bracket,
+                        "sex": sex,
+                        "status": status,
+                    })
+
+        return results
+
+    def apply_ancestry_adjustments(
+        self,
+        biomarkers: Dict[str, float],
+        ancestry: Optional[str],
+    ) -> List[Dict[str, Any]]:
+        """Apply population-specific threshold adjustments based on self-reported ancestry.
+
+        These adjustments modify reference range thresholds to account for
+        known population-level differences in biomarker distributions.
+        Not a substitute for individual clinical assessment.
+
+        Args:
+            biomarkers: Dict of biomarker name -> value.
+            ancestry: Self-reported ancestry category.
+
+        Returns:
+            List of adjustment dicts with biomarker, multiplier, note, and ancestry.
+        """
+        from src.knowledge import ANCESTRY_ADJUSTMENTS
+
+        if not ancestry or ancestry not in ANCESTRY_ADJUSTMENTS:
+            return []
+
+        adjustments = []
+        pop_adjustments = ANCESTRY_ADJUSTMENTS[ancestry]
+
+        for biomarker, value in biomarkers.items():
+            if biomarker in pop_adjustments:
+                adj = pop_adjustments[biomarker]
+                adjustments.append({
+                    "biomarker": biomarker,
+                    "value": value,
+                    "ancestry": ancestry,
+                    "threshold_multiplier": adj["threshold_multiplier"],
+                    "note": adj["note"],
+                })
+
+        return adjustments
 
     def list_supported_adjustments(self) -> List[Dict[str, Any]]:
         """List all supported genotype-biomarker adjustment rules.

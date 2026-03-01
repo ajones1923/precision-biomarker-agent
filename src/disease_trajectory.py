@@ -102,10 +102,14 @@ def _calculate_homa_ir(fasting_insulin: float, fasting_glucose: float) -> float:
     Note: If glucose is provided in mmol/L (typical values 3-7),
     results will be ~18x too low. This function assumes mg/dL.
     """
+    # Note: heuristic-based unit detection — fasting_glucose < 20 assumed mmol/L.
+    # Patients on medication may have actual 15-18 mg/dL glucose, causing false conversion.
+    # Explicit unit specification recommended for production use.
     if fasting_glucose < 20:
         logger.warning(
             f"HOMA-IR: fasting_glucose={fasting_glucose} appears to be in mmol/L "
-            f"(expected mg/dL, typical range 70-130). Converting."
+            f"(expected mg/dL, typical range 70-130). Auto-converting to mg/dL. "
+            f"If this is an actual mg/dL value, the conversion is incorrect."
         )
         fasting_glucose = fasting_glucose * 18.016
     return (fasting_insulin * fasting_glucose) / 405.0
@@ -459,8 +463,8 @@ class DiseaseTrajectoryAnalyzer:
         ast = available.get("ast")
         platelets = available.get("platelets")
 
-        # FIB-4 = (age × AST) / (platelets × √ALT); requires ALT > 0 and platelets > 0
-        if age is not None and age > 0 and ast and platelets and platelets > 0 and alt and alt > 0:
+        # FIB-4 = (age × AST) / (platelets × √ALT); requires platelets > 0 and alt > 0
+        if age is not None and age > 0 and ast is not None and platelets is not None and platelets > 0 and alt is not None and alt > 0:
             fib4 = round((age * ast) / (platelets * math.sqrt(alt)), 2)
             available["fib4_calculated"] = fib4
 

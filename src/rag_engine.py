@@ -90,6 +90,12 @@ COLLECTION_CONFIG = {
     "genomic_evidence":           {"weight": 0.10,                                 "label": "Genomic",            "has_disease_area": False, "year_field": None},
 }
 
+# Maximum merged results returned after deduplication and ranking
+MAX_MERGED_RESULTS = 30
+
+# Maximum evidence items per collection included in the LLM prompt
+MAX_PROMPT_EVIDENCE = 5
+
 # Known disease areas for filter expressions
 _KNOWN_DISEASE_AREAS = {
     "diabetes", "cardiovascular", "liver", "thyroid", "iron", "nutritional",
@@ -399,7 +405,7 @@ class BiomarkerRAGEngine:
                 seen_texts.add(text_key)
                 unique.append(hit)
         unique.sort(key=lambda h: h.score, reverse=True)
-        return unique[:30]
+        return unique[:MAX_MERGED_RESULTS]
 
     def _get_knowledge_context(self, query: str) -> str:
         """Extract knowledge graph context from ALL domains.
@@ -491,10 +497,8 @@ class BiomarkerRAGEngine:
     def _format_citation(collection: str, record_id: str) -> str:
         """Format a citation with clickable URL where possible."""
         if collection == "ClinicalEvidence" and record_id.isdigit():
-            return (
-                f"[ClinicalEvidence:PMID {record_id}]"
-                f"(https://pubmed.ncbi.nlm.nih.gov/{record_id}/)"
-            )
+            url = f"https://pubmed.ncbi.nlm.nih.gov/{record_id}/"
+            return f"[ClinicalEvidence:PMID {record_id}]({url})"
         return f"[{collection}:{record_id}]"
 
     def _build_prompt(self, question: str,
@@ -512,7 +516,7 @@ class BiomarkerRAGEngine:
 
         for coll_name, hits in by_coll.items():
             section_lines = [f"### Evidence from {coll_name}"]
-            for i, hit in enumerate(hits[:5], 1):
+            for i, hit in enumerate(hits[:MAX_PROMPT_EVIDENCE], 1):
                 citation = self._format_citation(hit.collection, hit.id)
                 relevance = hit.metadata.get("relevance", "")
                 relevance_tag = f" [{relevance} relevance]" if relevance else ""

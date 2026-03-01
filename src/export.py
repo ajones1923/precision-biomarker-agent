@@ -897,7 +897,10 @@ def _format_filters(filters_applied: Optional[dict]) -> str:
 
 
 def _format_citation_link(collection: str, record_id: str) -> str:
-    """Format a clickable citation link."""
+    """Format a clickable citation link.
+
+    Note: citation formatting logic shared with rag_engine._format_citation()
+    """
     if collection == "ClinicalEvidence" and record_id.isdigit():
         return f"[PMID {record_id}](https://pubmed.ncbi.nlm.nih.gov/{record_id}/)"
     return record_id

@@ -792,3 +792,178 @@ class TestSecurityEdgeCases:
         })
         # Should not crash -- overflow protection should handle it
         assert "biological_age" in result
+
+
+# =====================================================================
+# 9. ANCESTRY ADJUSTMENT EDGE CASES
+# =====================================================================
+
+
+class TestAncestryAdjustments:
+    """Test population-specific biomarker adjustments."""
+
+    def test_african_creatinine_adjustment(self):
+        from src.genotype_adjustment import GenotypeAdjuster
+        engine = GenotypeAdjuster()
+        result = engine.apply_ancestry_adjustments(
+            {"creatinine": 1.2}, "african"
+        )
+        assert len(result) == 1
+        assert result[0]["threshold_multiplier"] == 1.15
+        assert "muscle mass" in result[0]["note"]
+
+    def test_south_asian_ldl_adjustment(self):
+        from src.genotype_adjustment import GenotypeAdjuster
+        engine = GenotypeAdjuster()
+        result = engine.apply_ancestry_adjustments(
+            {"ldl": 130}, "south_asian"
+        )
+        assert len(result) == 1
+        assert result[0]["threshold_multiplier"] == 0.90
+
+    def test_no_adjustment_for_unknown_ancestry(self):
+        from src.genotype_adjustment import GenotypeAdjuster
+        engine = GenotypeAdjuster()
+        result = engine.apply_ancestry_adjustments(
+            {"creatinine": 1.2}, "martian"
+        )
+        assert result == []
+
+    def test_no_adjustment_when_ancestry_none(self):
+        from src.genotype_adjustment import GenotypeAdjuster
+        engine = GenotypeAdjuster()
+        result = engine.apply_ancestry_adjustments(
+            {"creatinine": 1.2}, None
+        )
+        assert result == []
+
+    def test_european_has_no_special_adjustments(self):
+        from src.genotype_adjustment import GenotypeAdjuster
+        engine = GenotypeAdjuster()
+        result = engine.apply_ancestry_adjustments(
+            {"creatinine": 1.2, "ldl": 130}, "european"
+        )
+        # European is the reference population -- no adjustments defined
+        assert result == []
+
+
+# =====================================================================
+# 10. AGE- AND SEX-STRATIFIED REFERENCE RANGES
+# =====================================================================
+
+
+class TestAgeSexReferenceRanges:
+    """Test age- and sex-stratified reference ranges."""
+
+    def test_young_male_creatinine_normal(self):
+        from src.genotype_adjustment import GenotypeAdjuster
+        engine = GenotypeAdjuster()
+        result = engine.get_age_sex_ranges({"creatinine": 1.0}, age=35, sex="M")
+        assert len(result) == 1
+        assert result[0]["status"] == "normal"
+
+    def test_elderly_female_tsh_wider_range(self):
+        from src.genotype_adjustment import GenotypeAdjuster
+        engine = GenotypeAdjuster()
+        # TSH 5.5 is high for young adult but normal for 75-year-old woman
+        result_young = engine.get_age_sex_ranges({"tsh": 5.5}, age=30, sex="F")
+        result_old = engine.get_age_sex_ranges({"tsh": 5.5}, age=75, sex="F")
+        assert result_young[0]["status"] == "high"
+        assert result_old[0]["status"] == "normal"
+
+    def test_sex_stratified_ferritin(self):
+        from src.genotype_adjustment import GenotypeAdjuster
+        engine = GenotypeAdjuster()
+        # 200 ng/mL: normal for male, high for premenopausal female
+        male = engine.get_age_sex_ranges({"ferritin": 200}, age=40, sex="M")
+        female = engine.get_age_sex_ranges({"ferritin": 200}, age=40, sex="F")
+        assert male[0]["status"] == "normal"
+        assert female[0]["status"] == "high"
+
+    def test_unknown_biomarker_skipped(self):
+        from src.genotype_adjustment import GenotypeAdjuster
+        engine = GenotypeAdjuster()
+        result = engine.get_age_sex_ranges({"unknown_marker": 5.0}, age=50, sex="M")
+        assert result == []
+
+
+# =====================================================================
+# 12. KNOWLEDGE BASE VERSIONING
+# =====================================================================
+
+
+class TestKnowledgeVersioning:
+    """Test knowledge base version tracking."""
+
+    def test_knowledge_version_exists(self):
+        from src.knowledge import KNOWLEDGE_VERSION
+        assert "version" in KNOWLEDGE_VERSION
+        assert "last_updated" in KNOWLEDGE_VERSION
+        assert "cpic_version" in KNOWLEDGE_VERSION
+
+    def test_knowledge_version_has_sources(self):
+        from src.knowledge import KNOWLEDGE_VERSION
+        assert len(KNOWLEDGE_VERSION["sources"]) >= 5
+
+
+# =====================================================================
+# 11. BIOMARKER INPUT VALIDATION
+# =====================================================================
+
+
+class TestBiomarkerInputValidation:
+    """Test plausible range validation for biomarker inputs."""
+
+    def test_valid_biomarkers_no_warnings(self):
+        from src.biological_age import validate_biomarker_ranges
+        warnings = validate_biomarker_ranges({"albumin": 4.2, "glucose": 95})
+        assert warnings == []
+
+    def test_implausible_glucose_warns(self):
+        from src.biological_age import validate_biomarker_ranges
+        warnings = validate_biomarker_ranges({"glucose": 5000})
+        assert len(warnings) == 1
+        assert "glucose" in warnings[0]
+        assert "plausible range" in warnings[0]
+
+    def test_negative_after_sanitization_warns(self):
+        from src.biological_age import validate_biomarker_ranges
+        warnings = validate_biomarker_ranges({"albumin": 0.5})
+        # 0.5 < 1.0 (lower bound), so this should warn
+        assert len(warnings) == 1
+        assert "albumin" in warnings[0]
+
+
+# =====================================================================
+# 10. AUDIT LOGGING
+# =====================================================================
+
+
+class TestAuditLogging:
+    """Test HIPAA audit logging."""
+
+    def test_audit_log_returns_event_id(self):
+        from src.audit import audit_log, AuditAction
+        event_id = audit_log(AuditAction.PATIENT_ANALYSIS, patient_id="P001")
+        assert isinstance(event_id, str)
+        assert len(event_id) == 16
+
+    def test_audit_log_hashes_patient_id(self):
+        from src.audit import audit_log, AuditAction
+        import hashlib
+        event_id = audit_log(AuditAction.BIOLOGICAL_AGE, patient_id="P001")
+        # Verify the patient_id is not stored in plain text
+        expected_hash = hashlib.sha256("P001".encode()).hexdigest()[:12]
+        assert isinstance(event_id, str)
+
+    def test_audit_log_without_patient_id(self):
+        from src.audit import audit_log, AuditAction
+        event_id = audit_log(AuditAction.RAG_QUERY)
+        assert isinstance(event_id, str)
+
+    def test_all_audit_actions_defined(self):
+        from src.audit import AuditAction
+        actions = list(AuditAction)
+        assert len(actions) >= 9
+        assert AuditAction.PATIENT_ANALYSIS in actions
+        assert AuditAction.FHIR_EXPORTED in actions

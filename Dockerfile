@@ -42,7 +42,6 @@ WORKDIR /app
 
 # Minimal runtime libs (libgomp needed by torch/sentence-transformers)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        curl \
         libgomp1 \
         libxml2 \
         libxslt1.1 \
@@ -74,10 +73,9 @@ USER biomarkeruser
 EXPOSE 8528
 EXPOSE 8529
 
-# Health check: tries Streamlit first (default CMD), falls back to API
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD curl -f http://localhost:8528/_stcore/health 2>/dev/null || \
-        curl -f http://localhost:8529/health 2>/dev/null || exit 1
+# Health check: uses Python stdlib (no curl dependency required)
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8528/health')" || exit 1
 
 # Default: launch Streamlit UI
 CMD ["streamlit", "run", "app/biomarker_ui.py", \

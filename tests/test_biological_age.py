@@ -15,6 +15,8 @@ from src.biological_age import (
     BiologicalAgeCalculator,
     PHENOAGE_COEFFICIENTS,
     PHENOAGE_INTERCEPT,
+    PHENOAGE_SE_FULL,
+    PHENOAGE_SE_PARTIAL,
     GRIMAGE_MARKERS,
 )
 
@@ -273,3 +275,75 @@ class TestCombinedCalculation:
         """calculate() sets grimage to None when no plasma markers present."""
         result = calculator.calculate(45.0, reference_biomarkers)
         assert result["grimage"] is None
+
+
+# =====================================================================
+# CONFIDENCE INTERVALS
+# =====================================================================
+
+
+class TestConfidenceIntervals:
+    """Test PhenoAge confidence intervals."""
+
+    def test_full_biomarkers_have_narrow_ci(self):
+        """All 9 biomarkers present should use the full-model SE (4.9 years)."""
+        calc = BiologicalAgeCalculator()
+        result = calc.calculate_phenoage(50, {
+            "albumin": 4.2, "creatinine": 0.9, "glucose": 95,
+            "hs_crp": 1.5, "lymphocyte_pct": 30, "mcv": 90,
+            "rdw": 13, "alkaline_phosphatase": 60, "wbc": 6.0,
+        })
+        ci = result["confidence_interval"]
+        assert ci["standard_error"] == PHENOAGE_SE_FULL  # Full model SE
+        assert ci["lower"] < result["biological_age"] < ci["upper"]
+        assert ci["confidence_level"] == 0.95
+
+    def test_partial_biomarkers_have_wider_ci(self):
+        """Fewer than 9 biomarkers should use the partial-model SE (6.5 years)."""
+        calc = BiologicalAgeCalculator()
+        result = calc.calculate_phenoage(50, {
+            "albumin": 4.2, "creatinine": 0.9, "glucose": 95,
+        })
+        ci = result["confidence_interval"]
+        assert ci["standard_error"] == PHENOAGE_SE_PARTIAL  # Partial model SE
+        # CI should be wider: 2 * 1.96 * 6.5 = 25.48
+        width = ci["upper"] - ci["lower"]
+        assert width > 20
+
+    def test_risk_confidence_high_with_all_markers(self):
+        """All 9 biomarkers present should yield high risk confidence."""
+        calc = BiologicalAgeCalculator()
+        result = calc.calculate_phenoage(50, {
+            "albumin": 4.2, "creatinine": 0.9, "glucose": 95,
+            "hs_crp": 1.5, "lymphocyte_pct": 30, "mcv": 90,
+            "rdw": 13, "alkaline_phosphatase": 60, "wbc": 6.0,
+        })
+        assert result["risk_confidence"] == "high"
+
+    def test_risk_confidence_low_with_few_markers(self):
+        """Only 1 biomarker (>3 missing) should yield low risk confidence."""
+        calc = BiologicalAgeCalculator()
+        result = calc.calculate_phenoage(50, {"albumin": 4.2})
+        assert result["risk_confidence"] == "low"
+
+    def test_risk_confidence_moderate_with_some_missing(self):
+        """1-3 missing biomarkers should yield moderate risk confidence."""
+        calc = BiologicalAgeCalculator()
+        # Provide 7 of 9 biomarkers (2 missing)
+        result = calc.calculate_phenoage(50, {
+            "albumin": 4.2, "creatinine": 0.9, "glucose": 95,
+            "hs_crp": 1.5, "lymphocyte_pct": 30, "mcv": 90,
+            "rdw": 13,
+        })
+        assert result["risk_confidence"] == "moderate"
+
+    def test_confidence_interval_fields_present(self):
+        """Confidence interval dict contains all expected keys."""
+        calc = BiologicalAgeCalculator()
+        result = calc.calculate_phenoage(50, {"albumin": 4.2, "creatinine": 0.9})
+        ci = result["confidence_interval"]
+        assert "lower" in ci
+        assert "upper" in ci
+        assert "confidence_level" in ci
+        assert "standard_error" in ci
+        assert "note" in ci

@@ -10,6 +10,8 @@ python_files = "test_*.py"
 python_classes = "Test*"
 python_functions = "test_*"
 addopts = "-v --tb=short"
+# Coverage: run with `python3 -m pytest --cov=src --cov=api --cov-report=term-missing`
+# when pytest-cov is installed. fail_under configured in [tool.coverage.report].
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     "integration: requires external services (Milvus, Claude API)",

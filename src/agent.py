@@ -203,6 +203,8 @@ class PrecisionBiomarkerAgent:
             ),
             mortality_risk=bio_age_raw.get("phenoage", {}).get("mortality_score", 0.0),
             aging_drivers=bio_age_raw.get("phenoage", {}).get("top_aging_drivers", []),
+            confidence_interval=bio_age_raw.get("phenoage", {}).get("confidence_interval"),
+            risk_confidence=bio_age_raw.get("phenoage", {}).get("risk_confidence"),
         )
 
         # 2. Disease trajectory analysis (returns List[Dict], convert to model objects)
@@ -236,8 +238,8 @@ class PrecisionBiomarkerAgent:
                     years_to_onset_estimate=td.get("years_to_onset_estimate"),
                     intervention_recommendations=td.get("recommendations", []),
                 ))
-            except Exception:
-                pass  # Skip malformed trajectory results
+            except Exception as e:
+                logger.warning(f"Skipping malformed trajectory result: {e}")
 
         # 3. Pharmacogenomic mapping (returns Dict, convert to PGxResult model objects)
         pgx_raw = self.pgx.map_all(profile.star_alleles, profile.genotypes)
@@ -256,8 +258,8 @@ class PrecisionBiomarkerAgent:
                     phenotype=phenotype,
                     drugs_affected=gr.get("affected_drugs", []),
                 ))
-            except Exception:
-                pass  # Skip malformed PGx results
+            except Exception as e:
+                logger.warning(f"Skipping malformed PGx result: {e}")
 
         # 4. Genotype-adjusted reference ranges (returns Dict, convert to model objects)
         adj_raw = self.adjuster.adjust_all(
@@ -277,8 +279,8 @@ class PrecisionBiomarkerAgent:
                     gene=adj.get("gene_display_name", ""),
                     rationale=adj.get("rationale", ""),
                 ))
-            except Exception:
-                pass  # Skip malformed adjustment results
+            except Exception as e:
+                logger.warning(f"Skipping malformed adjustment result: {e}")
 
         # 5. Extract critical alerts
         critical_alerts = self._extract_critical_alerts(

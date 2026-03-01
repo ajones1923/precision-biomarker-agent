@@ -12,6 +12,23 @@ from typing import Any, Dict, List, Optional
 from loguru import logger
 
 
+# CPIC guideline versions used for each gene
+# Update when new CPIC publications change recommendations
+CPIC_GUIDELINE_VERSIONS = {
+    "CYP2D6": {"version": "2019", "pmid": "33387367", "update": "2020-12", "level": "1A"},
+    "CYP2C19": {"version": "2022", "pmid": "34697867", "update": "2022-12", "level": "1A"},
+    "CYP2C9": {"version": "2017", "pmid": "27441996", "update": "2020-01", "level": "1A"},
+    "VKORC1": {"version": "2017", "pmid": "27441996", "update": "2020-01", "level": "1A"},
+    "SLCO1B1": {"version": "2022", "pmid": "35152405", "update": "2022-06", "level": "1A"},
+    "TPMT": {"version": "2018", "pmid": "30447069", "update": "2023-03", "level": "1A"},
+    "DPYD": {"version": "2017", "pmid": "29152729", "update": "2023-12", "level": "1A"},
+    "MTHFR": {"version": "N/A", "pmid": "N/A", "update": "N/A", "level": "Informational"},
+    "HLA-B*57:01": {"version": "2014", "pmid": "24561393", "update": "2014-01", "level": "1A"},
+    "G6PD": {"version": "N/A", "pmid": "N/A", "update": "N/A", "level": "Informational"},
+    "HLA-B*58:01": {"version": "2015", "pmid": "23232549", "update": "2015-01", "level": "1A"},
+}
+
+
 # ---------------------------------------------------------------------------
 # PGx gene configurations: star alleles -> phenotype -> drug recommendations
 # All mappings follow CPIC Level 1A guidelines
@@ -783,6 +800,70 @@ PGX_GENE_CONFIGS = {
 }
 
 
+# ---------------------------------------------------------------------------
+# Known drug-drug interactions relevant to PGx recommendations
+# Sources: FDA drug labels, CPIC guidelines, Lexicomp
+# ---------------------------------------------------------------------------
+DRUG_INTERACTIONS = [
+    {
+        "drug_a": "codeine",
+        "drug_b": "tramadol",
+        "severity": "high",
+        "mechanism": "Both metabolized by CYP2D6; combined use increases CNS depression risk",
+        "recommendation": "Avoid concurrent use",
+    },
+    {
+        "drug_a": "clopidogrel",
+        "drug_b": "omeprazole",
+        "severity": "high",
+        "mechanism": "Omeprazole inhibits CYP2C19, reducing clopidogrel activation",
+        "recommendation": "Use pantoprazole instead of omeprazole with clopidogrel",
+    },
+    {
+        "drug_a": "simvastatin",
+        "drug_b": "amiodarone",
+        "severity": "high",
+        "mechanism": "Amiodarone inhibits SLCO1B1/CYP3A4, increasing simvastatin myopathy risk",
+        "recommendation": "Limit simvastatin to 20mg/day or switch to rosuvastatin",
+    },
+    {
+        "drug_a": "warfarin",
+        "drug_b": "amiodarone",
+        "severity": "high",
+        "mechanism": "Amiodarone inhibits CYP2C9, increasing warfarin bleeding risk",
+        "recommendation": "Reduce warfarin dose by 30-50% and monitor INR closely",
+    },
+    {
+        "drug_a": "methotrexate",
+        "drug_b": "trimethoprim",
+        "severity": "high",
+        "mechanism": "Both are folate antagonists; combined use increases bone marrow suppression",
+        "recommendation": "Avoid concurrent use or monitor CBC closely",
+    },
+    {
+        "drug_a": "carbamazepine",
+        "drug_b": "simvastatin",
+        "severity": "moderate",
+        "mechanism": "Carbamazepine induces CYP3A4, reducing simvastatin efficacy",
+        "recommendation": "Consider higher statin dose or switch to rosuvastatin",
+    },
+    {
+        "drug_a": "fluoxetine",
+        "drug_b": "codeine",
+        "severity": "high",
+        "mechanism": "Fluoxetine strongly inhibits CYP2D6, blocking codeine-to-morphine conversion",
+        "recommendation": "Codeine will be ineffective; use non-CYP2D6 analgesic",
+    },
+    {
+        "drug_a": "fluoxetine",
+        "drug_b": "tramadol",
+        "severity": "high",
+        "mechanism": "Fluoxetine inhibits CYP2D6 and combined serotonergic effect increases seizure/serotonin syndrome risk",
+        "recommendation": "Avoid concurrent use",
+    },
+]
+
+
 class PharmacogenomicMapper:
     """Maps star alleles and genotypes to drug recommendations.
 
@@ -916,6 +997,13 @@ class PharmacogenomicMapper:
             "critical_alerts": critical_alerts,
         }
 
+    def get_guideline_versions(self) -> Dict[str, Dict[str, str]]:
+        """Return CPIC guideline version info for all supported genes.
+
+        Useful for audit trails and ensuring recommendations are current.
+        """
+        return dict(CPIC_GUIDELINE_VERSIONS)
+
     def map_all(
         self,
         star_alleles: Optional[Dict[str, str]] = None,
@@ -1002,13 +1090,8 @@ class PharmacogenomicMapper:
                     ),
                 })
 
-        logger.info(
-            f"PGx mapping complete: {len(gene_results)} genes analyzed, "
-            f"{len(all_critical_alerts)} critical alerts, "
-            f"{len(drugs_to_avoid)} drugs to avoid"
-        )
-
-        return {
+        # Build preliminary result for drug interaction checking
+        preliminary_result = {
             "gene_results": gene_results,
             "critical_alerts": all_critical_alerts,
             "drugs_to_avoid": drugs_to_avoid,
@@ -1017,6 +1100,86 @@ class PharmacogenomicMapper:
             "genes_analyzed": len(gene_results),
             "has_critical_findings": len(all_critical_alerts) > 0,
         }
+
+        # Cross-check for drug-drug interactions across all recommendations
+        drug_interactions = self.check_drug_interactions(preliminary_result)
+        preliminary_result["drug_interactions"] = drug_interactions
+
+        # Add guideline version info for audit trail
+        genes_analyzed = [r["gene"] for r in gene_results if r.get("gene")]
+        preliminary_result["guideline_versions"] = {
+            gene: CPIC_GUIDELINE_VERSIONS.get(gene, {}).get("update", "unknown")
+            for gene in genes_analyzed
+        }
+
+        logger.info(
+            f"PGx mapping complete: {len(gene_results)} genes analyzed, "
+            f"{len(all_critical_alerts)} critical alerts, "
+            f"{len(drugs_to_avoid)} drugs to avoid, "
+            f"{len(drug_interactions)} drug-drug interactions detected"
+        )
+
+        return preliminary_result
+
+    def check_drug_interactions(
+        self,
+        map_all_result: Dict[str, Any],
+    ) -> List[Dict[str, Any]]:
+        """Check for known drug-drug interactions across PGx recommendations.
+
+        Scans all drugs mentioned in gene_results and cross-checks them
+        against the DRUG_INTERACTIONS table. Returns warnings for any
+        dangerous combinations found in the patient's recommended drugs.
+
+        Args:
+            map_all_result: The dict returned by map_all(), containing
+                a "gene_results" list with per-gene drug recommendations.
+
+        Returns:
+            List of interaction warning dicts, each containing:
+                - drug_a, drug_b: the interacting drug names
+                - severity: "high" or "moderate"
+                - mechanism: pharmacological explanation
+                - recommendation: clinical guidance
+                - genes_involved: list of genes that recommended these drugs
+        """
+        # Collect all recommended drugs and which gene(s) recommended them
+        drug_to_genes: Dict[str, List[str]] = {}
+        for gene_result in map_all_result.get("gene_results", []):
+            gene = gene_result.get("gene", "")
+            for drug_rec in gene_result.get("affected_drugs", []):
+                drug_name = drug_rec["drug"].lower()
+                drug_to_genes.setdefault(drug_name, [])
+                if gene not in drug_to_genes[drug_name]:
+                    drug_to_genes[drug_name].append(gene)
+
+        # Check each known interaction pair
+        warnings: List[Dict[str, Any]] = []
+        recommended_drugs = set(drug_to_genes.keys())
+
+        for interaction in DRUG_INTERACTIONS:
+            a = interaction["drug_a"].lower()
+            b = interaction["drug_b"].lower()
+            if a in recommended_drugs and b in recommended_drugs:
+                genes_involved = sorted(
+                    set(drug_to_genes[a] + drug_to_genes[b])
+                )
+                warnings.append({
+                    "drug_a": interaction["drug_a"],
+                    "drug_b": interaction["drug_b"],
+                    "severity": interaction["severity"],
+                    "mechanism": interaction["mechanism"],
+                    "recommendation": interaction["recommendation"],
+                    "genes_involved": genes_involved,
+                })
+
+        if warnings:
+            logger.warning(
+                f"Drug-drug interactions detected: {len(warnings)} "
+                f"interaction(s) across PGx recommendations"
+            )
+
+        return warnings
 
     def check_drug(
         self,

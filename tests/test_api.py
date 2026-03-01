@@ -200,6 +200,7 @@ def client(
     external services.
     """
     from api.main import app
+    import api.main as main_module
 
     # Replace lifespan with a no-op so TestClient does not run the real startup
     @asynccontextmanager
@@ -208,39 +209,37 @@ def client(
 
     original_lifespan = app.router.lifespan_context
     app.router.lifespan_context = noop_lifespan
+    try:
+        with TestClient(app, raise_server_exceptions=False) as c:
+            # Set mocked state on app.state (read by route handlers via req.app.state)
+            app.state.engine = mock_engine
+            app.state.agent = mock_agent
+            app.state.manager = mock_manager
+            app.state.bio_age_calc = mock_bio_age_calc
+            app.state.trajectory_analyzer = mock_trajectory_analyzer
+            app.state.pgx_mapper = mock_pgx_mapper
+            app.state.genotype_adjuster = mock_genotype_adjuster
+            app.state.metrics = {
+                "requests_total": 0,
+                "query_requests_total": 0,
+                "search_requests_total": 0,
+                "analyze_requests_total": 0,
+                "bio_age_requests_total": 0,
+                "errors_total": 0,
+            }
 
-    with TestClient(app, raise_server_exceptions=False) as c:
-        # Set mocked state on app.state (read by route handlers via req.app.state)
-        app.state.engine = mock_engine
-        app.state.agent = mock_agent
-        app.state.manager = mock_manager
-        app.state.bio_age_calc = mock_bio_age_calc
-        app.state.trajectory_analyzer = mock_trajectory_analyzer
-        app.state.pgx_mapper = mock_pgx_mapper
-        app.state.genotype_adjuster = mock_genotype_adjuster
-        app.state.metrics = {
-            "requests_total": 0,
-            "query_requests_total": 0,
-            "search_requests_total": 0,
-            "analyze_requests_total": 0,
-            "bio_age_requests_total": 0,
-            "errors_total": 0,
-        }
+            # Also set module-level variables that /health and /collections read directly
+            main_module._engine = mock_engine
+            main_module._agent = mock_agent
+            main_module._manager = mock_manager
 
-        # Also set module-level variables that /health and /collections read directly
-        import api.main as main_module
-
-        main_module._engine = mock_engine
-        main_module._agent = mock_agent
-        main_module._manager = mock_manager
-
-        yield c
-
-    # Restore original lifespan and module-level state
-    app.router.lifespan_context = original_lifespan
-    main_module._engine = None
-    main_module._agent = None
-    main_module._manager = None
+            yield c
+    finally:
+        # Restore original lifespan and module-level state even if the test fails
+        app.router.lifespan_context = original_lifespan
+        main_module._engine = None
+        main_module._agent = None
+        main_module._manager = None
 
 
 @pytest.fixture(autouse=True)

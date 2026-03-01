@@ -83,11 +83,9 @@ class PrecisionBiomarkerSettings(BaseSettings):
             self.WEIGHT_GENOTYPE_ADJUSTMENTS, self.WEIGHT_MONITORING,
         ]
         total = sum(weights)
-        if abs(total - 1.0) > 0.1:
-            import logging
-            logging.getLogger(__name__).warning(
-                f"Collection search weights sum to {total:.2f}, expected ~1.0"
-            )
+        if abs(total - 1.0) > 0.05:
+            from loguru import logger
+            logger.warning(f"Collection search weights sum to {total:.2f}, expected ~1.0")
         return self
 
     # ── API Server ──

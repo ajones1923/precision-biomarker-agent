@@ -19,6 +19,29 @@ Date: March 2026
 from typing import Any, Dict, List, Optional
 
 
+# Knowledge base version tracking
+# Update these dates when clinical guidelines or thresholds change
+KNOWLEDGE_VERSION = {
+    "version": "1.0.0",
+    "last_updated": "2026-03-01",
+    "cpic_version": "March 2025",  # CPIC guideline versions used
+    "ada_standards": "2024",       # ADA Standards of Medical Care
+    "esc_guidelines": "2021",      # ESC/EAS Dyslipidemia Guidelines
+    "aasld_guidelines": "2023",    # AASLD NAFLD/NASH Guidance
+    "levine_phenoage": "2018",     # PhenoAge algorithm (Levine et al.)
+    "lu_grimage": "2019",          # GrimAge algorithm (Lu et al.)
+    "sources": [
+        "CPIC (cpicpgx.org) - Pharmacogenomic guidelines",
+        "ADA Standards of Medical Care in Diabetes 2024",
+        "ESC/EAS Guidelines for Dyslipidemia Management 2021",
+        "AASLD Practice Guidance on NAFLD 2023",
+        "Levine et al. 2018 PMID:29676998 - PhenoAge",
+        "Lu et al. 2019 PMID:30669119 - GrimAge",
+        "Nordestgaard et al. 2010 PMID:20031622 - Lp(a)",
+    ],
+}
+
+
 # =============================================================================
 # 0. SHARED CLINICAL THRESHOLDS -- for cross-module consistency
 # =============================================================================
@@ -30,6 +53,114 @@ GENOTYPE_THRESHOLDS = {
     "TCF7L2_fasting_glucose": {0: 100, 1: 95, 2: 90},  # mg/dL
     "PNPLA3_alt_upper": {"CC": 56, "CG": 45, "GG": 35},  # U/L; Romeo et al. 2008 PMID:18820127; Sookoian & Pirola 2011 PMID:21520172
     "DIO2_tsh_upper": {"GG": 4.0, "GA": 3.5, "AA": 3.0},  # mIU/L; Panicker et al. 2009 PMID:19820026; Castagna et al. 2017 PMID:28100792
+}
+
+# Age- and sex-stratified reference ranges for key biomarkers
+# Sources: NHANES III, Harrison's Principles of Internal Medicine 21e,
+# Tietz Clinical Guide to Laboratory Tests 6e
+AGE_SEX_REFERENCE_RANGES = {
+    "creatinine": {
+        # mg/dL; Inker et al. 2021 PMID:34554658 (CKD-EPI 2021)
+        "M": {"18-49": (0.7, 1.2), "50-69": (0.8, 1.3), "70+": (0.9, 1.5)},
+        "F": {"18-49": (0.5, 1.0), "50-69": (0.6, 1.1), "70+": (0.7, 1.3)},
+    },
+    "alt": {
+        # U/L; Prati et al. 2002 PMID:12407587; updated Kwo et al. 2017 PMID:27677441
+        "M": {"18-49": (7, 45), "50-69": (7, 50), "70+": (7, 55)},
+        "F": {"18-49": (7, 30), "50-69": (7, 35), "70+": (7, 40)},
+    },
+    "alkaline_phosphatase": {
+        # U/L; varies with bone turnover (higher in elderly)
+        "M": {"18-49": (44, 147), "50-69": (44, 147), "70+": (44, 165)},
+        "F": {"18-49": (44, 147), "50-69": (44, 165), "70+": (44, 187)},
+    },
+    "ferritin": {
+        # ng/mL; Adams et al. 2005 PMID:15818862
+        "M": {"18-49": (24, 336), "50-69": (24, 336), "70+": (24, 400)},
+        "F": {"18-49": (11, 150), "50-69": (12, 263), "70+": (12, 300)},
+    },
+    "tsh": {
+        # mIU/L; Boucai et al. 2011 PMID:21270357
+        "M": {"18-49": (0.4, 4.0), "50-69": (0.4, 4.5), "70+": (0.4, 6.0)},
+        "F": {"18-49": (0.4, 4.0), "50-69": (0.4, 5.0), "70+": (0.4, 7.0)},
+    },
+    "hemoglobin": {
+        # g/dL; WHO criteria
+        "M": {"18-49": (13.5, 17.5), "50-69": (13.0, 17.0), "70+": (12.0, 16.5)},
+        "F": {"18-49": (12.0, 16.0), "50-69": (11.5, 15.5), "70+": (11.0, 15.0)},
+    },
+}
+
+# Plausible clinical ranges for input validation
+# Values outside these ranges are likely data entry errors
+# Sources: Tietz Clinical Guide, clinical experience
+BIOMARKER_PLAUSIBLE_RANGES = {
+    "albumin": (1.0, 6.0),        # g/dL
+    "creatinine": (0.1, 25.0),    # mg/dL
+    "glucose": (20, 600),          # mg/dL
+    "fasting_glucose": (20, 600),  # mg/dL
+    "hs_crp": (0.01, 300.0),      # mg/L
+    "wbc": (0.5, 100.0),          # 10^3/μL
+    "mcv": (50, 130),              # fL
+    "rdw": (8.0, 30.0),           # %
+    "lymphocyte_pct": (1.0, 80.0), # %
+    "alkaline_phosphatase": (5, 2000), # U/L
+    "hba1c": (2.0, 20.0),         # %
+    "ldl": (10, 500),              # mg/dL
+    "hdl": (5, 150),               # mg/dL
+    "triglycerides": (20, 5000),   # mg/dL
+    "alt": (1, 5000),              # U/L
+    "ast": (1, 5000),              # U/L
+    "tsh": (0.01, 100.0),         # mIU/L
+    "ferritin": (1, 10000),        # ng/mL
+    "hemoglobin": (3.0, 25.0),    # g/dL
+    "platelets": (5, 2000),        # K/μL
+    "lpa": (0.1, 500),             # nmol/L
+    "homocysteine": (1.0, 100.0), # μmol/L
+    "vitamin_d_25oh": (1.0, 200.0), # ng/mL
+    "vitamin_b12": (50, 5000),     # pg/mL
+    "folate_serum": (1.0, 50.0),  # ng/mL
+}
+
+
+# =============================================================================
+# 0b. ANCESTRY ADJUSTMENTS -- population-specific biomarker reference shifts
+# =============================================================================
+
+# Population-specific biomarker adjustments
+# Sources: NHANES III, UK Biobank, Multi-Ethnic Study of Atherosclerosis (MESA)
+ANCESTRY_ADJUSTMENTS = {
+    "african": {
+        # African ancestry: higher Lp(a), lower triglycerides, higher creatinine
+        # Virani et al. 2020 PMID:31992061; Inker et al. 2021 PMID:34554658
+        "lpa": {"threshold_multiplier": 1.0, "note": "Lp(a) levels 2-3x higher; standard thresholds apply but prevalence is higher"},
+        "creatinine": {"threshold_multiplier": 1.15, "note": "Higher muscle mass raises baseline creatinine ~15%; eGFR equations now race-neutral (CKD-EPI 2021)"},
+        "triglycerides": {"threshold_multiplier": 0.85, "note": "Lower baseline triglycerides; adjusted thresholds recommended"},
+        "vitamin_d_25oh": {"threshold_multiplier": 0.80, "note": "Lower 25(OH)D levels but equivalent bone density; adjusted sufficiency threshold"},
+        "hba1c": {"threshold_multiplier": 1.0, "note": "HbA1c may overestimate glycemia due to RBC lifespan differences; consider fructosamine"},
+    },
+    "south_asian": {
+        # South Asian: higher cardiovascular risk at lower BMI/lipid levels
+        # Gujral et al. 2013 PMID:23404868; Sattar & Gill 2015 PMID:25533203
+        "ldl": {"threshold_multiplier": 0.90, "note": "Lower LDL thresholds recommended due to higher CVD risk at equivalent levels"},
+        "hba1c": {"threshold_multiplier": 0.95, "note": "Diabetes screening recommended at lower HbA1c (5.5% vs 5.7%)"},
+        "triglycerides": {"threshold_multiplier": 0.90, "note": "Lower triglyceride thresholds due to atherogenic dyslipidemia pattern"},
+        "lpa": {"threshold_multiplier": 1.0, "note": "Elevated Lp(a) prevalence; standard thresholds apply"},
+    },
+    "east_asian": {
+        # East Asian: different alcohol metabolism, statin sensitivity
+        # Dang et al. 2014 PMID:24458560; Lee et al. 2019 PMID:31276099
+        "alt": {"threshold_multiplier": 0.85, "note": "Lower ALT upper limits recommended (30 U/L male, 19 U/L female)"},
+        "creatinine": {"threshold_multiplier": 0.95, "note": "Lower average muscle mass; slightly lower baseline creatinine"},
+        "ldl": {"threshold_multiplier": 0.95, "note": "Statins more potent at equivalent doses; lower LDL targets achievable"},
+    },
+    "hispanic": {
+        # Hispanic/Latino: higher NAFLD prevalence, diabetes risk
+        # Lazo et al. 2013 PMID:23532013; Aguayo-Mazzucato et al. 2019 PMID:30737276
+        "alt": {"threshold_multiplier": 1.10, "note": "Higher NAFLD prevalence; ALT may be elevated at baseline"},
+        "hba1c": {"threshold_multiplier": 0.95, "note": "Earlier diabetes screening recommended; lower HbA1c threshold"},
+        "triglycerides": {"threshold_multiplier": 1.05, "note": "Higher baseline triglycerides common"},
+    },
 }
 
 

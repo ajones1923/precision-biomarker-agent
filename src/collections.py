@@ -830,7 +830,7 @@ class BiomarkerCollectionManager:
     def close(self):
         """Shut down the thread pool executor."""
         if hasattr(self, '_executor'):
-            self._executor.shutdown(wait=False)
+            self._executor.shutdown(wait=True)
 
     def disconnect(self) -> None:
         """Disconnect from the Milvus server."""

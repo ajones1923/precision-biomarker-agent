@@ -16,7 +16,7 @@ Date: March 2026
 """
 
 import math
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 from loguru import logger
 
@@ -56,6 +56,12 @@ UNIT_CONVERSIONS = {
     # Other biomarkers: same units in US and SI (%, fL, U/L, 10^3/μL, ln(mg/L))
 }
 
+# PhenoAge standard error from NHANES III validation cohort
+# Levine et al. 2018 PMID:29676998 (Table 1, SE = 4.9 years for full model)
+# SE decreases with more biomarkers available
+PHENOAGE_SE_FULL = 4.9  # years, all 9 biomarkers
+PHENOAGE_SE_PARTIAL = 6.5  # years, <9 biomarkers (increased uncertainty)
+
 # GrimAge surrogate markers and weights (simplified from Lu et al. 2019)
 # Lu et al. 2019 PMID:30669119; Hillary et al. 2020 PMID:32941527
 GRIMAGE_MARKERS = {
@@ -66,6 +72,25 @@ GRIMAGE_MARKERS = {
     "timp1": {"weight": 0.09, "unit": "ng/mL", "ref_max": 250.0},
     "adm": {"weight": 0.11, "unit": "pmol/L", "ref_max": 50.0},
 }
+
+
+def validate_biomarker_ranges(biomarkers: Dict[str, float]) -> List[str]:
+    """Check biomarker values against plausible clinical ranges.
+
+    Returns list of warning strings for out-of-range values.
+    """
+    from src.knowledge import BIOMARKER_PLAUSIBLE_RANGES
+
+    warnings = []
+    for name, value in biomarkers.items():
+        if name in BIOMARKER_PLAUSIBLE_RANGES:
+            lower, upper = BIOMARKER_PLAUSIBLE_RANGES[name]
+            if value < lower or value > upper:
+                warnings.append(
+                    f"{name}={value} outside plausible range ({lower}-{upper}); "
+                    f"possible data entry error"
+                )
+    return warnings
 
 
 class BiologicalAgeCalculator:
@@ -105,6 +130,10 @@ class BiologicalAgeCalculator:
             else:
                 sanitized[marker] = val
         biomarkers = sanitized
+
+        range_warnings = validate_biomarker_ranges(biomarkers)
+        for w in range_warnings:
+            logger.warning(f"Input validation: {w}")
 
         # Handle hs_crp -> ln_crp transformation
         working = dict(biomarkers)
@@ -152,6 +181,7 @@ class BiologicalAgeCalculator:
             )
 
         # Add chronological age contribution
+        # Chronological age coefficient from Levine et al. 2018 (Table S1, PMID:29676998)
         age_contribution = 0.0804 * chronological_age
         xb += age_contribution
         contributions.append({
@@ -182,16 +212,31 @@ class BiologicalAgeCalculator:
 
         age_acceleration = biological_age - chronological_age
 
-        # Classify mortality risk
+        # Compute confidence interval (95% CI)
+        # SE scales with proportion of missing biomarkers
+        n_available = len(PHENOAGE_COEFFICIENTS) - len(missing)
+        se = PHENOAGE_SE_FULL if n_available >= len(PHENOAGE_COEFFICIENTS) else PHENOAGE_SE_PARTIAL
+        ci_lower = biological_age - 1.96 * se
+        ci_upper = biological_age + 1.96 * se
+
+        # Classify mortality risk with confidence qualifier
         # Levine et al. 2018 PMID:29676998; Liu et al. 2019 PMID:30567591
-        if age_acceleration > 5:  # Levine et al. 2018 PMID:29676998; Liu et al. 2019 PMID:30567591
+        if age_acceleration > 5:
             risk = "HIGH"
-        elif age_acceleration > 2:  # Levine et al. 2018 PMID:29676998; Liu et al. 2019 PMID:30567591
+        elif age_acceleration > 2:
             risk = "MODERATE"
         elif age_acceleration > -2:
             risk = "NORMAL"
         else:
             risk = "LOW"  # Aging slower than expected
+
+        # Add confidence qualifier based on data completeness
+        if len(missing) > 3:
+            risk_confidence = "low"
+        elif len(missing) > 0:
+            risk_confidence = "moderate"
+        else:
+            risk_confidence = "high"
 
         # Sort contributions by absolute magnitude
         contributions.sort(key=lambda c: abs(c["contribution"]), reverse=True)
@@ -202,6 +247,14 @@ class BiologicalAgeCalculator:
             "age_acceleration": round(age_acceleration, 1),
             "mortality_score": round(mortality_score, 6),
             "mortality_risk": risk,
+            "risk_confidence": risk_confidence,
+            "confidence_interval": {
+                "lower": round(ci_lower, 1),
+                "upper": round(ci_upper, 1),
+                "confidence_level": 0.95,
+                "standard_error": se,
+                "note": f"Based on {n_available}/{len(PHENOAGE_COEFFICIENTS)} biomarkers available",
+            },
             "top_aging_drivers": contributions[:5],
             "all_contributions": contributions,
             "missing_biomarkers": missing,

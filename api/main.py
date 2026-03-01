@@ -29,6 +29,7 @@ Date: March 2026
 
 import os
 import sys
+import threading
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -89,6 +90,7 @@ _metrics: Dict[str, int] = {
     "bio_age_requests_total": 0,
     "errors_total": 0,
 }
+_metrics_lock = threading.Lock()
 
 
 # =====================================================================
@@ -243,8 +245,8 @@ async def _check_api_key(request: Request, call_next):
     """Validate API key if API_KEY is configured in settings."""
     api_key = getattr(settings, "API_KEY", None)
     if api_key:
-        # Skip auth for health, metrics, and docs endpoints
-        skip_paths = {"/health", "/metrics", "/docs", "/openapi.json", "/redoc"}
+        # Skip auth for health and metrics only; docs require auth in production
+        skip_paths = {"/health", "/metrics"}
         if request.url.path not in skip_paths:
             provided_key = request.headers.get("X-API-Key", "")
             if provided_key != api_key:
@@ -258,8 +260,12 @@ async def _limit_request_size(request: Request, call_next):
     """Reject request bodies that exceed the configured size limit."""
     content_length = request.headers.get("content-length")
     max_bytes = settings.MAX_REQUEST_SIZE_MB * 1024 * 1024
-    if content_length and int(content_length) > max_bytes:
-        return JSONResponse(status_code=413, content={"detail": "Request body too large"})
+    if content_length:
+        try:
+            if int(content_length) > max_bytes:
+                return JSONResponse(status_code=413, content={"detail": "Request too large"})
+        except ValueError:
+            pass  # Malformed header, let request proceed
     return await call_next(request)
 
 
@@ -311,7 +317,8 @@ class KnowledgeStatsResponse(BaseModel):
 @app.get("/health", response_model=HealthResponse, tags=["status"])
 async def health():
     """Return service health with collection count and total vector count."""
-    _metrics["requests_total"] += 1
+    with _metrics_lock:
+        _metrics["requests_total"] += 1
 
     agent_ready = _engine is not None and _agent is not None
 
@@ -335,14 +342,16 @@ async def health():
         )
     except Exception as e:
         logger.exception(f"Health check failed -- Milvus unavailable: {e}")
-        _metrics["errors_total"] += 1
+        with _metrics_lock:
+            _metrics["errors_total"] += 1
         raise HTTPException(status_code=503, detail=f"Milvus unavailable: {e}")
 
 
 @app.get("/collections", response_model=CollectionsResponse, tags=["status"])
 async def list_collections():
     """Return all collection names and their record counts."""
-    _metrics["requests_total"] += 1
+    with _metrics_lock:
+        _metrics["requests_total"] += 1
 
     if not _manager:
         raise HTTPException(status_code=503, detail="Engine not initialized")
@@ -359,21 +368,24 @@ async def list_collections():
         )
     except Exception as e:
         logger.exception(f"Failed to fetch collection stats: {e}")
-        _metrics["errors_total"] += 1
+        with _metrics_lock:
+            _metrics["errors_total"] += 1
         raise HTTPException(status_code=500, detail=f"Failed to fetch collection stats: {e}")
 
 
 @app.get("/knowledge/stats", response_model=KnowledgeStatsResponse, tags=["knowledge"])
 async def knowledge_stats():
     """Return statistics about the biomarker knowledge graph."""
-    _metrics["requests_total"] += 1
+    with _metrics_lock:
+        _metrics["requests_total"] += 1
 
     try:
         stats = get_knowledge_stats()
         return KnowledgeStatsResponse(**stats)
     except Exception as e:
         logger.exception(f"Knowledge stats failed: {e}")
-        _metrics["errors_total"] += 1
+        with _metrics_lock:
+            _metrics["errors_total"] += 1
         raise HTTPException(status_code=500, detail=f"Knowledge stats failed: {e}")
 
 

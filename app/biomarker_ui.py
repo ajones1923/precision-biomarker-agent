@@ -278,6 +278,23 @@ def risk_badge(level: str) -> str:
     return f'<span class="{css_class}">{level.upper()}</span>'
 
 
+def _risk_display(level: str, prefix: str = "", suffix: str = "") -> None:
+    """Render a risk level using safe Streamlit components instead of raw HTML.
+
+    Maps risk levels to appropriate Streamlit callout functions to avoid
+    XSS via unsafe_allow_html with user-controlled data.
+    """
+    label = level.upper()
+    text = f"{prefix}: {label} {suffix}".strip() if prefix else f"{label} {suffix}".strip()
+    level_lower = level.lower()
+    if level_lower in ("critical", "high"):
+        st.error(text)
+    elif level_lower == "moderate":
+        st.warning(text)
+    else:
+        st.info(text)
+
+
 def get_pgx_phenotype(gene: str, star_alleles: str) -> dict:
     """Determine metabolizer phenotype from star alleles (simplified)."""
     poor_alleles = {"*2", "*3", "*4", "*5", "*6", "*7", "*8"}
@@ -656,7 +673,7 @@ with tab1:
                     accel = pheno.get("age_acceleration", ba.get("age_acceleration", 0))
                     risk = pheno.get("mortality_risk", ba.get("mortality_risk", "NORMAL"))
                     st.metric("Acceleration", f"{accel:+.1f} years")
-                    st.markdown(f"Risk: {risk_badge(risk)}", unsafe_allow_html=True)
+                    _risk_display(risk, prefix="Risk")
 
             if "disease_trajectories" in results:
                 st.markdown("### Disease Trajectories")
@@ -664,10 +681,7 @@ with tab1:
                     level = traj.get("risk_level", "LOW")
                     name = traj.get("display_name", traj.get("disease", ""))
                     stage = traj.get("stage", "")
-                    st.markdown(
-                        f"**{name}**: {risk_badge(level)} | Stage: {stage}",
-                        unsafe_allow_html=True,
-                    )
+                    _risk_display(level, prefix=f"**{name}**", suffix=f"| Stage: {stage}")
                     if traj.get("findings"):
                         for f in traj["findings"]:
                             st.markdown(f"- {f}")
@@ -732,10 +746,7 @@ with tab2:
             with c2:
                 st.metric("Age Acceleration", f"{result['age_acceleration']:+.1f} years")
             with c3:
-                st.markdown(
-                    f"Risk Level: {risk_badge(result['mortality_risk'])}",
-                    unsafe_allow_html=True,
-                )
+                _risk_display(result['mortality_risk'], prefix="Risk Level")
 
             st.markdown("#### Top Aging Drivers")
             driver_data = []
@@ -912,10 +923,7 @@ with tab3:
             st.markdown(f"### {result['display_name']}")
             c1, c2 = st.columns(2)
             with c1:
-                st.markdown(
-                    f"Risk Level: {risk_badge(result['risk_level'])}",
-                    unsafe_allow_html=True,
-                )
+                _risk_display(result['risk_level'], prefix="Risk Level")
             with c2:
                 st.markdown(f"Stage: **{result['stage']}**")
 
@@ -1012,10 +1020,7 @@ with tab4:
             if critical_alerts:
                 st.markdown("#### Critical Alerts")
                 for alert in critical_alerts:
-                    st.markdown(
-                        f'<p class="risk-critical">WARNING: {alert}</p>',
-                        unsafe_allow_html=True,
-                    )
+                    st.error(f"WARNING: {alert}")
 
             if table_data:
                 st.table(table_data)

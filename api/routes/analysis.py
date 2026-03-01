@@ -14,6 +14,7 @@ Date: March 2026
 
 from __future__ import annotations
 
+import json
 import time
 
 from loguru import logger
@@ -22,6 +23,8 @@ from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel, Field, model_validator
+
+from src.audit import audit_log, AuditAction
 
 router = APIRouter(prefix="/v1", tags=["analysis"])
 
@@ -34,7 +37,7 @@ class PatientProfileRequest(BaseModel):
     """Full patient profile for analysis."""
     patient_id: str = Field(..., description="Unique patient identifier")
     age: int = Field(..., ge=0, le=150, description="Patient age in years")
-    sex: str = Field(..., max_length=10, description="Patient sex (M/F)")
+    sex: str = Field(..., description="Patient sex", pattern="^(M|F)$")
     biomarkers: Dict[str, float] = Field(
         default_factory=dict,
         description="Biomarker name -> measured value",
@@ -66,7 +69,7 @@ class BiologicalAgeRequest(BaseModel):
 class DiseaseRiskRequest(BaseModel):
     """Request for disease trajectory analysis."""
     age: int = Field(..., ge=0, le=150)
-    sex: str = Field(..., max_length=10)
+    sex: str = Field(..., description="Patient sex", pattern="^(M|F)$")
     biomarkers: Dict[str, float] = Field(default_factory=dict)
     genotypes: Dict[str, str] = Field(default_factory=dict)
 
@@ -90,6 +93,13 @@ class QueryRequest(BaseModel):
     collections: Optional[List[str]] = Field(None, description="Restrict to collections")
     year_min: Optional[int] = Field(None, ge=1990, le=2030)
     year_max: Optional[int] = Field(None, ge=1990, le=2030)
+
+    @model_validator(mode="after")
+    def _check_year_range(self) -> "QueryRequest":
+        if self.year_min is not None and self.year_max is not None:
+            if self.year_min > self.year_max:
+                raise ValueError("year_min must be <= year_max")
+        return self
 
 
 class AnalysisResponse(BaseModel):
@@ -156,6 +166,13 @@ def full_analysis(request: PatientProfileRequest, req: Request):
     t0 = time.perf_counter()
 
     try:
+        audit_log(
+            AuditAction.PATIENT_ANALYSIS,
+            patient_id=request.patient_id,
+            source_ip=req.client.host if req.client else None,
+            details={"modules": ["biological_age", "disease_trajectory", "pgx", "genotype_adjustment"]},
+        )
+
         from src.models import PatientProfile
         profile = PatientProfile(
             patient_id=request.patient_id,
@@ -183,7 +200,7 @@ def full_analysis(request: PatientProfileRequest, req: Request):
         raise
     except Exception as e:
         logger.exception(f"Full analysis failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Analysis failed: {e}")
+        raise HTTPException(status_code=500, detail="Internal analysis error. Check server logs.")
 
 
 @router.post("/biological-age", response_model=BiologicalAgeResponse)
@@ -198,6 +215,8 @@ def biological_age(request: BiologicalAgeRequest, req: Request):
         raise HTTPException(status_code=503, detail="Bio age calculator not initialized")
 
     try:
+        audit_log(AuditAction.BIOLOGICAL_AGE, source_ip=req.client.host if req.client else None)
+
         result = calc.calculate(request.age, request.biomarkers)
         phenoage = result.get("phenoage", {})
 
@@ -211,7 +230,7 @@ def biological_age(request: BiologicalAgeRequest, req: Request):
         )
     except Exception as e:
         logger.exception(f"Biological age calculation failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Biological age calculation failed: {e}")
+        raise HTTPException(status_code=500, detail="Internal analysis error. Check server logs.")
 
 
 @router.post("/disease-risk", response_model=DiseaseRiskResponse)
@@ -229,6 +248,8 @@ def disease_risk(request: DiseaseRiskRequest, req: Request):
     t0 = time.perf_counter()
 
     try:
+        audit_log(AuditAction.DISEASE_RISK, source_ip=req.client.host if req.client else None)
+
         trajectories = analyzer.analyze_all(
             request.biomarkers, request.genotypes, request.age, request.sex,
         )
@@ -240,7 +261,7 @@ def disease_risk(request: DiseaseRiskRequest, req: Request):
         )
     except Exception as e:
         logger.exception(f"Disease risk analysis failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Disease risk analysis failed: {e}")
+        raise HTTPException(status_code=500, detail="Internal analysis error. Check server logs.")
 
 
 @router.post("/pgx", response_model=PGxResponse)
@@ -255,6 +276,8 @@ def pharmacogenomics(request: PGxRequest, req: Request):
         raise HTTPException(status_code=503, detail="PGx mapper not initialized")
 
     try:
+        audit_log(AuditAction.PGX_MAPPING, source_ip=req.client.host if req.client else None)
+
         results = mapper.map_all(request.star_alleles, request.genotypes)
 
         # Extract critical findings
@@ -273,7 +296,7 @@ def pharmacogenomics(request: PGxRequest, req: Request):
         )
     except Exception as e:
         logger.exception(f"PGx mapping failed: {e}")
-        raise HTTPException(status_code=500, detail=f"PGx mapping failed: {e}")
+        raise HTTPException(status_code=500, detail="Internal analysis error. Check server logs.")
 
 
 @router.post("/query", response_model=QueryResponse)
@@ -292,6 +315,12 @@ def rag_query(request: QueryRequest, req: Request):
         raise HTTPException(status_code=503, detail="Embedding model not loaded")
 
     try:
+        audit_log(
+            AuditAction.RAG_QUERY,
+            patient_id=request.patient_profile.patient_id if request.patient_profile else None,
+            source_ip=req.client.host if req.client else None,
+        )
+
         patient_profile = None
         if request.patient_profile:
             from src.models import PatientProfile
@@ -326,7 +355,7 @@ def rag_query(request: QueryRequest, req: Request):
         raise
     except Exception as e:
         logger.exception(f"RAG query failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Query failed: {e}")
+        raise HTTPException(status_code=500, detail="Internal analysis error. Check server logs.")
 
 
 @router.post("/query/stream")
@@ -346,7 +375,6 @@ def rag_query_stream(request: QueryRequest, req: Request):
         patient_profile = PatientProfile(**request.patient_profile.model_dump())
 
     def event_generator():
-        import json as _json
         try:
             for chunk in engine.query_stream(
                 question=request.question,
@@ -356,12 +384,12 @@ def rag_query_stream(request: QueryRequest, req: Request):
                 year_max=request.year_max,
             ):
                 if chunk["type"] == "token":
-                    yield f"data: {_json.dumps({'type': 'token', 'content': chunk['content']})}\n\n"
+                    yield f"data: {json.dumps({'type': 'token', 'content': chunk['content']})}\n\n"
                 elif chunk["type"] == "done":
-                    yield f"data: {_json.dumps({'type': 'done'})}\n\n"
+                    yield f"data: {json.dumps({'type': 'done'})}\n\n"
         except Exception as e:
             logger.exception(f"Streaming query failed: {e}")
-            yield f"data: {_json.dumps({'type': 'error', 'message': str(e)})}\n\n"
+            yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
 
     return StreamingResponse(
         event_generator(),
