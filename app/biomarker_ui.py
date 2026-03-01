@@ -1,12 +1,13 @@
 """Precision Biomarker Agent -- Streamlit UI v1.0.
 
-Full-featured UI with 6 tabs:
+Full-featured UI with 7 tabs:
 - Biomarker Analysis: full patient analysis pipeline
 - Biological Age: PhenoAge calculator
 - Disease Risk: focused disease trajectory analysis
 - PGx Profile: pharmacogenomic drug interaction mapping
 - Evidence Explorer: RAG Q&A with collection filtering
 - Reports: PDF and FHIR R4 export
+- Patient 360: unified cross-agent intelligence dashboard
 
 Port: 8528 (assigned to Precision Biomarker Agent)
 
@@ -266,6 +267,35 @@ with st.sidebar:
         "Part of the HCLS AI Factory precision medicine platform."
     )
 
+    st.sidebar.markdown("---")
+    st.sidebar.markdown("### \U0001f3af Demo Mode")
+    if st.sidebar.button("Load Demo Patient", key="load_demo"):
+        import sys as _sys
+        _sys.path.insert(0, "/home/adam/projects/hcls-ai-factory/lib")
+        from hcls_common.demo_data import (
+            DEMO_PATIENT_ID, DEMO_PATIENT_AGE, DEMO_PATIENT_SEX,
+            DEMO_BIOMARKERS, DEMO_GENOTYPES, DEMO_STAR_ALLELES,
+        )
+        st.session_state["t1_patient_id"] = DEMO_PATIENT_ID
+        st.session_state["t1_age"] = DEMO_PATIENT_AGE
+        st.session_state["t1_sex"] = DEMO_PATIENT_SEX
+        # Map biomarkers to session state keys
+        biomarker_map = {
+            "wbc": "t1_wbc", "lymphocyte_pct": "t1_lymph", "rdw": "t1_rdw",
+            "mcv": "t1_mcv", "platelets": "t1_plt", "albumin": "t1_alb",
+            "creatinine": "t1_cr", "glucose": "t1_glu", "alt": "t1_alt",
+            "ast": "t1_ast", "alkaline_phosphatase": "t1_alp",
+            "total_cholesterol": "t1_tc", "ldl": "t1_ldl", "hdl": "t1_hdl",
+            "triglycerides": "t1_tg", "c_reactive_protein": "t1_crp",
+            "hs_crp": "t1_hs_crp", "d_dimer": "t1_d_dimer",
+            "troponin_i": "t1_troponin", "nt_probnp": "t1_nt_probnp",
+        }
+        for src, dst in biomarker_map.items():
+            if src in DEMO_BIOMARKERS:
+                st.session_state[dst] = DEMO_BIOMARKERS[src]
+        st.toast("\u2705 Demo patient loaded! Switch to any tab to analyze.", icon="\U0001f3af")
+        st.rerun()
+
 
 # =====================================================================
 # HELPER FUNCTIONS
@@ -357,14 +387,15 @@ PGX_DRUG_MAP = {
 st.markdown("# Precision Biomarker Agent")
 st.caption("Genotype-aware biomarker interpretation | HCLS AI Factory")
 
-tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(
+tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs(
     [
-        "Biomarker Analysis",
-        "Biological Age",
-        "Disease Risk",
-        "PGx Profile",
-        "Evidence Explorer",
-        "Reports",
+        "\U0001f52c Biomarker Analysis",
+        "\U0001f9ec Biological Age",
+        "\U0001f4ca Disease Risk",
+        "\U0001f48a PGx Profile",
+        "\U0001f50d Evidence Explorer",
+        "\U0001f4cb Reports",
+        "\U0001f310 Patient 360",
     ]
 )
 
@@ -1342,3 +1373,71 @@ with tab6:
                         mime="text/csv",
                         key="t6_csv",
                     )
+
+
+# =====================================================================
+# TAB 7: PATIENT 360
+# =====================================================================
+
+with tab7:
+    st.markdown("### \U0001f310 Unified Patient 360 Dashboard")
+    st.caption("Cross-agent intelligence view combining genomics, biomarkers, drug candidates, and clinical evidence")
+
+    # Check if we have analysis results to display
+    _analysis = st.session_state.get("analysis_results")
+    _patient = st.session_state.get("patient_info")
+
+    if _analysis and _patient:
+        from patient_360 import (
+            render_header,
+            render_pipeline_status,
+            render_biomarker_panel as render_360_biomarker_panel,
+            render_drug_candidates,
+            render_evidence_chain,
+            render_concordance_matrix,
+        )
+
+        _pid = _patient.get("patient_id", "UNKNOWN")
+        render_header(_pid, f"Patient {_pid}")
+
+        # Pipeline status -- determine completed stages from available results
+        _completed_stages = ["Biomarker"]
+        _ba = _analysis.get("biological_age")
+        if _ba:
+            _completed_stages.append("Biomarker")  # already present, but confirms
+        if _analysis.get("disease_trajectories"):
+            _completed_stages.append("Biomarker")
+        if _analysis.get("pgx_results"):
+            _completed_stages.append("Drug Discovery")
+        render_pipeline_status(list(set(_completed_stages)))
+
+        # Biomarker panel -- unpack from analysis_results
+        if _ba:
+            _pheno = _ba.get("phenoage", _ba)
+            render_360_biomarker_panel(
+                biological_age=float(_pheno.get("biological_age", _patient.get("age", 0))),
+                chronological_age=int(_patient.get("age", 0)),
+                age_acceleration=float(_pheno.get("age_acceleration", 0)),
+                mortality_risk=str(_pheno.get("mortality_risk", "UNKNOWN")).upper(),
+                disease_trajectories=_analysis.get("disease_trajectories", []),
+                top_drivers=_pheno.get("aging_drivers", _ba.get("aging_drivers", [])),
+            )
+
+        # Drug candidates (if any exist in session)
+        render_drug_candidates(
+            candidates=_analysis.get("drug_candidates", []),
+            pgx_filtered=_analysis.get("pgx_filtered_candidates", []),
+        )
+
+        # Evidence chain
+        render_evidence_chain(st.session_state.get("evidence_history", []))
+
+        # Concordance
+        render_concordance_matrix(_analysis.get("concordance_scores", {}))
+    else:
+        st.info("Run an analysis in the other tabs first, then return here for the unified Patient 360 view.")
+        st.markdown("---")
+        st.markdown("**Or explore with demo data:**")
+        if st.button("\U0001f3af Load Demo Patient 360", key="demo_360"):
+            from patient_360 import render_demo_patient_360
+            render_demo_patient_360()

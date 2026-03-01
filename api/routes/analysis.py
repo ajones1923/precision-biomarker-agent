@@ -185,7 +185,7 @@ def full_analysis(request: PatientProfileRequest, req: Request):
         result = agent.analyze_patient(profile)
         elapsed = (time.perf_counter() - t0) * 1000
 
-        return AnalysisResponse(
+        response = AnalysisResponse(
             patient_id=request.patient_id,
             biological_age=result.biological_age.biological_age,
             age_acceleration=result.biological_age.age_acceleration,
@@ -196,6 +196,49 @@ def full_analysis(request: PatientProfileRequest, req: Request):
             critical_alerts=result.critical_alerts,
             processing_time_ms=round(elapsed, 1),
         )
+
+        # Publish cross-agent events
+        try:
+            import sys
+            sys.path.insert(0, "/home/adam/projects/hcls-ai-factory/lib")
+            from hcls_common.event_bus import publish_event, EventType, EventPriority, PipelineStage
+
+            publish_event(
+                EventType.BIOLOGICAL_AGE_COMPUTED,
+                source_stage=PipelineStage.ANNOTATION,
+                payload={
+                    "biological_age": result.biological_age.biological_age,
+                    "age_acceleration": result.biological_age.age_acceleration,
+                    "mortality_risk": result.biological_age.mortality_risk,
+                },
+                patient_id=request.patient_id,
+            )
+
+            # Publish alerts for critical findings
+            for alert in result.critical_alerts:
+                publish_event(
+                    EventType.BIOMARKER_ALERT,
+                    source_stage=PipelineStage.ANNOTATION,
+                    payload={"alert": alert},
+                    patient_id=request.patient_id,
+                    priority=EventPriority.HIGH,
+                )
+
+            # Publish PGx results for drug discovery feedback
+            if result.pgx_results:
+                publish_event(
+                    EventType.PGX_RESULT_READY,
+                    source_stage=PipelineStage.ANNOTATION,
+                    payload={
+                        "pgx_results": [p.model_dump() for p in result.pgx_results],
+                        "genes_analyzed": len(result.pgx_results),
+                    },
+                    patient_id=request.patient_id,
+                )
+        except Exception:
+            logger.debug("Cross-agent event publishing unavailable (non-critical)")
+
+        return response
     except HTTPException:
         raise
     except Exception as e:
@@ -220,7 +263,7 @@ def biological_age(request: BiologicalAgeRequest, req: Request):
         result = calc.calculate(request.age, request.biomarkers)
         phenoage = result.get("phenoage", {})
 
-        return BiologicalAgeResponse(
+        response = BiologicalAgeResponse(
             chronological_age=request.age,
             biological_age=result.get("biological_age", request.age),
             age_acceleration=result.get("age_acceleration", 0.0),
@@ -228,6 +271,24 @@ def biological_age(request: BiologicalAgeRequest, req: Request):
             top_aging_drivers=phenoage.get("top_aging_drivers", []),
             grimage=result.get("grimage"),
         )
+
+        # Publish cross-agent event
+        try:
+            import sys
+            sys.path.insert(0, "/home/adam/projects/hcls-ai-factory/lib")
+            from hcls_common.event_bus import publish_event, EventType, PipelineStage
+            publish_event(
+                EventType.BIOLOGICAL_AGE_COMPUTED,
+                source_stage=PipelineStage.ANNOTATION,
+                payload={
+                    "biological_age": result.get("biological_age"),
+                    "age_acceleration": result.get("age_acceleration"),
+                },
+            )
+        except Exception:
+            logger.debug("Cross-agent event publishing unavailable")
+
+        return response
     except Exception as e:
         logger.exception(f"Biological age calculation failed: {e}")
         raise HTTPException(status_code=500, detail="Internal analysis error. Check server logs.")
@@ -255,10 +316,31 @@ def disease_risk(request: DiseaseRiskRequest, req: Request):
         )
         elapsed = (time.perf_counter() - t0) * 1000
 
-        return DiseaseRiskResponse(
+        response = DiseaseRiskResponse(
             trajectories=[t.model_dump() for t in trajectories],
             processing_time_ms=round(elapsed, 1),
         )
+
+        # Publish cross-agent event for critical disease trajectories
+        try:
+            import sys
+            sys.path.insert(0, "/home/adam/projects/hcls-ai-factory/lib")
+            from hcls_common.event_bus import publish_event, EventType, EventPriority, PipelineStage
+            critical_trajectories = [
+                t for t in trajectories
+                if hasattr(t, 'risk_level') and t.risk_level in ("HIGH", "CRITICAL")
+            ]
+            if critical_trajectories:
+                publish_event(
+                    EventType.DISEASE_TRAJECTORY_ALERT,
+                    source_stage=PipelineStage.ANNOTATION,
+                    payload={"trajectories": [t.model_dump() for t in critical_trajectories]},
+                    priority=EventPriority.HIGH,
+                )
+        except Exception:
+            logger.debug("Cross-agent event publishing unavailable")
+
+        return response
     except Exception as e:
         logger.exception(f"Disease risk analysis failed: {e}")
         raise HTTPException(status_code=500, detail="Internal analysis error. Check server logs.")
