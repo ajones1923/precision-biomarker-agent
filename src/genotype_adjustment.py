@@ -364,6 +364,243 @@ ADJUSTMENT_RULES = {
             },
         },
     },
+    # Frosst et al. 1995 PMID:7647779; Jacques et al. 1996 PMID:8862946
+    # Homocysteine: Refsum et al. 2004 PMID:15205206
+    "MTHFR_rs1801133": {
+        "display_name": "MTHFR (rs1801133, C677T)",
+        "description": "Methylenetetrahydrofolate reductase — folate metabolism and homocysteine regulation",
+        "risk_allele": "T",
+        "affected_biomarkers": {
+            "homocysteine": {
+                "unit": "umol/L",
+                "standard_range": {"lower": 5, "upper": 15},  # Refsum et al. 2004 PMID:15205206
+                "adjustments": {
+                    "CC": {
+                        "adjusted_range": {"lower": 5, "upper": 15},
+                        "rationale": "MTHFR CC (wildtype): Normal folate metabolism. Standard homocysteine reference range applies.",
+                    },
+                    "CT": {
+                        "adjusted_range": {"lower": 5, "upper": 12},
+                        "rationale": (
+                            "MTHFR C677T heterozygote: ~35% reduced enzyme activity. "
+                            "Homocysteine upper limit adjusted to 12 umol/L. Values 12-15 umol/L "
+                            "may indicate suboptimal methylation in this genotype. "
+                            "Ensure adequate folate intake; consider L-methylfolate."
+                        ),
+                    },
+                    "TT": {
+                        "adjusted_range": {"lower": 5, "upper": 10},
+                        "rationale": (
+                            "MTHFR C677T TT homozygote: 60-70% reduced enzyme activity. "
+                            "Homocysteine upper limit adjusted to 10 umol/L. This genotype "
+                            "cannot efficiently convert folic acid to 5-MTHF. Requires "
+                            "L-methylfolate supplementation (1-5 mg/day). Target homocysteine <10."
+                        ),
+                    },
+                },
+            },
+            "folate_serum": {
+                "unit": "ng/mL",
+                "standard_range": {"lower": 3.0, "upper": 20.0},
+                "adjustments": {
+                    "CC": {
+                        "adjusted_range": {"lower": 3.0, "upper": 20.0},
+                        "rationale": "MTHFR CC: Normal folate metabolism. Standard serum folate range applies.",
+                    },
+                    "CT": {
+                        "adjusted_range": {"lower": 5.0, "upper": 20.0},
+                        "rationale": (
+                            "MTHFR CT heterozygote: Higher folate levels needed for optimal "
+                            "methylation. Minimum folate adjusted to 5.0 ng/mL. Values 3-5 ng/mL "
+                            "may be functionally insufficient despite being in standard range."
+                        ),
+                    },
+                    "TT": {
+                        "adjusted_range": {"lower": 8.0, "upper": 20.0},
+                        "rationale": (
+                            "MTHFR TT homozygote: Substantially higher folate levels required. "
+                            "Minimum adjusted to 8.0 ng/mL. Even 'normal' folate (3-8 ng/mL) "
+                            "may be functionally inadequate. Use L-methylfolate, not folic acid."
+                        ),
+                    },
+                },
+            },
+        },
+    },
+    # Uitterlinden et al. 2004 PMID:15472169; Arai et al. 1997 PMID:9160801
+    "VDR_rs2228570": {
+        "display_name": "VDR (rs2228570, FokI)",
+        "description": "Vitamin D receptor — affects vitamin D signaling efficiency",
+        "risk_allele": "T",
+        "affected_biomarkers": {
+            "vitamin_d_25oh": {
+                "unit": "ng/mL",
+                "standard_range": {"lower": 30, "upper": 100},  # Endocrine Society 2011 PMID:21646368
+                "adjustments": {
+                    "CC": {
+                        "adjusted_range": {"lower": 30, "upper": 100},
+                        "rationale": "VDR FokI CC: Normal vitamin D receptor function. Standard 25(OH)D targets apply.",
+                    },
+                    "CT": {
+                        "adjusted_range": {"lower": 35, "upper": 100},
+                        "rationale": (
+                            "VDR FokI CT heterozygote: Mildly reduced receptor efficiency. "
+                            "Vitamin D lower limit adjusted to 35 ng/mL. May need higher "
+                            "vitamin D levels for equivalent biological effect."
+                        ),
+                    },
+                    "TT": {
+                        "adjusted_range": {"lower": 40, "upper": 100},
+                        "rationale": (
+                            "VDR FokI TT homozygote: Significantly reduced receptor efficiency. "
+                            "Vitamin D lower limit adjusted to 40 ng/mL. Standard 'sufficient' "
+                            "levels (30-40 ng/mL) may be functionally inadequate. "
+                            "Supplement D3 2000-5000 IU/day to maintain >40 ng/mL."
+                        ),
+                    },
+                },
+            },
+        },
+    },
+    # Clarke et al. 2009 PMID:19060911; Nordestgaard et al. 2010 PMID:20031622
+    "LPA_rs10455872": {
+        "display_name": "LPA (rs10455872)",
+        "description": "Lipoprotein(a) genetic variant — determines Lp(a) production rate",
+        "risk_allele": "G",
+        "affected_biomarkers": {
+            "lpa": {
+                "unit": "nmol/L",
+                "standard_range": {"lower": 0, "upper": 75},  # ESC/EAS 2019 Guidelines PMID:31504418
+                "adjustments": {
+                    "AA": {
+                        "adjusted_range": {"lower": 0, "upper": 75},
+                        "rationale": "LPA AA (wildtype): Standard Lp(a) risk thresholds apply. Lp(a) <75 nmol/L is low risk.",
+                    },
+                    "AG": {
+                        "adjusted_range": {"lower": 0, "upper": 50},
+                        "rationale": (
+                            "LPA AG heterozygote: Genetically elevated Lp(a) production. "
+                            "Risk threshold tightened to 50 nmol/L. Even values 50-75 nmol/L "
+                            "carry meaningful cardiovascular risk in this genotype. "
+                            "Lp(a) is not modifiable by statins or lifestyle. "
+                            "Focus on aggressive LDL-C lowering and PCSK9 inhibitors."
+                        ),
+                    },
+                    "GG": {
+                        "adjusted_range": {"lower": 0, "upper": 30},
+                        "rationale": (
+                            "LPA GG homozygote: Very high genetic Lp(a) production. "
+                            "Risk threshold tightened to 30 nmol/L. High lifetime "
+                            "cardiovascular risk. Consider PCSK9 inhibitors which can "
+                            "reduce Lp(a) by 20-30%. Niacin (1-3g/day) may reduce Lp(a) "
+                            "further. Antisense oligonucleotide therapies (pelacarsen) in trials."
+                        ),
+                    },
+                },
+            },
+        },
+    },
+    # Cohen et al. 2006 PMID:16554528; Benn et al. 2010 PMID:20031564
+    "PCSK9_rs11591147": {
+        "display_name": "PCSK9 (rs11591147, R46L)",
+        "description": "Proprotein convertase subtilisin/kexin 9 — LDL receptor degradation",
+        "risk_allele": "T",
+        "affected_biomarkers": {
+            "ldl_c": {
+                "unit": "mg/dL",
+                "standard_range": {"lower": 0, "upper": 130},  # ACC/AHA 2019 Cholesterol Guideline PMID:30586774
+                "adjustments": {
+                    "GG": {
+                        "adjusted_range": {"lower": 0, "upper": 130},
+                        "rationale": "PCSK9 GG (wildtype): Standard LDL-C targets apply.",
+                    },
+                    "GT": {
+                        "adjusted_range": {"lower": 0, "upper": 160},
+                        "rationale": (
+                            "PCSK9 R46L GT heterozygote: Loss-of-function variant. "
+                            "Naturally lower LDL-C levels (~15% reduction from baseline). "
+                            "Upper limit relaxed to 160 mg/dL — this genotype is cardioprotective. "
+                            "Lifetime 50% reduction in coronary heart disease risk. "
+                            "Statins remain effective if LDL needs further lowering."
+                        ),
+                    },
+                    "TT": {
+                        "adjusted_range": {"lower": 0, "upper": 190},
+                        "rationale": (
+                            "PCSK9 R46L TT homozygote: Strong loss-of-function. "
+                            "Naturally very low LDL-C levels (~30-40% below population mean). "
+                            "Highly cardioprotective genotype. Higher LDL thresholds acceptable "
+                            "as baseline is already substantially lower than average."
+                        ),
+                    },
+                },
+            },
+        },
+    },
+    # Kozlitina et al. 2014 PMID:24531328; Liu et al. 2014 PMID:24656440
+    "TM6SF2_rs58542926": {
+        "display_name": "TM6SF2 (rs58542926, E167K)",
+        "description": "Transmembrane 6 superfamily member 2 — hepatic VLDL secretion",
+        "risk_allele": "T",
+        "affected_biomarkers": {
+            "alt": {
+                "unit": "U/L",
+                "standard_range": {"lower": 7, "upper": 56},  # Prati et al. 2002 PMID:12029600
+                "adjustments": {
+                    "CC": {
+                        "adjusted_range": {"lower": 7, "upper": 56},
+                        "rationale": "TM6SF2 CC (wildtype): Standard ALT reference range applies.",
+                    },
+                    "CT": {
+                        "adjusted_range": {"lower": 7, "upper": 45},
+                        "rationale": (
+                            "TM6SF2 E167K CT heterozygote: Impaired hepatic VLDL secretion "
+                            "causes increased hepatic fat retention. ALT upper limit adjusted "
+                            "to 45 U/L for earlier steatosis detection. Note: This variant "
+                            "reduces cardiovascular risk (lower circulating lipids) while "
+                            "increasing liver disease risk — a metabolic trade-off."
+                        ),
+                    },
+                    "TT": {
+                        "adjusted_range": {"lower": 7, "upper": 35},
+                        "rationale": (
+                            "TM6SF2 E167K TT homozygote: Significantly impaired VLDL secretion. "
+                            "High risk of hepatic steatosis and NAFLD progression. ALT upper "
+                            "limit adjusted to 35 U/L. Regular liver imaging recommended. "
+                            "Paradoxically cardioprotective due to lower circulating triglycerides."
+                        ),
+                    },
+                },
+            },
+            "triglycerides": {
+                "unit": "mg/dL",
+                "standard_range": {"lower": 0, "upper": 150},
+                "adjustments": {
+                    "CC": {
+                        "adjusted_range": {"lower": 0, "upper": 150},
+                        "rationale": "TM6SF2 CC: Standard triglyceride reference range applies.",
+                    },
+                    "CT": {
+                        "adjusted_range": {"lower": 0, "upper": 130},
+                        "rationale": (
+                            "TM6SF2 CT heterozygote: Lower triglycerides expected due to "
+                            "reduced hepatic VLDL export. Values >130 mg/dL are relatively "
+                            "elevated for this genotype and may indicate dietary excess."
+                        ),
+                    },
+                    "TT": {
+                        "adjusted_range": {"lower": 0, "upper": 110},
+                        "rationale": (
+                            "TM6SF2 TT homozygote: Significantly lower triglycerides expected. "
+                            "Values >110 mg/dL are relatively elevated for this genotype. "
+                            "If triglycerides appear 'normal' (100-150), hepatic lipid retention "
+                            "may still be significant."
+                        ),
+                    },
+                },
+            },
+        },
+    },
 }
 
 
@@ -375,9 +612,10 @@ class GenotypeAdjuster:
     genotype-specific adjustments to enable earlier, more precise detection
     of clinically meaningful biomarker deviations.
 
-    Supports 6 gene-biomarker adjustment rules covering liver function,
+    Supports 11 gene-biomarker adjustment rules covering liver function,
     glucose metabolism, lipid management, thyroid function, iron metabolism,
-    and fatty acid conversion.
+    fatty acid conversion, methylation, vitamin D metabolism, cardiovascular
+    lipids, and hepatic lipid secretion.
     """
 
     def __init__(self) -> None:

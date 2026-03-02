@@ -483,13 +483,13 @@ class TestNutritional:
 class TestAnalyzeAll:
     """Tests for the combined analyze_all() method."""
 
-    def test_returns_six_results(self, analyzer):
-        """analyze_all() returns exactly 6 disease trajectory results."""
+    def test_returns_nine_results(self, analyzer):
+        """analyze_all() returns exactly 9 disease trajectory results."""
         results = analyzer.analyze_all(
             biomarkers={"hba1c": 5.4, "ldl_c": 120},
             genotypes={},
         )
-        assert len(results) == 6
+        assert len(results) == 9
 
     def test_sorted_by_risk_level(self, analyzer):
         """Results should be sorted by risk severity (CRITICAL first)."""
@@ -502,8 +502,8 @@ class TestAnalyzeAll:
         assert risk_values == sorted(risk_values)
 
     def test_all_diseases_represented(self, analyzer):
-        """All 6 disease categories should be in results."""
+        """All 9 disease categories should be in results."""
         results = analyzer.analyze_all(biomarkers={}, genotypes={})
         diseases = {r["disease"] for r in results}
-        expected = {"type2_diabetes", "cardiovascular", "liver", "thyroid", "iron", "nutritional"}
+        expected = {"type2_diabetes", "cardiovascular", "liver", "thyroid", "iron", "nutritional", "kidney", "bone_health", "cognitive"}
         assert diseases == expected

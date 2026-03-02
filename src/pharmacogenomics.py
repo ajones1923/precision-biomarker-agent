@@ -26,6 +26,9 @@ CPIC_GUIDELINE_VERSIONS = {
     "HLA-B*57:01": {"version": "2014", "pmid": "24561393", "update": "2014-01", "level": "1A"},
     "G6PD": {"version": "N/A", "pmid": "N/A", "update": "N/A", "level": "Informational"},
     "HLA-B*58:01": {"version": "2015", "pmid": "23232549", "update": "2015-01", "level": "1A"},
+    "CYP3A5": {"version": "2015", "pmid": "25801146", "update": "2022-11", "level": "1A"},
+    "UGT1A1": {"version": "2020", "pmid": "32233013", "update": "2020-04", "level": "1A"},
+    "NUDT15": {"version": "2018", "pmid": "30447069", "update": "2023-03", "level": "1A"},
 }
 
 
@@ -385,6 +388,57 @@ PGX_GENE_CONFIGS = {
                     "recommendation": "Reduce celecoxib starting dose by 50%. CYP2C9 PMs have increased exposure. Consider alternative NSAID with less CYP2C9 dependence",
                     "action": "DOSE_REDUCTION",
                     "alert_level": "WARNING",
+                },
+            },
+            "ibuprofen": {
+                "Normal Metabolizer": {
+                    "recommendation": "Use ibuprofen per standard dosing",
+                    "action": "STANDARD_DOSING",
+                    "alert_level": "INFO",
+                },
+                "Intermediate Metabolizer": {
+                    "recommendation": "Use lowest effective ibuprofen dose. CYP2C9 IMs have reduced NSAID clearance with increased GI bleeding risk",
+                    "action": "DOSE_ADJUSTMENT",
+                    "alert_level": "INFO",
+                },
+                "Poor Metabolizer": {
+                    "recommendation": "Reduce ibuprofen dose by 25-50% or use alternative analgesic (acetaminophen). CYP2C9 PMs have increased NSAID exposure and GI/renal toxicity risk",
+                    "action": "DOSE_REDUCTION",
+                    "alert_level": "WARNING",
+                },
+            },
+            "flurbiprofen": {
+                "Normal Metabolizer": {
+                    "recommendation": "Use flurbiprofen per standard dosing",
+                    "action": "STANDARD_DOSING",
+                    "alert_level": "INFO",
+                },
+                "Intermediate Metabolizer": {
+                    "recommendation": "Use lowest effective flurbiprofen dose. Monitor for GI side effects",
+                    "action": "DOSE_ADJUSTMENT",
+                    "alert_level": "INFO",
+                },
+                "Poor Metabolizer": {
+                    "recommendation": "Reduce flurbiprofen dose by 50% or use alternative. CYP2C9 PMs have significantly increased flurbiprofen exposure",
+                    "action": "DOSE_REDUCTION",
+                    "alert_level": "WARNING",
+                },
+            },
+            "losartan": {
+                "Normal Metabolizer": {
+                    "recommendation": "Use losartan per standard dosing",
+                    "action": "STANDARD_DOSING",
+                    "alert_level": "INFO",
+                },
+                "Intermediate Metabolizer": {
+                    "recommendation": "Losartan may have reduced efficacy — CYP2C9 converts losartan to active E3174 metabolite. Monitor blood pressure closely. Consider alternative ARB (valsartan, irbesartan)",
+                    "action": "CONSIDER_ALTERNATIVE",
+                    "alert_level": "WARNING",
+                },
+                "Poor Metabolizer": {
+                    "recommendation": "Losartan likely ineffective — CYP2C9 PMs produce minimal active metabolite E3174. Switch to non-CYP2C9-dependent ARB (valsartan, irbesartan, candesartan)",
+                    "action": "AVOID",
+                    "alert_level": "CRITICAL",
                 },
             },
         },
@@ -797,6 +851,150 @@ PGX_GENE_CONFIGS = {
             },
         },
     },
+    "CYP3A5": {
+        "display_name": "CYP3A5",
+        "description": "Cytochrome P450 3A5 — tacrolimus and cyclosporine metabolism",
+        "allele_to_phenotype": {
+            "*1/*1": "Extensive Metabolizer",
+            "*1/*3": "Intermediate Metabolizer",
+            "*3/*3": "Poor Metabolizer",
+            "*1/*6": "Intermediate Metabolizer",
+            "*3/*6": "Poor Metabolizer",
+            "*6/*6": "Poor Metabolizer",
+        },
+        "drug_recommendations": {
+            "tacrolimus": {
+                "Extensive Metabolizer": {
+                    "recommendation": "Increase tacrolimus starting dose to 1.5-2x standard (0.3 mg/kg/day). CYP3A5 expressers clear tacrolimus rapidly. Therapeutic drug monitoring essential",
+                    "action": "DOSE_ADJUSTMENT",
+                    "alert_level": "WARNING",
+                },
+                "Intermediate Metabolizer": {
+                    "recommendation": "Use standard tacrolimus starting dose (0.2 mg/kg/day). Therapeutic drug monitoring recommended. May need dose adjustment based on trough levels",
+                    "action": "STANDARD_DOSING",
+                    "alert_level": "INFO",
+                },
+                "Poor Metabolizer": {
+                    "recommendation": "Use standard or reduced tacrolimus starting dose (0.15-0.2 mg/kg/day). CYP3A5 non-expressers have slower clearance. Therapeutic drug monitoring essential to avoid supratherapeutic levels and nephrotoxicity",
+                    "action": "DOSE_REDUCTION",
+                    "alert_level": "WARNING",
+                },
+            },
+            "cyclosporine": {
+                "Extensive Metabolizer": {
+                    "recommendation": "May require higher cyclosporine doses. CYP3A5 expressers metabolize cyclosporine faster. Monitor C2 levels closely",
+                    "action": "DOSE_ADJUSTMENT",
+                    "alert_level": "INFO",
+                },
+                "Intermediate Metabolizer": {
+                    "recommendation": "Use cyclosporine per standard dosing with therapeutic drug monitoring",
+                    "action": "STANDARD_DOSING",
+                    "alert_level": "INFO",
+                },
+                "Poor Metabolizer": {
+                    "recommendation": "Standard or reduced cyclosporine dosing. Monitor C2 levels to avoid nephrotoxicity",
+                    "action": "STANDARD_DOSING",
+                    "alert_level": "INFO",
+                },
+            },
+        },
+    },
+    "UGT1A1": {
+        "display_name": "UGT1A1",
+        "description": "UDP-glucuronosyltransferase 1A1 — irinotecan and atazanavir metabolism",
+        "allele_to_phenotype": {
+            "*1/*1": "Normal Metabolizer",
+            "*1/*28": "Intermediate Metabolizer",
+            "*1/*6": "Intermediate Metabolizer",
+            "*28/*28": "Poor Metabolizer",
+            "*6/*6": "Poor Metabolizer",
+            "*6/*28": "Poor Metabolizer",
+        },
+        "drug_recommendations": {
+            "irinotecan": {
+                "Normal Metabolizer": {
+                    "recommendation": "Use irinotecan per standard dosing",
+                    "action": "STANDARD_DOSING",
+                    "alert_level": "INFO",
+                },
+                "Intermediate Metabolizer": {
+                    "recommendation": "Reduce irinotecan dose by 25-30% if using doses >=250 mg/m2. UGT1A1*28 carriers have reduced SN-38 glucuronidation. Monitor for neutropenia and diarrhea",
+                    "action": "DOSE_REDUCTION",
+                    "alert_level": "WARNING",
+                },
+                "Poor Metabolizer": {
+                    "recommendation": "Reduce irinotecan dose by 30-50%. UGT1A1*28/*28 (Gilbert's-associated) — significantly impaired SN-38 metabolism with high risk of severe neutropenia and diarrhea. FDA label includes UGT1A1*28 dosing guidance",
+                    "action": "DOSE_REDUCTION",
+                    "alert_level": "CRITICAL",
+                },
+            },
+            "atazanavir": {
+                "Normal Metabolizer": {
+                    "recommendation": "Use atazanavir per standard dosing (300 mg + ritonavir 100 mg daily)",
+                    "action": "STANDARD_DOSING",
+                    "alert_level": "INFO",
+                },
+                "Intermediate Metabolizer": {
+                    "recommendation": "Monitor for jaundice/hyperbilirubinemia. UGT1A1*28 carriers have higher bilirubin levels on atazanavir. Usually cosmetic but may affect adherence",
+                    "action": "STANDARD_DOSING",
+                    "alert_level": "INFO",
+                },
+                "Poor Metabolizer": {
+                    "recommendation": "High risk of clinically significant hyperbilirubinemia on atazanavir. Consider alternative protease inhibitor (darunavir) if jaundice is concerning to patient. UGT1A1*28/*28 genotype",
+                    "action": "CONSIDER_ALTERNATIVE",
+                    "alert_level": "WARNING",
+                },
+            },
+        },
+    },
+    "NUDT15": {
+        "display_name": "NUDT15",
+        "description": "Nudix hydrolase 15 — thiopurine metabolite dephosphorylation",
+        "allele_to_phenotype": {
+            "*1/*1": "Normal Metabolizer",
+            "*1/*2": "Intermediate Metabolizer",
+            "*1/*3": "Intermediate Metabolizer",
+            "*2/*2": "Poor Metabolizer",
+            "*2/*3": "Poor Metabolizer",
+            "*3/*3": "Poor Metabolizer",
+        },
+        "drug_recommendations": {
+            "azathioprine": {
+                "Normal Metabolizer": {
+                    "recommendation": "Use azathioprine per standard dosing. NUDT15 normal — standard thiopurine toxicity risk",
+                    "action": "STANDARD_DOSING",
+                    "alert_level": "INFO",
+                },
+                "Intermediate Metabolizer": {
+                    "recommendation": "Reduce azathioprine dose by 25-50%. NUDT15 intermediate metabolizers have increased thioguanine nucleotide levels and myelosuppression risk. Monitor CBC weekly for first 8 weeks",
+                    "action": "DOSE_REDUCTION",
+                    "alert_level": "WARNING",
+                },
+                "Poor Metabolizer": {
+                    "recommendation": "Reduce azathioprine to 10% of standard dose or AVOID. NUDT15 poor metabolizers have severe myelosuppression risk. This is especially important in East Asian populations where NUDT15*3 frequency is 7-10%",
+                    "action": "AVOID",
+                    "alert_level": "CRITICAL",
+                },
+            },
+            "6-mercaptopurine": {
+                "Normal Metabolizer": {
+                    "recommendation": "Use 6-mercaptopurine per standard dosing with NUDT15 normal status",
+                    "action": "STANDARD_DOSING",
+                    "alert_level": "INFO",
+                },
+                "Intermediate Metabolizer": {
+                    "recommendation": "Reduce 6-mercaptopurine dose by 25-50%. Monitor CBC closely for myelosuppression",
+                    "action": "DOSE_REDUCTION",
+                    "alert_level": "WARNING",
+                },
+                "Poor Metabolizer": {
+                    "recommendation": "Reduce 6-mercaptopurine to 10% of standard dose. Severe myelosuppression risk — especially in East Asian populations",
+                    "action": "AVOID",
+                    "alert_level": "CRITICAL",
+                },
+            },
+        },
+    },
 }
 
 
@@ -861,13 +1059,48 @@ DRUG_INTERACTIONS = [
         "mechanism": "Fluoxetine inhibits CYP2D6 and combined serotonergic effect increases seizure/serotonin syndrome risk",
         "recommendation": "Avoid concurrent use",
     },
+    {
+        "drug_a": "tacrolimus",
+        "drug_b": "itraconazole",
+        "severity": "high",
+        "mechanism": "Itraconazole potently inhibits CYP3A4/5, dramatically increasing tacrolimus levels",
+        "recommendation": "If unavoidable, reduce tacrolimus dose by 60-80% with intensive TDM",
+    },
+    {
+        "drug_a": "irinotecan",
+        "drug_b": "atazanavir",
+        "severity": "high",
+        "mechanism": "Both metabolized by UGT1A1; atazanavir inhibits UGT1A1 increasing irinotecan toxicity",
+        "recommendation": "Avoid concurrent use; if required, reduce irinotecan dose significantly",
+    },
+    {
+        "drug_a": "azathioprine",
+        "drug_b": "allopurinol",
+        "severity": "high",
+        "mechanism": "Allopurinol inhibits xanthine oxidase, shifting thiopurine metabolism toward cytotoxic 6-TGN",
+        "recommendation": "Reduce azathioprine dose by 67-75% if allopurinol required, with intensive CBC monitoring",
+    },
+    {
+        "drug_a": "warfarin",
+        "drug_b": "ibuprofen",
+        "severity": "high",
+        "mechanism": "Both affected by CYP2C9; ibuprofen inhibits COX-1 platelets and displaces warfarin from albumin",
+        "recommendation": "Avoid concurrent use if possible; use acetaminophen for analgesia",
+    },
+    {
+        "drug_a": "tacrolimus",
+        "drug_b": "voriconazole",
+        "severity": "high",
+        "mechanism": "Voriconazole inhibits CYP3A4/5, increasing tacrolimus levels 2-3x",
+        "recommendation": "Reduce tacrolimus dose by 60% and monitor trough levels daily",
+    },
 ]
 
 
 class PharmacogenomicMapper:
     """Maps star alleles and genotypes to drug recommendations.
 
-    Follows CPIC Level 1A guidelines for 11 pharmacogenes covering
+    Follows CPIC Level 1A guidelines for 14 pharmacogenes covering
     major drug classes including analgesics, antiplatelets, statins,
     anticoagulants, antimetabolites, thiopurines, antiretrovirals,
     fluoropyrimidines, oxidative hemolysis triggers, and xanthine

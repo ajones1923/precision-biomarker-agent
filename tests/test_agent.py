@@ -81,7 +81,7 @@ class TestFullPipeline:
             age=float(sample_patient_profile.age),
             sex="male",
         )
-        assert len(results) == 6
+        assert len(results) == 9
 
     def test_pipeline_produces_analysis_result(self, mock_agent_engine, sample_patient_profile):
         """Pipeline produces a valid AnalysisResult with all sub-analyses."""
@@ -122,7 +122,7 @@ class TestFullPipeline:
             ],
         )
         assert analysis.biological_age is not None
-        assert len(analysis.disease_trajectories) == 6
+        assert len(analysis.disease_trajectories) == 9
 
     def test_pipeline_handles_empty_biomarkers(self, mock_agent_engine):
         """Pipeline handles a patient with no biomarkers gracefully."""
@@ -288,7 +288,7 @@ class TestModuleIntegration:
         )
 
         assert bio_result["biological_age"] is not None
-        assert len(disease_results) == 6
+        assert len(disease_results) == 9
 
     def test_genotypes_shared_across_modules(self, sample_patient_profile):
         """Genotype dict is shared across disease trajectory modules."""

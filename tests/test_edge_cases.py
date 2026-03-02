@@ -189,7 +189,7 @@ class TestDiseaseTrajectoryEdgeCases:
         }
         results = self.analyzer.analyze_all(biomarkers, {}, age=45, sex="male")
         assert isinstance(results, list)
-        assert len(results) == 6  # All 6 disease categories
+        assert len(results) == 9  # All 9 disease categories
         # NaN values should not appear in any current_markers
         for r in results:
             for val in r.get("current_markers", {}).values():
@@ -212,7 +212,7 @@ class TestDiseaseTrajectoryEdgeCases:
     def test_empty_biomarkers_dict(self):
         """Empty biomarkers dict should not crash; all analyses return low risk."""
         results = self.analyzer.analyze_all({}, {}, age=45, sex="male")
-        assert len(results) == 6
+        assert len(results) == 9
         for r in results:
             assert r["risk_level"] == "LOW"
             assert len(r["findings"]) == 0
@@ -779,7 +779,7 @@ class TestSecurityEdgeCases:
         results = analyzer.analyze_all(
             {"hba1c": 5.5}, {"TCF7L2_rs7903146": ""}, 45, "M"
         )
-        assert len(results) == 6
+        assert len(results) == 9
 
     def test_inf_biomarker_value(self):
         """Infinity biomarker values should be handled."""

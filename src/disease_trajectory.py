@@ -1,6 +1,6 @@
 """Disease trajectory detection engine.
 
-Detects pre-symptomatic disease trajectories across 6 disease categories
+Detects pre-symptomatic disease trajectories across 9 disease categories
 using genotype-stratified biomarker thresholds. Pure computation — no LLM
 or database calls.
 
@@ -82,6 +82,35 @@ DISEASE_CONFIGS = {
             "MTHFR_rs1801133": {"risk_allele": "T", "effect": "folate_metabolism"},
         },
         "stages": ["optimal", "suboptimal", "deficient"],
+    },
+    "kidney": {
+        "display_name": "Chronic Kidney Disease",
+        "biomarkers": ["egfr", "creatinine", "cystatin_c", "bun", "urine_acr", "potassium"],
+        "genetic_modifiers": {
+            "APOL1": {"risk_allele": "G1/G2", "effect": "focal_segmental_glomerulosclerosis"},
+            "UMOD_rs12917707": {"risk_allele": "G", "effect": "uromodulin_ckd_risk"},
+        },
+        "stages": ["normal", "early_decline", "moderate_ckd", "advanced_ckd"],
+    },
+    "bone_health": {
+        "display_name": "Osteoporosis / Bone Health",
+        "biomarkers": ["vitamin_d_25oh", "calcium", "pth", "alkaline_phosphatase", "ctx", "p1np"],
+        "genetic_modifiers": {
+            "VDR_rs2228570": {"risk_allele": "T", "effect": "vitamin_d_receptor_function"},
+            "COL1A1_rs1800012": {"risk_allele": "T", "effect": "collagen_structure"},
+            "ESR1_rs2234693": {"risk_allele": "T", "effect": "estrogen_receptor_bone"},
+        },
+        "stages": ["optimal", "osteopenia_risk", "osteoporosis_risk", "fracture_risk"],
+    },
+    "cognitive": {
+        "display_name": "Cognitive Decline / Alzheimer's Risk",
+        "biomarkers": ["homocysteine", "vitamin_b12", "folate", "omega3_index", "hs_crp", "vitamin_d_25oh"],
+        "genetic_modifiers": {
+            "APOE": {"risk_allele": "E4", "effect": "amyloid_clearance"},
+            "MTHFR_rs1801133": {"risk_allele": "T", "effect": "homocysteine_metabolism"},
+            "BDNF_rs6265": {"risk_allele": "A", "effect": "neurotrophin_signaling"},
+        },
+        "stages": ["low_risk", "modifiable_risk_factors", "elevated_risk", "high_risk"],
     },
 }
 
@@ -940,6 +969,409 @@ class DiseaseTrajectoryAnalyzer:
             "recommendations": recommendations,
         }
 
+    def analyze_kidney(
+        self,
+        biomarkers: Dict[str, float],
+        genotypes: Dict[str, str],
+        age: Optional[float] = None,
+        sex: str = "male",
+    ) -> Dict[str, Any]:
+        """Analyze chronic kidney disease trajectory.
+
+        Evaluates eGFR (calculated from creatinine and/or cystatin C),
+        urine albumin-to-creatinine ratio, and APOL1 risk variants.
+
+        Args:
+            biomarkers: Dict with egfr, creatinine, cystatin_c, bun, urine_acr.
+            genotypes: Dict with APOL1, UMOD_rs12917707.
+            age: Patient age in years (needed for eGFR calculation).
+            sex: Patient sex for eGFR calculation.
+
+        Returns:
+            Dict with disease trajectory analysis.
+        """
+        available = {k: v for k, v in biomarkers.items()
+                     if k in DISEASE_CONFIGS["kidney"]["biomarkers"]}
+
+        # Calculate eGFR from creatinine if not provided (CKD-EPI 2021)
+        # Inker et al. 2021 PMID:34554658 — race-neutral equation
+        if "egfr" not in available and "creatinine" in available and age is not None:
+            scr = available["creatinine"]
+            if sex.lower() == "female":
+                kappa, alpha, female_mult = 0.7, -0.241, 1.012
+            else:
+                kappa, alpha, female_mult = 0.9, -0.302, 1.0
+            egfr = 142 * min(scr / kappa, 1) ** alpha * max(scr / kappa, 1) ** (-1.200) * 0.9938 ** age * female_mult
+            available["egfr_calculated"] = round(egfr, 1)
+
+        # APOL1 risk assessment (high-risk = two G1/G2 alleles)
+        apol1 = genotypes.get("APOL1", "")
+        has_apol1_risk = apol1.lower() in ("g1/g1", "g2/g2", "g1/g2", "high_risk", "two_risk_alleles")
+
+        genetic_risk_factors = []
+        if has_apol1_risk:
+            genetic_risk_factors.append({
+                "gene": "APOL1",
+                "genotype": apol1,
+                "risk_alleles": 2,
+                "effect": "focal_segmental_glomerulosclerosis",
+            })
+        for gene_key in ("UMOD_rs12917707",):
+            gt = genotypes.get(gene_key, "")
+            if gt:
+                config = DISEASE_CONFIGS["kidney"]["genetic_modifiers"][gene_key]
+                count = _count_risk_alleles(gt, config["risk_allele"])
+                if count > 0:
+                    genetic_risk_factors.append({
+                        "gene": gene_key, "genotype": gt,
+                        "risk_alleles": count, "effect": config["effect"],
+                    })
+
+        stage = "normal"
+        risk_level = "LOW"
+        findings = []
+        recommendations = []
+
+        egfr = available.get("egfr") or available.get("egfr_calculated")
+        if egfr is not None:
+            if egfr < 30:
+                stage = "advanced_ckd"
+                risk_level = "CRITICAL"
+                findings.append(f"eGFR {egfr} mL/min/1.73m2 — CKD Stage 4-5 (<30)")
+                recommendations.append("Urgent nephrology referral; evaluate for renal replacement therapy planning")
+            elif egfr < 60:
+                stage = "moderate_ckd"
+                risk_level = "HIGH"
+                findings.append(f"eGFR {egfr} mL/min/1.73m2 — CKD Stage 3 (30-59)")
+                recommendations.append("Nephrology consultation; ACEi/ARB for renoprotection")
+                recommendations.append("SGLT2 inhibitor (dapagliflozin/empagliflozin) for CKD progression reduction")
+            elif egfr < 90:
+                stage = "early_decline"
+                risk_level = "MODERATE"
+                findings.append(f"eGFR {egfr} mL/min/1.73m2 — mildly decreased (60-89)")
+                recommendations.append("Monitor creatinine and urine ACR every 6 months")
+
+        # Urine albumin-to-creatinine ratio
+        uacr = available.get("urine_acr")
+        if uacr is not None:
+            if uacr > 300:
+                risk_level = _max_risk(risk_level, "HIGH")
+                findings.append(f"Urine ACR {uacr} mg/g — severely increased albuminuria (>300, A3)")
+                recommendations.append("Optimize blood pressure <130/80; maximize ACEi/ARB dose")
+            elif uacr > 30:
+                risk_level = _max_risk(risk_level, "MODERATE")
+                findings.append(f"Urine ACR {uacr} mg/g — moderately increased albuminuria (30-300, A2)")
+                recommendations.append("Start or optimize ACEi/ARB therapy for albuminuria reduction")
+
+        # Cystatin C — more accurate GFR estimation in muscle wasting
+        cystatin = available.get("cystatin_c")
+        if cystatin is not None and cystatin > 1.0:
+            findings.append(f"Cystatin C {cystatin} mg/L elevated (>1.0) — consider cystatin-based eGFR")
+
+        # BUN
+        bun = available.get("bun")
+        if bun is not None and bun > 20:
+            findings.append(f"BUN {bun} mg/dL elevated (>20)")
+
+        # APOL1 high-risk genotype
+        if has_apol1_risk:
+            risk_level = _max_risk(risk_level, "MODERATE")
+            findings.append(
+                "APOL1 high-risk genotype (two G1/G2 alleles): 7-10x increased risk of "
+                "FSGS and CKD progression, especially in African ancestry populations"
+            )
+            recommendations.append("Annual eGFR + urine ACR monitoring due to APOL1 risk")
+            recommendations.append("Avoid nephrotoxic agents; maintain aggressive blood pressure control")
+
+        # Potassium — important in CKD
+        potassium = available.get("potassium")
+        if potassium is not None:
+            if potassium > 5.5:
+                findings.append(f"Potassium {potassium} mEq/L is elevated (>5.5) — hyperkalemia risk in CKD")
+                recommendations.append("Review ACEi/ARB dose; consider potassium binder if persistent")
+
+        return {
+            "disease": "kidney",
+            "display_name": "Chronic Kidney Disease",
+            "risk_level": risk_level,
+            "stage": stage,
+            "current_markers": available,
+            "genetic_risk_factors": genetic_risk_factors,
+            "findings": findings,
+            "recommendations": recommendations,
+        }
+
+    def analyze_bone_health(
+        self,
+        biomarkers: Dict[str, float],
+        genotypes: Dict[str, str],
+        sex: str = "male",
+        age: Optional[float] = None,
+    ) -> Dict[str, Any]:
+        """Analyze osteoporosis and bone health trajectory.
+
+        Evaluates vitamin D, calcium, PTH, bone turnover markers, and
+        VDR/COL1A1 genetic modifiers.
+
+        Args:
+            biomarkers: Dict with vitamin_d_25oh, calcium, pth,
+                alkaline_phosphatase, ctx (C-telopeptide), p1np.
+            genotypes: Dict with VDR_rs2228570, COL1A1_rs1800012, ESR1_rs2234693.
+            sex: Patient sex for risk stratification.
+            age: Patient age for risk context.
+
+        Returns:
+            Dict with disease trajectory analysis.
+        """
+        available = {k: v for k, v in biomarkers.items()
+                     if k in DISEASE_CONFIGS["bone_health"]["biomarkers"]}
+
+        genetic_risk_factors = []
+        for gene_key, config in DISEASE_CONFIGS["bone_health"]["genetic_modifiers"].items():
+            gt = genotypes.get(gene_key, "")
+            if gt:
+                count = _count_risk_alleles(gt, config["risk_allele"])
+                if count > 0:
+                    genetic_risk_factors.append({
+                        "gene": gene_key, "genotype": gt,
+                        "risk_alleles": count, "effect": config["effect"],
+                    })
+
+        stage = "optimal"
+        risk_level = "LOW"
+        findings = []
+        recommendations = []
+        risk_factors_count = 0
+
+        # Vitamin D — critical for calcium absorption
+        vit_d = available.get("vitamin_d_25oh")
+        if vit_d is not None:
+            vdr = genotypes.get("VDR_rs2228570", "")
+            vdr_risk = _count_risk_alleles(vdr, "T")
+            # VDR variants need higher vitamin D levels
+            vit_d_target = 40 if vdr_risk >= 2 else 35 if vdr_risk == 1 else 30
+
+            if vit_d < 20:
+                risk_factors_count += 1
+                findings.append(f"Vitamin D {vit_d} ng/mL is deficient (<20) — bone mineralization impaired")
+                recommendations.append("Vitamin D3 5000 IU/day + K2 for 8-12 weeks, then recheck")
+            elif vit_d < vit_d_target:
+                risk_factors_count += 1
+                findings.append(
+                    f"Vitamin D {vit_d} ng/mL below VDR-adjusted target "
+                    f"({vit_d_target} ng/mL for {'TT' if vdr_risk >= 2 else 'CT' if vdr_risk == 1 else 'standard'})"
+                )
+                recommendations.append(f"Supplement vitamin D3 2000-4000 IU/day to target >{vit_d_target} ng/mL")
+
+        # PTH — secondary hyperparathyroidism
+        pth = available.get("pth")
+        if pth is not None and pth > 65:
+            risk_factors_count += 1
+            findings.append(f"PTH {pth} pg/mL is elevated (>65) — secondary hyperparathyroidism")
+            recommendations.append("Evaluate vitamin D status and calcium intake; rule out primary hyperparathyroidism")
+
+        # Calcium
+        calcium = available.get("calcium")
+        if calcium is not None:
+            if calcium < 8.5:
+                risk_factors_count += 1
+                findings.append(f"Calcium {calcium} mg/dL is low (<8.5)")
+                recommendations.append("Evaluate PTH and vitamin D; consider calcium citrate supplementation")
+            elif calcium > 10.5:
+                findings.append(f"Calcium {calcium} mg/dL is elevated (>10.5) — evaluate for hyperparathyroidism")
+
+        # Bone turnover markers
+        ctx = available.get("ctx")  # C-telopeptide (bone resorption)
+        if ctx is not None and ctx > 0.6:
+            risk_factors_count += 1
+            findings.append(f"CTX {ctx} ng/mL elevated (>0.6) — increased bone resorption")
+            recommendations.append("Consider DEXA scan; evaluate for anti-resorptive therapy need")
+
+        p1np = available.get("p1np")  # Procollagen I N-propeptide (bone formation)
+        if p1np is not None and p1np < 25:
+            risk_factors_count += 1
+            findings.append(f"P1NP {p1np} mcg/L is low (<25) — reduced bone formation")
+
+        # ALP elevated with other bone markers
+        alp = available.get("alkaline_phosphatase")
+        if alp is not None and alp > 120:
+            findings.append(f"Alkaline phosphatase {alp} U/L elevated — evaluate bone vs liver source")
+
+        # COL1A1 risk
+        col1a1 = genotypes.get("COL1A1_rs1800012", "")
+        if _count_risk_alleles(col1a1, "T") > 0:
+            risk_factors_count += 1
+            findings.append("COL1A1 Sp1 variant: altered collagen structure; increased fracture risk")
+
+        # Postmenopausal female + ESR1 variant
+        if sex.lower() == "female" and age is not None and age > 50:
+            esr1 = genotypes.get("ESR1_rs2234693", "")
+            if _count_risk_alleles(esr1, "T") > 0:
+                risk_factors_count += 1
+                findings.append("ESR1 variant in postmenopausal female: increased bone loss risk")
+                recommendations.append("Consider DEXA scan if not done in last 2 years")
+
+        # Determine stage
+        if risk_factors_count >= 3:
+            stage = "fracture_risk"
+            risk_level = "HIGH"
+            recommendations.append("DEXA scan recommended; evaluate for pharmacological intervention")
+        elif risk_factors_count >= 2:
+            stage = "osteoporosis_risk"
+            risk_level = "MODERATE"
+        elif risk_factors_count >= 1:
+            stage = "osteopenia_risk"
+            risk_level = "MODERATE"
+
+        return {
+            "disease": "bone_health",
+            "display_name": "Osteoporosis / Bone Health",
+            "risk_level": risk_level,
+            "stage": stage,
+            "current_markers": available,
+            "genetic_risk_factors": genetic_risk_factors,
+            "findings": findings,
+            "recommendations": recommendations,
+        }
+
+    def analyze_cognitive(
+        self,
+        biomarkers: Dict[str, float],
+        genotypes: Dict[str, str],
+    ) -> Dict[str, Any]:
+        """Analyze cognitive decline and Alzheimer's risk trajectory.
+
+        Evaluates APOE genotype with modifiable risk factors: homocysteine,
+        B12, folate, omega-3, inflammation, and vitamin D.
+
+        Args:
+            biomarkers: Dict with homocysteine, vitamin_b12, folate,
+                omega3_index, hs_crp, vitamin_d_25oh.
+            genotypes: Dict with APOE, MTHFR_rs1801133, BDNF_rs6265.
+
+        Returns:
+            Dict with disease trajectory analysis.
+        """
+        available = {k: v for k, v in biomarkers.items()
+                     if k in DISEASE_CONFIGS["cognitive"]["biomarkers"]}
+
+        # APOE genotype — strongest genetic risk factor for Alzheimer's
+        apoe = genotypes.get("APOE", "")
+        has_e4 = "E4" in apoe
+        e4_count = apoe.count("E4")
+
+        genetic_risk_factors = []
+        if has_e4:
+            genetic_risk_factors.append({
+                "gene": "APOE", "genotype": apoe,
+                "risk_alleles": e4_count, "effect": "amyloid_clearance",
+            })
+        for gene_key in ("MTHFR_rs1801133", "BDNF_rs6265"):
+            gt = genotypes.get(gene_key, "")
+            if gt:
+                config = DISEASE_CONFIGS["cognitive"]["genetic_modifiers"][gene_key]
+                count = _count_risk_alleles(gt, config["risk_allele"])
+                if count > 0:
+                    genetic_risk_factors.append({
+                        "gene": gene_key, "genotype": gt,
+                        "risk_alleles": count, "effect": config["effect"],
+                    })
+
+        stage = "low_risk"
+        risk_level = "LOW"
+        findings = []
+        recommendations = []
+        modifiable_risk_count = 0
+
+        # APOE E4 — non-modifiable risk
+        if e4_count >= 2:
+            risk_level = "HIGH"
+            findings.append(
+                "APOE E4/E4 homozygote: ~12x increased Alzheimer's risk. "
+                "Aggressive modifiable risk factor optimization critical"
+            )
+        elif e4_count == 1:
+            risk_level = _max_risk(risk_level, "MODERATE")
+            findings.append(
+                f"APOE {apoe}: ~3x increased Alzheimer's risk. "
+                "Focus on modifiable protective factors"
+            )
+
+        # Homocysteine — neurotoxic at elevated levels
+        hcy = available.get("homocysteine")
+        if hcy is not None:
+            if hcy > 15:
+                modifiable_risk_count += 1
+                findings.append(f"Homocysteine {hcy} umol/L elevated (>15) — neurotoxic, accelerates brain atrophy")
+                mthfr = genotypes.get("MTHFR_rs1801133", "")
+                mthfr_risk = _count_risk_alleles(mthfr, "T")
+                if mthfr_risk >= 2:
+                    recommendations.append(
+                        "MTHFR TT + elevated homocysteine: L-methylfolate 1-5mg + methylB12 1000mcg + P5P 50mg daily"
+                    )
+                else:
+                    recommendations.append("Optimize B-vitamins: folate + B12 + B6 to reduce homocysteine")
+            elif hcy > 10 and has_e4:
+                modifiable_risk_count += 1
+                findings.append(f"Homocysteine {hcy} umol/L is suboptimal for APOE E4 carrier (target <10)")
+
+        # Vitamin B12
+        b12 = available.get("vitamin_b12")
+        if b12 is not None and b12 < 400:
+            modifiable_risk_count += 1
+            findings.append(f"Vitamin B12 {b12} pg/mL suboptimal for neuroprotection (<400)")
+            recommendations.append("Methylcobalamin 1000-2000 mcg/day for neuroprotection")
+
+        # Omega-3 index — DHA critical for brain structure
+        omega3 = available.get("omega3_index")
+        if omega3 is not None and omega3 < 8:
+            modifiable_risk_count += 1
+            findings.append(f"Omega-3 index {omega3}% below neuroprotective threshold (<8%)")
+            recommendations.append("EPA/DHA supplementation 2-4g/day; prioritize DHA for brain health")
+
+        # hs-CRP — neuroinflammation marker
+        crp = available.get("hs_crp")
+        if crp is not None and crp > 2.0:
+            modifiable_risk_count += 1
+            findings.append(f"hs-CRP {crp} mg/L indicates inflammation — neuroinflammation accelerates neurodegeneration")
+            recommendations.append("Anti-inflammatory lifestyle: Mediterranean diet, regular exercise, stress management")
+
+        # Vitamin D
+        vit_d = available.get("vitamin_d_25oh")
+        if vit_d is not None and vit_d < 30:
+            modifiable_risk_count += 1
+            findings.append(f"Vitamin D {vit_d} ng/mL insufficient (<30) — associated with cognitive decline")
+            recommendations.append("Vitamin D3 2000-5000 IU/day; target >40 ng/mL for neuroprotection")
+
+        # BDNF Val66Met
+        bdnf = genotypes.get("BDNF_rs6265", "")
+        if _count_risk_alleles(bdnf, "A") > 0:
+            findings.append("BDNF Val66Met variant: reduced activity-dependent BDNF secretion")
+            recommendations.append("Regular aerobic exercise (150+ min/week) — strongest BDNF inducer")
+
+        # Stage determination
+        if has_e4 and modifiable_risk_count >= 2:
+            stage = "high_risk"
+            risk_level = _max_risk(risk_level, "HIGH")
+            recommendations.append("Consider comprehensive cognitive assessment and longitudinal monitoring")
+        elif has_e4 or modifiable_risk_count >= 3:
+            stage = "elevated_risk"
+            risk_level = _max_risk(risk_level, "MODERATE")
+        elif modifiable_risk_count >= 1:
+            stage = "modifiable_risk_factors"
+
+        return {
+            "disease": "cognitive",
+            "display_name": "Cognitive Decline / Alzheimer's Risk",
+            "risk_level": risk_level,
+            "stage": stage,
+            "current_markers": available,
+            "genetic_risk_factors": genetic_risk_factors,
+            "modifiable_risk_factors": modifiable_risk_count,
+            "findings": findings,
+            "recommendations": recommendations,
+        }
+
     def analyze_all(
         self,
         biomarkers: Dict[str, float],
@@ -947,7 +1379,7 @@ class DiseaseTrajectoryAnalyzer:
         age: Optional[float] = None,
         sex: str = "male",
     ) -> List[Dict[str, Any]]:
-        """Run all 6 disease trajectory analyses.
+        """Run all 9 disease trajectory analyses.
 
         Args:
             biomarkers: Combined dict of all available biomarkers.
@@ -972,6 +1404,9 @@ class DiseaseTrajectoryAnalyzer:
         results.append(self.analyze_thyroid(clean_biomarkers, genotypes))
         results.append(self.analyze_iron(clean_biomarkers, genotypes, sex=sex))
         results.append(self.analyze_nutritional(clean_biomarkers, genotypes))
+        results.append(self.analyze_kidney(clean_biomarkers, genotypes, age=age, sex=sex))
+        results.append(self.analyze_bone_health(clean_biomarkers, genotypes, sex=sex, age=age))
+        results.append(self.analyze_cognitive(clean_biomarkers, genotypes))
 
         # Sort by risk level severity
         risk_order = {"CRITICAL": 0, "HIGH": 1, "MODERATE": 2, "LOW": 3}

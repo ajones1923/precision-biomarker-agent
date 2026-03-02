@@ -4,13 +4,13 @@ Extends the Clinker pattern from rag-chat-pipeline/src/knowledge.py and
 mirrors cart_intelligence_agent/src/knowledge.py, adapted for precision
 biomarker analysis. Contains:
 
-1. BIOMARKER_DOMAINS: 6 disease domains with biomarkers, genetic modifiers, and
+1. BIOMARKER_DOMAINS: 7 disease domains with biomarkers, genetic modifiers, and
    intervention targets
 2. PHENOAGE_KNOWLEDGE: PhenoAge clock biomarker descriptions, coefficients,
    and clinical interpretation
-3. PGX_KNOWLEDGE: 7 pharmacogenes with key drug interactions and CPIC guidance
-4. CROSS_MODAL_LINKS: Mapping of biomarker findings to triggers for other
-   HCLS AI Factory agents (imaging, oncology, genomics)
+3. PGX_KNOWLEDGE: 9 pharmacogenes with key drug interactions and CPIC guidance
+4. CROSS_MODAL_LINKS: 8 cross-modal links mapping biomarker findings to triggers
+   for other HCLS AI Factory agents (imaging, oncology, genomics)
 
 Author: Adam Jones
 Date: March 2026
@@ -53,6 +53,8 @@ GENOTYPE_THRESHOLDS = {
     "TCF7L2_fasting_glucose": {0: 100, 1: 95, 2: 90},  # mg/dL
     "PNPLA3_alt_upper": {"CC": 56, "CG": 45, "GG": 35},  # U/L; Romeo et al. 2008 PMID:18820127; Sookoian & Pirola 2011 PMID:21520172
     "DIO2_tsh_upper": {"GG": 4.0, "GA": 3.5, "AA": 3.0},  # mIU/L; Panicker et al. 2009 PMID:19820026; Castagna et al. 2017 PMID:28100792
+    "APOL1_eGFR_threshold": {"low_risk": 60, "high_risk": 75},  # APOL1 two-risk-allele carriers need tighter eGFR monitoring
+    "MTHFR_homocysteine_upper": {"CC": 15, "CT": 12, "TT": 10},  # umol/L; Frosst et al. 1995 PMID:7647779
 }
 
 # Age- and sex-stratified reference ranges for key biomarkers
@@ -89,6 +91,26 @@ AGE_SEX_REFERENCE_RANGES = {
         "M": {"18-49": (13.5, 17.5), "50-69": (13.0, 17.0), "70+": (12.0, 16.5)},
         "F": {"18-49": (12.0, 16.0), "50-69": (11.5, 15.5), "70+": (11.0, 15.0)},
     },
+    "bun": {
+        # mg/dL; Inker et al. 2021 PMID:34554658
+        "M": {"18-49": (7, 20), "50-69": (8, 23), "70+": (10, 28)},
+        "F": {"18-49": (6, 18), "50-69": (7, 21), "70+": (8, 25)},
+    },
+    "cystatin_c": {
+        # mg/L; Stevens et al. 2008 PMID:18701668
+        "M": {"18-49": (0.56, 0.98), "50-69": (0.63, 1.08), "70+": (0.70, 1.21)},
+        "F": {"18-49": (0.52, 0.90), "50-69": (0.58, 1.02), "70+": (0.65, 1.15)},
+    },
+    "homocysteine": {
+        # umol/L; Refsum et al. 2004 PMID:15205206
+        "M": {"18-49": (5, 15), "50-69": (6, 17), "70+": (7, 20)},
+        "F": {"18-49": (4, 13), "50-69": (5, 15), "70+": (6, 18)},
+    },
+    "vitamin_d_25oh": {
+        # ng/mL; Endocrine Society 2024 PMID:38828931
+        "M": {"18-49": (30, 100), "50-69": (30, 100), "70+": (30, 100)},
+        "F": {"18-49": (30, 100), "50-69": (30, 100), "70+": (30, 100)},
+    },
 }
 
 # Plausible clinical ranges for input validation
@@ -120,6 +142,22 @@ BIOMARKER_PLAUSIBLE_RANGES = {
     "vitamin_d_25oh": (1.0, 200.0), # ng/mL
     "vitamin_b12": (50, 5000),     # pg/mL
     "folate_serum": (1.0, 50.0),  # ng/mL
+    "egfr": (5, 150),              # mL/min/1.73m2
+    "cystatin_c": (0.1, 10.0),    # mg/L
+    "bun": (2, 100),               # mg/dL
+    "urine_acr": (0, 5000),       # mg/g
+    "potassium": (2.0, 8.0),      # mEq/L
+    "calcium": (5.0, 15.0),       # mg/dL
+    "pth": (5, 500),               # pg/mL
+    "ctx": (0.01, 3.0),           # ng/mL (C-telopeptide)
+    "p1np": (5, 300),              # mcg/L (Procollagen I N-propeptide)
+    "omega3_index": (1.0, 20.0),  # %
+    "vitamin_d_25oh_plausible": (1.0, 200.0),  # ng/mL (already exists as vitamin_d_25oh)
+    "magnesium": (0.5, 5.0),      # mg/dL
+    "zinc": (20, 200),             # mcg/dL
+    "selenium": (20, 400),         # mcg/L
+    "adiponectin": (1.0, 50.0),   # mcg/mL
+    "igf1": (10, 1000),            # ng/mL
 }
 
 
@@ -533,6 +571,63 @@ BIOMARKER_DOMAINS: Dict[str, Dict[str, Any]] = {
             "conversion. VDR variants affect the threshold for vitamin D sufficiency."
         ),
     },
+    "kidney": {
+        "name": "Kidney Function / CKD",
+        "key_biomarkers": {
+            "eGFR": {
+                "unit": "mL/min/1.73m2",
+                "normal": ">=90",
+                "stage_2": "60-89",
+                "stage_3": "30-59",
+                "stage_4": "15-29",
+                "stage_5": "<15",
+                "clinical_note": "Estimated from creatinine (CKD-EPI 2021, race-neutral). Confirm with cystatin C if muscle mass is atypical.",
+            },
+            "cystatin_C": {
+                "unit": "mg/L",
+                "normal_range": "0.56-1.0",
+                "elevated": ">1.0",
+                "clinical_note": "Less affected by muscle mass than creatinine. Preferred for sarcopenic and muscular patients.",
+            },
+            "urine_ACR": {
+                "unit": "mg/g",
+                "normal": "<30 (A1)",
+                "moderately_increased": "30-300 (A2)",
+                "severely_increased": ">300 (A3)",
+                "clinical_note": "Urine albumin-to-creatinine ratio; early marker of glomerular damage.",
+            },
+            "BUN": {
+                "unit": "mg/dL",
+                "normal_range": "7-20",
+                "elevated": ">20",
+                "clinical_note": "Blood urea nitrogen; affected by diet, hydration, and hepatic function.",
+            },
+        },
+        "genetic_modifiers": [
+            {"gene": "APOL1", "rs_id": "G1/G2 variants", "risk_allele": "G1 or G2",
+             "effect": "7-10x FSGS/CKD risk with two risk alleles; critical in African ancestry"},
+            {"gene": "UMOD", "rs_id": "rs12917707", "risk_allele": "G",
+             "effect": "Uromodulin variant; CKD risk through tubular dysfunction"},
+            {"gene": "PKD1/PKD2", "rs_id": "various", "risk_allele": "pathogenic",
+             "effect": "Autosomal dominant polycystic kidney disease; screen family members"},
+        ],
+        "intervention_targets": [
+            "SGLT2 inhibitors (dapagliflozin, empagliflozin) — slow CKD progression regardless of diabetes status",
+            "ACEi/ARB therapy for albuminuria reduction and renoprotection",
+            "Blood pressure target <130/80 mmHg in CKD with albuminuria",
+            "Finerenone (non-steroidal MRA) for diabetic CKD with albuminuria",
+            "Dietary protein restriction (0.6-0.8 g/kg/day) in CKD Stage 3b-5",
+            "Avoid nephrotoxic agents (NSAIDs, aminoglycosides) — especially with APOL1 risk",
+        ],
+        "clinical_context": (
+            "CKD affects 15% of US adults. APOL1 high-risk genotype (G1/G2 two-allele) "
+            "explains the 3-4x higher CKD prevalence in African Americans compared to "
+            "European Americans. SGLT2 inhibitors represent a paradigm shift, showing "
+            "renoprotection independent of diabetes status (DAPA-CKD, EMPA-KIDNEY trials). "
+            "Early detection via eGFR + urine ACR screening enables intervention before "
+            "irreversible nephron loss."
+        ),
+    },
 }
 
 
@@ -834,6 +929,53 @@ PGX_KNOWLEDGE: Dict[str, Dict[str, Any]] = {
             "organ transplantation."
         ),
     },
+    "UGT1A1": {
+        "full_name": "UDP-Glucuronosyltransferase 1A1",
+        "chromosome": "2q37.1",
+        "phenotypes": {
+            "normal": "*1/*1; standard glucuronidation activity",
+            "intermediate": "*1/*28 or *1/*6; reduced activity (Gilbert's-associated)",
+            "poor": "*28/*28 or *6/*6; markedly reduced activity",
+        },
+        "key_drugs": [
+            {"drug": "irinotecan", "effect": "Poor: 3-4x increased severe neutropenia and diarrhea risk",
+             "recommendation": "Reduce dose by 30-50% for *28/*28; FDA label includes UGT1A1*28 dosing guidance",
+             "cpic_level": "1A"},
+            {"drug": "atazanavir", "effect": "Poor: hyperbilirubinemia (cosmetic jaundice); may affect adherence",
+             "recommendation": "Consider alternative PI if jaundice is unacceptable to patient",
+             "cpic_level": "1B"},
+        ],
+        "clinical_context": (
+            "UGT1A1*28 (TA7/TA7) is the genetic basis of Gilbert's syndrome, present in "
+            "~10% of European and ~30-40% of African populations. While benign in isolation, "
+            "it becomes critically important when prescribing irinotecan, where impaired "
+            "glucuronidation of the active metabolite SN-38 can cause life-threatening toxicity. "
+            "UGT1A1*6 is more common in East Asian populations."
+        ),
+    },
+    "NUDT15": {
+        "full_name": "Nudix Hydrolase 15",
+        "chromosome": "13q14.2",
+        "phenotypes": {
+            "normal": "*1/*1; standard thiopurine metabolism",
+            "intermediate": "*1/*2, *1/*3; reduced nucleotide pool regulation",
+            "poor": "*2/*2, *3/*3; absent activity — severe myelosuppression risk",
+        },
+        "key_drugs": [
+            {"drug": "azathioprine", "effect": "Poor: severe myelosuppression risk; critical for East Asian patients",
+             "recommendation": "Reduce dose by 75-90% or avoid; *3 frequency is 7-10% in East Asians",
+             "cpic_level": "1A"},
+            {"drug": "6-mercaptopurine", "effect": "Same as azathioprine — shared thiopurine pathway",
+             "recommendation": "Combined TPMT + NUDT15 testing recommended before thiopurines",
+             "cpic_level": "1A"},
+        ],
+        "clinical_context": (
+            "NUDT15 was identified as a major determinant of thiopurine toxicity in East Asian "
+            "populations, where TPMT variants are rare. NUDT15*3 (p.Arg139Cys) has a frequency "
+            "of 7-10% in East Asians but <1% in Europeans. Combined TPMT + NUDT15 testing "
+            "is now recommended by CPIC for all patients before starting thiopurines."
+        ),
+    },
 }
 
 
@@ -933,6 +1075,57 @@ CROSS_MODAL_LINKS: Dict[str, Dict[str, Any]] = {
             "clinical_rationale": "Screen for germline aging-associated variants",
         },
     },
+    "ckd_detected": {
+        "trigger_condition": "eGFR < 60 OR urine ACR > 300",
+        "target_agent": "imaging_intelligence_agent",
+        "target_url": "not_deployed",
+        "action": "renal_imaging_assessment",
+        "description": (
+            "CKD Stage 3+ or severely increased albuminuria detected. Trigger imaging "
+            "assessment for renal ultrasound (kidney size, cortical thickness, obstruction), "
+            "and Doppler for renal artery stenosis if clinical suspicion."
+        ),
+        "urgency": "high",
+        "payload": {
+            "biomarkers": {"eGFR": "variable", "urine_ACR": "variable"},
+            "imaging_modalities": ["renal_ultrasound", "renal_doppler"],
+            "clinical_rationale": "Structural assessment of kidneys in CKD detection",
+        },
+    },
+    "cognitive_risk_detected": {
+        "trigger_condition": "APOE E4 carrier AND (homocysteine > 15 OR omega3_index < 6)",
+        "target_agent": "imaging_intelligence_agent",
+        "target_url": "not_deployed",
+        "action": "brain_imaging_assessment",
+        "description": (
+            "Elevated Alzheimer's risk with APOE E4 genotype and modifiable risk factors "
+            "detected. Trigger imaging assessment for brain MRI volumetry (hippocampal "
+            "volume), white matter hyperintensities, and optional amyloid PET if indicated."
+        ),
+        "urgency": "moderate",
+        "payload": {
+            "genetic_risk": "APOE_E4",
+            "imaging_modalities": ["brain_MRI_volumetry", "WMH_assessment"],
+            "clinical_rationale": "Screen for neurodegeneration biomarkers in high-risk genotype",
+        },
+    },
+    "bone_health_alert": {
+        "trigger_condition": "Vitamin D < 20 AND PTH > 65 AND (VDR risk OR COL1A1 risk)",
+        "target_agent": "imaging_intelligence_agent",
+        "target_url": "not_deployed",
+        "action": "bone_density_assessment",
+        "description": (
+            "Osteoporosis risk detected with vitamin D deficiency, secondary "
+            "hyperparathyroidism, and genetic bone risk factors. Trigger imaging "
+            "for DEXA scan and vertebral fracture assessment."
+        ),
+        "urgency": "moderate",
+        "payload": {
+            "biomarkers": {"vitamin_D": "deficient", "PTH": "elevated"},
+            "imaging_modalities": ["DEXA_scan", "vertebral_fracture_assessment"],
+            "clinical_rationale": "Bone density screening with genetic + biochemical risk factors",
+        },
+    },
 }
 
 
@@ -945,7 +1138,7 @@ def get_domain_context(domain: str) -> str:
     """Return formatted knowledge context for a disease domain.
 
     Args:
-        domain: One of 'diabetes', 'cardiovascular', 'liver', 'thyroid', 'iron', 'nutritional'.
+        domain: One of 'diabetes', 'cardiovascular', 'liver', 'thyroid', 'iron', 'nutritional', 'kidney'.
 
     Returns:
         Formatted string with domain knowledge or empty string if not found.

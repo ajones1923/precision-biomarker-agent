@@ -44,6 +44,9 @@ class DiseaseCategory(str, Enum):
     THYROID = "thyroid"
     IRON = "iron"
     NUTRITIONAL = "nutritional"
+    KIDNEY = "kidney"
+    BONE_HEALTH = "bone_health"
+    COGNITIVE = "cognitive"
 
 
 class MetabolizerPhenotype(str, Enum):

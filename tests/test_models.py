@@ -427,8 +427,8 @@ class TestEnums:
         assert ClockType.GRIMAGE.value == "GrimAge"
 
     def test_disease_category_values(self):
-        """DiseaseCategory has all 6 expected categories."""
-        assert len(DiseaseCategory) == 6
+        """DiseaseCategory has all 9 expected categories."""
+        assert len(DiseaseCategory) == 9
         assert DiseaseCategory.DIABETES.value == "diabetes"
         assert DiseaseCategory.CARDIOVASCULAR.value == "cardiovascular"
         assert DiseaseCategory.LIVER.value == "liver"
