@@ -8,7 +8,7 @@ Sections:
  1. Biological Age Assessment
  2. Executive Findings (top 5 critical/high priority)
  3. Biomarker-Gene Correlation Map
- 4. Disease Trajectory Analysis (6 diseases)
+ 4. Disease Trajectory Analysis (9 diseases)
  5. Pharmacogenomic Profile
  6. Nutritional Analysis
  7. Interconnected Pathways
@@ -662,6 +662,9 @@ class ReportGenerator:
                 "thyroid": "TSH, free T4, free T3, anti-TPO",
                 "iron": "Ferritin, transferrin saturation, serum iron, TIBC",
                 "nutritional": "Vitamin D, folate, B12, omega-3 index, homocysteine",
+                "kidney": "eGFR, cystatin C, urine ACR, BUN, potassium",
+                "bone_health": "Vitamin D, PTH, calcium, CTX, P1NP",
+                "cognitive": "Homocysteine, B12, omega-3 index, hs-CRP, vitamin D",
             }
             panel = disease_panels.get(traj.disease.value, "Standard panel")
             lines.append(

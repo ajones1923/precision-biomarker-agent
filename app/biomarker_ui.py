@@ -1380,6 +1380,9 @@ with tab6:
                     "thyroid": DiseaseCategory.THYROID,
                     "iron": DiseaseCategory.IRON,
                     "nutritional": DiseaseCategory.NUTRITIONAL,
+                    "kidney": DiseaseCategory.KIDNEY,
+                    "bone_health": DiseaseCategory.BONE_HEALTH,
+                    "cognitive": DiseaseCategory.COGNITIVE,
                 }
                 for traj_raw in results.get("disease_trajectories", []):
                     disease_key = traj_raw.get("disease", "").lower()
