@@ -202,15 +202,200 @@ def export_json(
     return json.dumps(data, indent=2, default=str)
 
 
-def export_pdf(report_markdown: str) -> bytes:
-    """Export a markdown report as a styled PDF.
+def _create_bio_age_gauge(chronological_age: float, biological_age: float) -> Optional[bytes]:
+    """Create a biological age gauge chart as PNG bytes."""
+    try:
+        import matplotlib
+        matplotlib.use('Agg')
+        import matplotlib.pyplot as plt
+        import matplotlib.patches as patches
+        import io
+
+        fig, ax = plt.subplots(figsize=(5, 2.5))
+
+        # Draw gauge background
+        theta_range = 180
+        colors_zones = [('#22c55e', 'Younger'), ('#76B900', 'Healthy'), ('#f59e0b', 'Accelerated'), ('#ef4444', 'High Risk')]
+        for i, (color, label) in enumerate(colors_zones):
+            start = i * 45
+            wedge = patches.Wedge((0.5, 0.0), 0.45, 180 - start - 45, 180 - start,
+                                   facecolor=color, alpha=0.3, transform=ax.transAxes)
+            ax.add_patch(wedge)
+
+        # Needle position (0-180 degrees based on age acceleration)
+        accel = biological_age - chronological_age
+        # Map acceleration to angle: -10 -> 180 deg, 0 -> 90 deg, +10 -> 0 deg
+        angle = max(0, min(180, 90 - accel * 9))
+        import math
+        needle_x = 0.5 + 0.35 * math.cos(math.radians(angle))
+        needle_y = 0.0 + 0.35 * math.sin(math.radians(angle))
+        ax.annotate('', xy=(needle_x, needle_y), xytext=(0.5, 0.0),
+                     xycoords='axes fraction', textcoords='axes fraction',
+                     arrowprops=dict(arrowstyle='->', color='#1f2937', lw=2))
+
+        # Labels
+        ax.text(0.5, -0.15, f'Bio Age: {biological_age:.1f}y  |  Chrono: {chronological_age:.0f}y',
+                ha='center', va='center', transform=ax.transAxes, fontsize=10, fontweight='bold')
+        ax.text(0.5, -0.3, f'Acceleration: {"+" if accel > 0 else ""}{accel:.1f} years',
+                ha='center', va='center', transform=ax.transAxes, fontsize=9,
+                color='#ef4444' if accel > 0 else '#22c55e')
+
+        ax.set_xlim(0, 1)
+        ax.set_ylim(-0.4, 0.6)
+        ax.set_aspect('equal')
+        ax.axis('off')
+
+        buf = io.BytesIO()
+        fig.savefig(buf, format='png', dpi=150, bbox_inches='tight', transparent=True)
+        plt.close(fig)
+        buf.seek(0)
+        return buf.getvalue()
+    except Exception:
+        return None
+
+
+def _create_disease_risk_radar(trajectories: list) -> Optional[bytes]:
+    """Create a disease risk radar chart as PNG bytes."""
+    try:
+        import matplotlib
+        matplotlib.use('Agg')
+        import matplotlib.pyplot as plt
+        import numpy as np
+        import io
+
+        # Extract disease names and risk scores
+        diseases = []
+        scores = []
+        colors = []
+        risk_score_map = {"NORMAL": 10, "LOW": 25, "MODERATE": 50, "HIGH": 75, "CRITICAL": 95}
+        risk_color_map = {"NORMAL": '#22c55e', "LOW": '#22c55e', "MODERATE": '#f59e0b', "HIGH": '#ef4444', "CRITICAL": '#dc2626'}
+
+        for t in trajectories:
+            if isinstance(t, dict):
+                name = t.get("disease", t.get("name", "Unknown"))
+                risk = str(t.get("risk_level", t.get("stage", "LOW"))).upper()
+            elif hasattr(t, "disease"):
+                name = t.disease
+                risk = str(getattr(t, "risk_level", "LOW")).upper()
+            else:
+                continue
+            diseases.append(name[:15])  # truncate long names
+            scores.append(risk_score_map.get(risk, 25))
+            colors.append(risk_color_map.get(risk, '#6b7280'))
+
+        if not diseases:
+            return None
+
+        # Radar chart
+        N = len(diseases)
+        angles = np.linspace(0, 2 * np.pi, N, endpoint=False).tolist()
+        scores_plot = scores + [scores[0]]
+        angles += [angles[0]]
+
+        fig, ax = plt.subplots(figsize=(4, 4), subplot_kw=dict(polar=True))
+        ax.fill(angles, scores_plot, alpha=0.2, color='#ef4444')
+        ax.plot(angles, scores_plot, 'o-', color='#ef4444', linewidth=2, markersize=6)
+
+        # Population average
+        pop_avg = [20] * N + [20]
+        ax.fill(angles, pop_avg, alpha=0.1, color='#76B900')
+        ax.plot(angles, pop_avg, '--', color='#76B900', linewidth=1, label='Pop. Avg')
+
+        ax.set_xticks(angles[:-1])
+        ax.set_xticklabels(diseases, size=8)
+        ax.set_ylim(0, 100)
+        ax.set_yticks([25, 50, 75])
+        ax.set_yticklabels(['Low', 'Moderate', 'High'], size=7, color='gray')
+        ax.set_title('Disease Risk Profile', size=11, fontweight='bold', pad=15)
+        ax.legend(loc='lower right', fontsize=7)
+
+        buf = io.BytesIO()
+        fig.savefig(buf, format='png', dpi=150, bbox_inches='tight')
+        plt.close(fig)
+        buf.seek(0)
+        return buf.getvalue()
+    except Exception:
+        return None
+
+
+def _create_pgx_bar_chart(pgx_results: list) -> Optional[bytes]:
+    """Create a PGx metabolizer status bar chart as PNG bytes."""
+    try:
+        import matplotlib
+        matplotlib.use('Agg')
+        import matplotlib.pyplot as plt
+        import io
+
+        genes = []
+        phenotype_scores = []
+        bar_colors = []
+
+        phenotype_score_map = {
+            "poor metabolizer": 1, "poor": 1, "poor expresser": 1,
+            "intermediate metabolizer": 2, "intermediate": 2,
+            "normal metabolizer": 3, "normal": 3, "extensive": 3,
+            "rapid metabolizer": 4, "rapid": 4,
+            "ultra-rapid metabolizer": 5, "ultra-rapid": 5, "ultrarapid metabolizer": 5,
+        }
+        phenotype_color_map = {
+            1: '#ef4444',  # poor - red
+            2: '#f59e0b',  # intermediate - amber
+            3: '#22c55e',  # normal - green
+            4: '#3b82f6',  # rapid - blue
+            5: '#dc2626',  # ultra-rapid - dark red
+        }
+
+        for r in pgx_results:
+            if isinstance(r, dict):
+                gene = r.get("gene", "?")
+                phenotype = str(r.get("phenotype", "unknown")).lower().strip()
+            elif hasattr(r, "gene"):
+                gene = r.gene
+                phenotype = str(getattr(r, "phenotype", "unknown")).lower().strip()
+            else:
+                continue
+
+            score = phenotype_score_map.get(phenotype, 3)
+            genes.append(gene)
+            phenotype_scores.append(score)
+            bar_colors.append(phenotype_color_map.get(score, '#6b7280'))
+
+        if not genes:
+            return None
+
+        fig, ax = plt.subplots(figsize=(5, max(2, len(genes) * 0.5)))
+        y_pos = range(len(genes))
+        ax.barh(y_pos, phenotype_scores, color=bar_colors, height=0.6, edgecolor='white')
+        ax.set_yticks(y_pos)
+        ax.set_yticklabels(genes, fontsize=9)
+        ax.set_xticks([1, 2, 3, 4, 5])
+        ax.set_xticklabels(['Poor', 'Intermediate', 'Normal', 'Rapid', 'Ultra-Rapid'], fontsize=7)
+        ax.set_xlim(0, 5.5)
+        ax.set_title('Pharmacogenomic Metabolizer Profile', fontsize=11, fontweight='bold')
+        ax.axvline(x=3, color='#76B900', linestyle='--', alpha=0.5, label='Normal')
+
+        plt.tight_layout()
+        buf = io.BytesIO()
+        fig.savefig(buf, format='png', dpi=150, bbox_inches='tight')
+        plt.close(fig)
+        buf.seek(0)
+        return buf.getvalue()
+    except Exception:
+        return None
+
+
+def export_pdf(report_markdown: str, analysis: Optional[AnalysisResult] = None) -> bytes:
+    """Export a markdown report as a styled PDF with optional embedded charts.
 
     Uses reportlab Platypus for professional formatting with HCLS AI Factory
     branding (NVIDIA green accent, dark header bars, zebra-striped tables).
+    When *analysis* is provided and matplotlib is available, embeds a
+    biological-age gauge, disease-risk radar, and PGx metabolizer bar chart.
     Falls back to plain-text PDF if reportlab is not installed.
 
     Args:
         report_markdown: Complete markdown report string.
+        analysis: Optional AnalysisResult with patient analysis data for charts.
 
     Returns:
         PDF content as bytes.
@@ -476,6 +661,41 @@ def export_pdf(report_markdown: str) -> bytes:
             text = _md_to_rl(stripped)
             story.append(Paragraph(text, styles["BodyText"]))
             i += 1
+
+        # -- Embed charts if analysis data is available --------------------
+        if analysis is not None:
+            from reportlab.platypus import Image as RLImage
+            import io as _io
+
+            # Biological age gauge
+            if hasattr(analysis, 'biological_age'):
+                bio_age = analysis.biological_age
+                if hasattr(bio_age, 'biological_age') and hasattr(bio_age, 'chronological_age'):
+                    gauge_bytes = _create_bio_age_gauge(bio_age.chronological_age, bio_age.biological_age)
+                elif isinstance(bio_age, dict):
+                    gauge_bytes = _create_bio_age_gauge(bio_age.get('chronological_age', 0), bio_age.get('biological_age', 0))
+                else:
+                    gauge_bytes = None
+                if gauge_bytes:
+                    story.append(Spacer(1, 12))
+                    story.append(RLImage(_io.BytesIO(gauge_bytes), width=350, height=175))
+                    story.append(Spacer(1, 8))
+
+            # Disease risk radar
+            if hasattr(analysis, 'disease_trajectories'):
+                radar_bytes = _create_disease_risk_radar(analysis.disease_trajectories)
+                if radar_bytes:
+                    story.append(Spacer(1, 12))
+                    story.append(RLImage(_io.BytesIO(radar_bytes), width=280, height=280))
+                    story.append(Spacer(1, 8))
+
+            # PGx bar chart
+            if hasattr(analysis, 'pgx_results'):
+                pgx_bytes = _create_pgx_bar_chart(analysis.pgx_results)
+                if pgx_bytes:
+                    story.append(Spacer(1, 12))
+                    story.append(RLImage(_io.BytesIO(pgx_bytes), width=350, height=max(140, len(analysis.pgx_results) * 35)))
+                    story.append(Spacer(1, 8))
 
         doc.build(story)
         return buf.getvalue()

@@ -294,6 +294,7 @@ with st.sidebar:
             if src in DEMO_BIOMARKERS:
                 st.session_state[dst] = DEMO_BIOMARKERS[src]
         st.toast("\u2705 Demo patient loaded! Switch to any tab to analyze.", icon="\U0001f3af")
+        st.session_state["auto_run_demo"] = True
         st.rerun()
 
 
@@ -405,6 +406,12 @@ tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs(
 # =====================================================================
 
 with tab1:
+    # Auto-run demo analysis if triggered
+    if st.session_state.get("auto_run_demo"):
+        st.session_state["auto_run_demo"] = False
+        # Trigger the analysis automatically
+        st.toast("🚀 Auto-running demo analysis...", icon="⚡")
+
     st.markdown("## Full Patient Biomarker Analysis")
     st.caption(
         "Enter patient information, biomarker values, and genotype data for "
@@ -643,7 +650,8 @@ with tab1:
                 star_alleles["TPMT"] = v
 
     # -- Run Analysis --
-    if st.button("Run Full Analysis", type="primary", key="t1_run"):
+    auto_run = st.session_state.pop("auto_run_demo", False)
+    if st.button("Run Full Analysis", type="primary", key="t1_run") or auto_run:
         # Clear stale results from previous runs
         for key in ["analysis_results", "patient_info", "report_markdown"]:
             st.session_state.pop(key, None)
@@ -967,6 +975,133 @@ with tab3:
                 st.markdown("#### Recommendations")
                 for r in result["recommendations"]:
                     st.markdown(f"- {r}")
+
+            # Store disease results for pathway map
+            st.session_state["disease_results"] = [result]
+            st.session_state["bm_results"] = t3_biomarkers
+
+    # Interactive Pathway Network Visualization
+    if st.session_state.get("disease_results"):
+        with st.expander("🗺️ Interactive Pathway Map", expanded=False):
+            try:
+                import plotly.graph_objects as go
+
+                # Build network from disease trajectory results
+                diseases = st.session_state.get("disease_results", [])
+                biomarkers_used = st.session_state.get("bm_results", {})
+
+                # Define pathway network nodes
+                nodes = []
+                node_x, node_y, node_text, node_color, node_size = [], [], [], [], []
+                edges_x, edges_y = [], []
+
+                # Center: Patient
+                nodes.append("Patient")
+                node_x.append(0.5); node_y.append(0.5)
+                node_text.append(f"Patient {st.session_state.get('t1_patient_id', '')}")
+                node_color.append("#76B900"); node_size.append(30)
+
+                # Disease nodes in a circle around center
+                import math
+                disease_names = []
+                if isinstance(diseases, list):
+                    for d in diseases:
+                        if isinstance(d, dict):
+                            disease_names.append(d.get("disease", d.get("name", d.get("display_name", "Unknown"))))
+                        elif hasattr(d, "disease"):
+                            disease_names.append(d.disease)
+
+                risk_colors = {"LOW": "#22c55e", "MODERATE": "#f59e0b", "HIGH": "#ef4444", "CRITICAL": "#dc2626", "NORMAL": "#22c55e"}
+
+                n_diseases = max(len(disease_names), 1)
+                for i, disease in enumerate(disease_names):
+                    angle = 2 * math.pi * i / n_diseases
+                    x = 0.5 + 0.35 * math.cos(angle)
+                    y = 0.5 + 0.35 * math.sin(angle)
+
+                    nodes.append(disease)
+                    node_x.append(x); node_y.append(y)
+
+                    # Get risk level
+                    risk = "UNKNOWN"
+                    if isinstance(diseases, list) and i < len(diseases):
+                        d = diseases[i]
+                        if isinstance(d, dict):
+                            risk = d.get("risk_level", d.get("stage", "UNKNOWN"))
+                        elif hasattr(d, "risk_level"):
+                            risk = d.risk_level
+
+                    node_text.append(f"{disease}<br>Risk: {risk}")
+                    node_color.append(risk_colors.get(str(risk).upper(), "#6b7280"))
+                    node_size.append(22)
+
+                    # Edge from patient to disease
+                    edges_x.extend([0.5, x, None])
+                    edges_y.extend([0.5, y, None])
+
+                # Biomarker nodes in outer ring
+                key_biomarkers = {
+                    "albumin": "Albumin", "creatinine": "Creatinine", "glucose": "Glucose",
+                    "c_reactive_protein": "CRP", "hba1c": "HbA1c", "alt": "ALT",
+                    "tsh": "TSH", "ferritin": "Ferritin", "homocysteine": "Homocysteine",
+                }
+
+                bm_vals = {}
+                if isinstance(biomarkers_used, dict):
+                    bm_vals = biomarkers_used
+
+                bm_i = 0
+                for key, label in key_biomarkers.items():
+                    val = bm_vals.get(key) or st.session_state.get(f"t1_{key}")
+                    if val:
+                        angle = 2 * math.pi * bm_i / len(key_biomarkers) + 0.3
+                        x = 0.5 + 0.18 * math.cos(angle)
+                        y = 0.5 + 0.18 * math.sin(angle)
+
+                        nodes.append(label)
+                        node_x.append(x); node_y.append(y)
+                        node_text.append(f"{label}: {val}")
+                        node_color.append("#3b82f6")
+                        node_size.append(14)
+
+                        # Edge from biomarker to patient
+                        edges_x.extend([x, 0.5, None])
+                        edges_y.extend([y, 0.5, None])
+                        bm_i += 1
+
+                fig = go.Figure()
+
+                # Add edges
+                fig.add_trace(go.Scatter(
+                    x=edges_x, y=edges_y, mode='lines',
+                    line=dict(width=1, color='#4b5563'),
+                    hoverinfo='none',
+                ))
+
+                # Add nodes
+                fig.add_trace(go.Scatter(
+                    x=node_x, y=node_y, mode='markers+text',
+                    marker=dict(size=node_size, color=node_color, line=dict(width=1, color='#1f2937')),
+                    text=nodes, textposition="top center", textfont=dict(size=10, color='white'),
+                    hovertext=node_text, hoverinfo='text',
+                ))
+
+                fig.update_layout(
+                    showlegend=False,
+                    plot_bgcolor='#0a0a0f',
+                    paper_bgcolor='#0a0a0f',
+                    font=dict(color='white'),
+                    xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+                    yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+                    margin=dict(l=20, r=20, t=30, b=20),
+                    height=500,
+                    title=dict(text="Biomarker → Disease Pathway Network", font=dict(size=14, color="#76B900")),
+                )
+
+                st.plotly_chart(fig, use_container_width=True)
+                st.caption("🟢 Green = Low risk | 🟡 Yellow = Moderate | 🔴 Red = High/Critical | 🔵 Blue = Biomarkers")
+            except ImportError:
+                st.info("Install plotly for interactive pathway visualization: `pip install plotly`")
 
 
 # =====================================================================

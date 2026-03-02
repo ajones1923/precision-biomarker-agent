@@ -576,6 +576,89 @@ def render_demo_patient_360():
 
     render_patient_360(demo_data)
 
+    # ── Cohort Comparison ──────────────────────────────────────
+    st.markdown("---")
+    st.markdown("### 📊 Population Cohort Comparison")
+    st.caption("How this patient compares to reference populations and VCP mutation carriers")
+
+    col_a, col_b = st.columns(2)
+
+    with col_a:
+        st.markdown("**Biological Age vs. Population**")
+        try:
+            import plotly.graph_objects as go
+
+            fig = go.Figure()
+            # Population distribution (simulated normal curve)
+            import numpy as np
+            x_pop = np.linspace(40, 70, 100)
+            y_pop = np.exp(-0.5 * ((x_pop - 52) / 5) ** 2)
+
+            fig.add_trace(go.Scatter(
+                x=x_pop, y=y_pop, fill='tozeroy', name='Population (age 52)',
+                fillcolor='rgba(118,185,0,0.2)', line=dict(color='#76B900'),
+            ))
+            fig.add_vline(x=58.2, line_dash="dash", line_color="#ef4444",
+                          annotation_text="This Patient: 58.2y", annotation_font_color="#ef4444")
+            fig.add_vline(x=52, line_dash="dot", line_color="#76B900",
+                          annotation_text="Pop. Average: 52y", annotation_font_color="#76B900")
+
+            fig.update_layout(
+                height=300, margin=dict(l=20, r=20, t=40, b=20),
+                plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
+                font=dict(color='#333'), showlegend=False,
+                title=dict(text="Biological Age Distribution", font=dict(size=13)),
+                xaxis_title="Biological Age (years)",
+            )
+            st.plotly_chart(fig, use_container_width=True)
+        except ImportError:
+            st.info("Install plotly and numpy for cohort visualization")
+
+    with col_b:
+        st.markdown("**Disease Risk Radar**")
+        try:
+            import plotly.graph_objects as go
+
+            categories = ['Diabetes', 'Cardiovascular', 'Liver', 'Thyroid', 'Iron', 'Nutritional']
+            patient_risk = [65, 45, 20, 15, 10, 35]  # demo patient percentiles
+            pop_avg = [25, 30, 15, 10, 8, 20]  # population average
+
+            fig = go.Figure()
+            fig.add_trace(go.Scatterpolar(
+                r=patient_risk, theta=categories, fill='toself', name='This Patient',
+                fillcolor='rgba(239,68,68,0.2)', line=dict(color='#ef4444'),
+            ))
+            fig.add_trace(go.Scatterpolar(
+                r=pop_avg, theta=categories, fill='toself', name='Population Avg',
+                fillcolor='rgba(118,185,0,0.1)', line=dict(color='#76B900'),
+            ))
+
+            fig.update_layout(
+                polar=dict(
+                    radialaxis=dict(visible=True, range=[0, 100]),
+                    bgcolor='rgba(0,0,0,0)',
+                ),
+                height=300, margin=dict(l=40, r=40, t=40, b=20),
+                plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
+                font=dict(color='#333'), showlegend=True,
+                title=dict(text="Disease Risk Profile", font=dict(size=13)),
+            )
+            st.plotly_chart(fig, use_container_width=True)
+        except ImportError:
+            st.info("Install plotly for radar chart")
+
+    # VCP Cohort stats
+    st.markdown("**VCP p.R155H Carrier Cohort (N=47)**")
+    cohort_cols = st.columns(4)
+    with cohort_cols[0]:
+        st.metric("Median Onset Age", "56y", delta="-4y vs. this patient", delta_color="inverse")
+    with cohort_cols[1]:
+        st.metric("5-Year FTD Risk", "34%", delta="+12% vs. population")
+    with cohort_cols[2]:
+        st.metric("IBM Prevalence", "62%", help="Inclusion body myopathy in VCP carriers")
+    with cohort_cols[3]:
+        st.metric("Paget Disease", "43%", help="Paget disease of bone in VCP carriers")
+
 
 # Run as standalone page
 if __name__ == "__main__":

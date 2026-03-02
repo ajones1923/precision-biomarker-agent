@@ -219,11 +219,12 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Precision Biomarker Agent API",
     description=(
-        "REST API for the Precision Biomarker Intelligence Agent -- multi-collection "
-        "RAG engine with biological age calculation, disease trajectory analysis, "
-        "pharmacogenomic mapping, and genotype-adjusted reference ranges."
+        "Biological age, disease trajectories, pharmacogenomics, and "
+        "RAG-powered evidence retrieval"
     ),
     version="1.0.0",
+    docs_url="/docs",
+    openapi_url="/openapi.json",
     lifespan=lifespan,
 )
 
@@ -273,6 +274,15 @@ async def _limit_request_size(request: Request, call_next):
 app.include_router(analysis_router)
 app.include_router(reports_router)
 app.include_router(events_router)
+
+
+# =====================================================================
+# Root endpoint
+# =====================================================================
+
+@app.get("/", include_in_schema=False)
+def root():
+    return {"service": "Precision Biomarker Agent", "docs": "/docs", "health": "/health"}
 
 
 # =====================================================================
