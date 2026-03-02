@@ -1,1 +1,1 @@
-"""Precision Biomarker Agent -- API route modules."""
+"""Biomarker Intelligence Agent -- API route modules."""

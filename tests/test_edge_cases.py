@@ -1,4 +1,4 @@
-"""Edge case tests for Precision Biomarker Agent safety fixes.
+"""Edge case tests for Biomarker Intelligence Agent safety fixes.
 
 Validates overflow protection, NaN handling, score clamping,
 input validation, and other defensive code paths added to

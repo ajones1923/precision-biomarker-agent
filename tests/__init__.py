@@ -1,1 +1,1 @@
-"""Precision Biomarker Agent -- Test suite."""
+"""Biomarker Intelligence Agent -- Test suite."""

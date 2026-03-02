@@ -1,4 +1,4 @@
-"""Tests for Precision Biomarker Agent export functions.
+"""Tests for Biomarker Intelligence Agent export functions.
 
 Validates markdown export, JSON export, PDF export (bytes), CSV export,
 and FHIR R4 bundle structure using the real src.export module.
@@ -179,7 +179,7 @@ class TestExportMarkdown:
 
     def test_contains_footer(self):
         md = export_markdown("q", "r")
-        assert "Precision Biomarker Agent" in md
+        assert "Biomarker Intelligence Agent" in md
 
     def test_valid_markdown_headers(self, simple_evidence):
         md = export_markdown("q", "r", evidence=simple_evidence)

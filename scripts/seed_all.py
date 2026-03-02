@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Seed all 10 Precision Biomarker Milvus collections from JSON reference files.
+"""Seed all 10 Biomarker Intelligence Milvus collections from JSON reference files.
 
 Reads JSON seed files from data/reference/, embeds text_chunk fields with
 BGE-small-en-v1.5, and inserts into the corresponding Milvus collections.
@@ -146,7 +146,7 @@ def embed_and_insert(
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Seed all Precision Biomarker collections")
+    parser = argparse.ArgumentParser(description="Seed all Biomarker Intelligence collections")
     parser.add_argument("--host", default=None, help="Milvus host")
     parser.add_argument("--port", type=int, default=None, help="Milvus port")
     parser.add_argument("--batch-size", type=int, default=32, help="Embedding batch size")

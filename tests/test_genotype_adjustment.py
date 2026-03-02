@@ -1,4 +1,4 @@
-"""Tests for Precision Biomarker Agent genotype-based reference range adjustments.
+"""Tests for Biomarker Intelligence Agent genotype-based reference range adjustments.
 
 Validates that genotype-adjusted thresholds are applied correctly for
 PNPLA3, TCF7L2, APOE, DIO2, HFE, and FADS1, and that missing genotypes

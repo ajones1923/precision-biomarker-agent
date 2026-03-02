@@ -1,5 +1,5 @@
 # =============================================================================
-# Precision Biomarker Agent -- CI/CD
+# Biomarker Intelligence Agent -- CI/CD
 # HCLS AI Factory / ai_agent_adds / precision_biomarker_agent
 #
 # Triggers on push/PR to main; also callable via workflow_dispatch.
@@ -9,7 +9,7 @@
 # Date:   March 2026
 # =============================================================================
 
-name: Precision Biomarker Agent CI
+name: Biomarker Intelligence Agent CI
 
 on:
   push:

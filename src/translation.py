@@ -1,5 +1,5 @@
 """
-Multi-Language Report Translation for the Precision Biomarker Agent.
+Multi-Language Report Translation for the Biomarker Intelligence Agent.
 
 Provides translation of clinical reports to multiple languages to serve
 diverse patient populations. Uses a template-based approach for medical
@@ -32,7 +32,7 @@ from typing import Dict, Optional
 
 MEDICAL_TERMS: Dict[str, Dict[str, str]] = {
     # Section headers
-    "Precision Biomarker Intelligence Report": {
+    "Biomarker Intelligence Report": {
         "es": "Informe de Inteligencia de Biomarcadores de Precisión",
         "zh": "精准生物标志物智能报告",
         "hi": "प्रिसिजन बायोमार्कर इंटेलिजेंस रिपोर्ट",

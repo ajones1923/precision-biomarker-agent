@@ -1,4 +1,4 @@
-"""Integration tests for the Precision Biomarker Agent.
+"""Integration tests for the Biomarker Intelligence Agent.
 
 These tests exercise the full analysis pipeline with real computation
 modules (no mocking of core logic). Only external services (Milvus,

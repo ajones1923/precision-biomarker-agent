@@ -1,4 +1,4 @@
-"""Tests for Precision Biomarker Agent pharmacogenomic mapping.
+"""Tests for Biomarker Intelligence Agent pharmacogenomic mapping.
 
 Validates PGx phenotype determination, drug-gene interaction mapping,
 star allele interpretation, and critical alert generation.

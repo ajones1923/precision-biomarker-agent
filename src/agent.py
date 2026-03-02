@@ -1,11 +1,11 @@
-"""Precision Biomarker Agent -- autonomous reasoning across biomarker data silos.
+"""Biomarker Intelligence Agent -- autonomous reasoning across biomarker data silos.
 
 Implements the plan -> analyze -> search -> synthesize -> report pattern from the
 VAST AI OS AgentEngine model. The agent integrates four analysis modules
 (biological age, disease trajectory, pharmacogenomics, genotype adjustment)
 alongside the multi-collection RAG engine.
 
-Key differences from other Precision Biomarker Agent designs:
+Key differences from other Biomarker Intelligence Agent designs:
 - Integrates 4 analysis modules alongside RAG (not RAG-only)
 - Patient profile drives module execution (biological age, trajectories, PGx)
 - Critical alerts extracted across all analysis results
@@ -63,7 +63,7 @@ class SearchPlan:
 
 
 class PrecisionBiomarkerAgent:
-    """Autonomous Precision Biomarker Intelligence Agent.
+    """Autonomous Biomarker Intelligence Agent.
 
     Wraps the multi-collection RAG engine with planning, analysis modules,
     and reasoning capabilities. Designed to answer complex cross-functional

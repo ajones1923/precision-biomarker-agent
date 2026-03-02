@@ -1,4 +1,4 @@
-"""Precision Biomarker Agent -- FastAPI REST API.
+"""Biomarker Intelligence Agent -- FastAPI REST API.
 
 Wraps the multi-collection RAG engine and analysis modules as a
 production-ready REST API with CORS, health checks, Prometheus-compatible
@@ -217,7 +217,7 @@ async def lifespan(app: FastAPI):
 # =====================================================================
 
 app = FastAPI(
-    title="Precision Biomarker Agent API",
+    title="Biomarker Intelligence Agent API",
     description=(
         "Biological age, disease trajectories, pharmacogenomics, and "
         "RAG-powered evidence retrieval"
@@ -282,7 +282,7 @@ app.include_router(events_router)
 
 @app.get("/", include_in_schema=False)
 def root():
-    return {"service": "Precision Biomarker Agent", "docs": "/docs", "health": "/health"}
+    return {"service": "Biomarker Intelligence Agent", "docs": "/docs", "health": "/health"}
 
 
 # =====================================================================

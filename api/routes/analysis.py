@@ -1,4 +1,4 @@
-"""Analysis-specific routes for the Precision Biomarker Agent.
+"""Analysis-specific routes for the Biomarker Intelligence Agent.
 
 Provides endpoints for:
   - Full patient analysis (all modules)

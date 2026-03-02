@@ -1,4 +1,4 @@
-# Precision Biomarker Agent
+# Biomarker Intelligence Agent
 
 **HCLS AI Factory** | Genotype-aware biomarker interpretation, biological age estimation, disease trajectory detection, and pharmacogenomic profiling.
 

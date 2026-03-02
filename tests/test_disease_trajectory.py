@@ -1,4 +1,4 @@
-"""Tests for Precision Biomarker Agent disease trajectory detection engine.
+"""Tests for Biomarker Intelligence Agent disease trajectory detection engine.
 
 Validates each disease analyzer with normal/elevated biomarkers,
 genotype-stratified thresholds, and missing data handling.

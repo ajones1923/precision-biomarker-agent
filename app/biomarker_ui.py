@@ -1,4 +1,4 @@
-"""Precision Biomarker Agent -- Streamlit UI v1.0.
+"""Biomarker Intelligence Agent -- Streamlit UI v1.0.
 
 Full-featured UI with 7 tabs:
 - Biomarker Analysis: full patient analysis pipeline
@@ -9,7 +9,7 @@ Full-featured UI with 7 tabs:
 - Reports: PDF and FHIR R4 export
 - Patient 360: unified cross-agent intelligence dashboard
 
-Port: 8528 (assigned to Precision Biomarker Agent)
+Port: 8528 (assigned to Biomarker Intelligence Agent)
 
 Usage:
     streamlit run app/biomarker_ui.py --server.port 8528
@@ -54,7 +54,7 @@ if not os.environ.get("ANTHROPIC_API_KEY"):
 
 @st.cache_resource(ttl=300)
 def init_engine():
-    """Initialize the Precision Biomarker analysis engine (cached across reruns)."""
+    """Initialize the Biomarker Intelligence analysis engine (cached across reruns)."""
     try:
         from src.collections import BiomarkerCollectionManager
         from src.biological_age import BiologicalAgeCalculator
@@ -148,7 +148,7 @@ engine = init_engine()
 # =====================================================================
 
 st.set_page_config(
-    page_title="Precision Biomarker Agent -- HCLS AI Factory",
+    page_title="Biomarker Intelligence Agent -- HCLS AI Factory",
     page_icon="\U0001fa78",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -224,7 +224,7 @@ st.markdown(
 # =====================================================================
 
 with st.sidebar:
-    st.markdown("## Precision Biomarker Agent")
+    st.markdown("## Biomarker Intelligence Agent")
     st.caption("HCLS AI Factory | v1.0")
 
     st.markdown("---")
@@ -385,7 +385,7 @@ PGX_DRUG_MAP = {
 # TABS
 # =====================================================================
 
-st.markdown("# Precision Biomarker Agent")
+st.markdown("# Biomarker Intelligence Agent")
 st.caption("Genotype-aware biomarker interpretation | HCLS AI Factory")
 
 tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs(

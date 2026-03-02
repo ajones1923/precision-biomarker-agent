@@ -1,4 +1,4 @@
-"""Tests for Precision Biomarker Agent pipeline.
+"""Tests for Biomarker Intelligence Agent pipeline.
 
 Validates the agent orchestration: full analysis pipeline, search planning,
 critical alert extraction, and module integration -- all with mocks.

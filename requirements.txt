@@ -1,5 +1,5 @@
 # =============================================================================
-# Precision Biomarker Agent — Python Dependencies
+# Biomarker Intelligence Agent — Python Dependencies
 # HCLS AI Factory / ai_agent_adds / precision_biomarker_agent
 #
 # Author: Adam Jones

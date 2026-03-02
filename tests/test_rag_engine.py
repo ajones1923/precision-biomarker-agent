@@ -1,4 +1,4 @@
-"""Tests for Precision Biomarker Agent RAG engine module.
+"""Tests for Biomarker Intelligence Agent RAG engine module.
 
 Validates evidence retrieval, prompt building, collection filtering,
 merge-and-rank deduplication, and cross-collection search — all with mocks.

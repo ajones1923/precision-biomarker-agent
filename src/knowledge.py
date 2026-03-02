@@ -1,4 +1,4 @@
-"""Precision Biomarker Agent -- Knowledge Graph.
+"""Biomarker Intelligence Agent -- Knowledge Graph.
 
 Extends the Clinker pattern from rag-chat-pipeline/src/knowledge.py and
 mirrors cart_intelligence_agent/src/knowledge.py, adapted for precision

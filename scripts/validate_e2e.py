@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""End-to-end validation of Precision Biomarker Agent data layer.
+"""End-to-end validation of Biomarker Intelligence Agent data layer.
 
 Tests:
   1. Connect to Milvus
@@ -50,7 +50,7 @@ DEMO_QUERIES = [
 
 def main():
     print("=" * 70)
-    print("Precision Biomarker Agent -- End-to-End Validation")
+    print("Biomarker Intelligence Agent -- End-to-End Validation")
     print("=" * 70)
 
     # Connect to Milvus

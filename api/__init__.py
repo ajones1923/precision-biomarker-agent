@@ -1,1 +1,1 @@
-"""Precision Biomarker Agent -- FastAPI REST API package."""
+"""Biomarker Intelligence Agent -- FastAPI REST API package."""

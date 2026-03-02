@@ -37,7 +37,7 @@ flowchart TB
     %% ══════════════════════════════════════════════════════════
     %% VAST AI OS — Three-Plane Architecture
     %% ══════════════════════════════════════════════════════════
-    subgraph VASTOS["  VAST AI OS  —  Precision Biomarker Agent Substrate  "]
+    subgraph VASTOS["  VAST AI OS  —  Biomarker Intelligence Agent Substrate  "]
 
         %% ── Data Plane ───────────────────────────────────────
         subgraph DATAPLANE["  ① Data Plane  "]

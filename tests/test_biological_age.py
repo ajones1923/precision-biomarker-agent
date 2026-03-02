@@ -1,4 +1,4 @@
-"""Tests for Precision Biomarker Agent biological age calculation engine.
+"""Tests for Biomarker Intelligence Agent biological age calculation engine.
 
 Validates PhenoAge computation, GrimAge surrogate estimation, age
 acceleration classification, edge cases, and known-answer tests.

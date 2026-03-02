@@ -1,5 +1,5 @@
 # =============================================================================
-# Precision Biomarker Agent — Dockerfile
+# Biomarker Intelligence Agent — Dockerfile
 # HCLS AI Factory / ai_agent_adds / precision_biomarker_agent
 #
 # Multi-purpose image: runs Streamlit UI (8528), FastAPI server (8529),
@@ -35,7 +35,7 @@ RUN pip install --no-cache-dir --upgrade pip \
 FROM python:3.10-slim
 
 LABEL maintainer="Adam Jones"
-LABEL description="Precision Biomarker Agent — HCLS AI Factory"
+LABEL description="Biomarker Intelligence Agent — HCLS AI Factory"
 LABEL version="1.0.0"
 
 WORKDIR /app

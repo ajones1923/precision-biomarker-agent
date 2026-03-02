@@ -1,4 +1,4 @@
-"""Cross-modal event routes for the Precision Biomarker Agent.
+"""Cross-modal event routes for the Biomarker Intelligence Agent.
 
 Provides endpoints for:
   - Receiving cross-modal triggers from other HCLS AI Factory agents

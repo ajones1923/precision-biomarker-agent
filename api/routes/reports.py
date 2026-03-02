@@ -1,4 +1,4 @@
-"""Report generation routes for the Precision Biomarker Agent.
+"""Report generation routes for the Biomarker Intelligence Agent.
 
 Provides endpoints to:
   - Generate full 12-section patient report

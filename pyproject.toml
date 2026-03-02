@@ -1,7 +1,7 @@
 [project]
 name = "precision-biomarker-agent"
 version = "1.0.0"
-description = "Precision Biomarker Intelligence Agent for HCLS AI Factory"
+description = "Biomarker Intelligence Agent for HCLS AI Factory"
 requires-python = ">=3.10"
 
 [tool.pytest.ini_options]

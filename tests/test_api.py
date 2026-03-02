@@ -1,4 +1,4 @@
-"""Tests for Precision Biomarker Agent REST API.
+"""Tests for Biomarker Intelligence Agent REST API.
 
 Validates all API routes using FastAPI TestClient with mocked backends
 so tests run without Milvus, sentence-transformers, or Anthropic API.

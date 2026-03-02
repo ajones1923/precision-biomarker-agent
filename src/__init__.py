@@ -1,1 +1,1 @@
-"""Precision Biomarker Agent — Core source package."""
+"""Biomarker Intelligence Agent — Core source package."""

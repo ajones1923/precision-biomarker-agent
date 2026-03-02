@@ -1,4 +1,4 @@
-"""Shared pytest fixtures for Precision Biomarker Agent test suite.
+"""Shared pytest fixtures for Biomarker Intelligence Agent test suite.
 
 Provides mock embedder, LLM client, collection manager, and sample
 patient/biomarker data so that tests run without Milvus or external services.

@@ -1,4 +1,4 @@
-"""Multi-collection RAG engine for Precision Biomarker Agent.
+"""Multi-collection RAG engine for Biomarker Intelligence Agent.
 
 Searches across all 11 collections simultaneously using parallel ThreadPoolExecutor,
 synthesizes findings with full knowledge graph augmentation (biomarker domains, PGx,
@@ -32,7 +32,7 @@ _SAFE_FILTER_RE = re.compile(r"^[A-Za-z0-9 _\-]+$")
 # SYSTEM PROMPT
 # =====================================================================
 
-BIOMARKER_SYSTEM_PROMPT = """You are a Precision Biomarker Intelligence Agent with deep expertise in:
+BIOMARKER_SYSTEM_PROMPT = """You are a Biomarker Intelligence Agent with deep expertise in:
 
 1. **Biological Aging** -- PhenoAge (Levine 2018), GrimAge (Lu 2019), epigenetic clocks, and aging biomarker interpretation
 2. **Pre-Symptomatic Disease Detection** -- trajectory analysis for diabetes, cardiovascular, liver, thyroid, iron, and nutritional conditions years before clinical diagnosis

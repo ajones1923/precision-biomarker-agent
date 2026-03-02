@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Create all Precision Biomarker Milvus collections.
+"""Create all Biomarker Intelligence Milvus collections.
 
 Usage:
     python scripts/setup_collections.py [--drop-existing]
@@ -25,7 +25,7 @@ from src.collections import BiomarkerCollectionManager
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Setup Precision Biomarker Milvus collections")
+    parser = argparse.ArgumentParser(description="Setup Biomarker Intelligence Milvus collections")
     parser.add_argument("--drop-existing", action="store_true",
                         help="Drop and recreate all collections")
     parser.add_argument("--host", default=None, help="Milvus host")
@@ -37,7 +37,7 @@ def main():
     manager.connect()
 
     # Create all collections
-    logger.info("Creating all Precision Biomarker collections...")
+    logger.info("Creating all Biomarker Intelligence collections...")
     manager.create_all_collections(drop_existing=args.drop_existing)
 
     # Show stats

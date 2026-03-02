@@ -1,4 +1,4 @@
-"""Pydantic data models for Precision Biomarker Agent.
+"""Pydantic data models for Biomarker Intelligence Agent.
 
 Maps to the 10 biomarker Milvus collections + patient analysis models.
 Follows the same Pydantic pattern as:
@@ -579,14 +579,14 @@ class CrossCollectionResult(BaseModel):
 
 
 class AgentQuery(BaseModel):
-    """Input to the Precision Biomarker Agent."""
+    """Input to the Biomarker Intelligence Agent."""
     question: str = Field(..., max_length=10000, description="Natural language biomarker question")
     patient_profile: Optional[PatientProfile] = None
     include_genomic: bool = True  # Also search genomic_evidence collection
 
 
 class AgentResponse(BaseModel):
-    """Output from the Precision Biomarker Agent."""
+    """Output from the Biomarker Intelligence Agent."""
     question: str
     answer: str
     evidence: CrossCollectionResult

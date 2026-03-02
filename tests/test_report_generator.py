@@ -1,4 +1,4 @@
-"""Tests for Precision Biomarker Agent report generation.
+"""Tests for Biomarker Intelligence Agent report generation.
 
 Validates that reports contain all 12 sections, critical alerts are
 highlighted, PGx warnings are formatted, and markdown is valid.
@@ -129,7 +129,7 @@ class TestReportSections:
     def test_all_12_sections_present(self, generator, full_analysis):
         """Report should contain all 12 sections."""
         report = generator.generate(full_analysis)
-        assert "# Precision Biomarker Intelligence Report" in report
+        assert "# Biomarker Intelligence Report" in report
         assert "## 1. Biological Age Assessment" in report
         assert "## 2. Executive Findings" in report
         assert "## 3. Biomarker-Gene Correlation Map" in report

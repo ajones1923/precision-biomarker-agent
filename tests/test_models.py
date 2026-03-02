@@ -1,4 +1,4 @@
-"""Tests for Precision Biomarker Agent Pydantic data models.
+"""Tests for Biomarker Intelligence Agent Pydantic data models.
 
 Validates all 10 collection models, enum values, embedding text generation,
 search result models, patient profile, and analysis result models.

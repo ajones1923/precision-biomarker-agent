@@ -1,4 +1,4 @@
-"""Precision Biomarker Agent configuration.
+"""Biomarker Intelligence Agent configuration.
 
 Follows the same Pydantic BaseSettings pattern as cart_intelligence_agent/config/settings.py.
 """
@@ -11,7 +11,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class PrecisionBiomarkerSettings(BaseSettings):
-    """Configuration for Precision Biomarker Agent."""
+    """Configuration for Biomarker Intelligence Agent."""
 
     # ── Paths ──
     PROJECT_ROOT: Path = Path(__file__).resolve().parent.parent

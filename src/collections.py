@@ -1,4 +1,4 @@
-"""Milvus collection management for Precision Biomarker Agent.
+"""Milvus collection management for Biomarker Intelligence Agent.
 
 Manages 11 biomarker collections (10 domain-specific + 1 read-only genomic):
   - biomarker_reference          — Reference biomarker definitions & ranges
