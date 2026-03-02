@@ -317,7 +317,7 @@ def disease_risk(request: DiseaseRiskRequest, req: Request):
         elapsed = (time.perf_counter() - t0) * 1000
 
         response = DiseaseRiskResponse(
-            trajectories=[t.model_dump() for t in trajectories],
+            trajectories=[t.model_dump() if hasattr(t, "model_dump") else t for t in trajectories],
             processing_time_ms=round(elapsed, 1),
         )
 
@@ -326,15 +326,16 @@ def disease_risk(request: DiseaseRiskRequest, req: Request):
             import sys
             sys.path.insert(0, "/home/adam/projects/hcls-ai-factory/lib")
             from hcls_common.event_bus import publish_event, EventType, EventPriority, PipelineStage
-            critical_trajectories = [
-                t for t in trajectories
-                if hasattr(t, 'risk_level') and t.risk_level in ("HIGH", "CRITICAL")
-            ]
+            critical_trajectories = []
+            for t in trajectories:
+                risk = t.risk_level if hasattr(t, "risk_level") else t.get("risk_level") if isinstance(t, dict) else None
+                if risk in ("HIGH", "CRITICAL"):
+                    critical_trajectories.append(t.model_dump() if hasattr(t, "model_dump") else t)
             if critical_trajectories:
                 publish_event(
                     EventType.DISEASE_TRAJECTORY_ALERT,
                     source_stage=PipelineStage.ANNOTATION,
-                    payload={"trajectories": [t.model_dump() for t in critical_trajectories]},
+                    payload={"trajectories": critical_trajectories},
                     priority=EventPriority.HIGH,
                 )
         except Exception:
