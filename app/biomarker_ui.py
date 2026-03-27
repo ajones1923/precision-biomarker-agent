@@ -1,13 +1,14 @@
 """Biomarker Intelligence Agent -- Streamlit UI v1.0.
 
-Full-featured UI with 7 tabs:
-- Biomarker Analysis: full patient analysis pipeline
+Full-featured UI with 8 tabs:
+- Biomarker Analysis: full patient analysis pipeline (with sample patient quick-load)
 - Biological Age: PhenoAge calculator
 - Disease Risk: focused disease trajectory analysis
 - PGx Profile: pharmacogenomic drug interaction mapping
 - Evidence Explorer: RAG Q&A with collection filtering
 - Reports: PDF and FHIR R4 export
 - Patient 360: unified cross-agent intelligence dashboard
+- Longitudinal: biomarker trend tracking across multiple visits
 
 Port: 8528 (assigned to Biomarker Intelligence Agent)
 
@@ -26,25 +27,44 @@ from pathlib import Path
 
 import streamlit as st
 
+# Page config MUST be the first Streamlit command
+st.set_page_config(
+    page_title="Biomarker Intelligence Agent -- HCLS AI Factory",
+    page_icon="\U0001fa78",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
+
+st.warning(
+    "**Clinical Decision Support Tool** — This system provides evidence-based guidance "
+    "for research and clinical decision support only. All recommendations must be verified "
+    "by a qualified healthcare professional. Not FDA-cleared. Not a substitute for professional "
+    "clinical judgment."
+)
+
 # Add project root to path (must happen before src imports)
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-# Load API key from rag-chat-pipeline .env if not already set
-if not os.environ.get("ANTHROPIC_API_KEY"):
+# Load API key: prefer env vars, then settings, then rag-chat-pipeline .env file
+_api_key = (
+    os.environ.get("ANTHROPIC_API_KEY")
+    or os.environ.get("BIOMARKER_ANTHROPIC_API_KEY")
+)
+if not _api_key:
     from config.settings import settings
 
     if settings.ANTHROPIC_API_KEY:
-        os.environ["ANTHROPIC_API_KEY"] = settings.ANTHROPIC_API_KEY
+        _api_key = settings.ANTHROPIC_API_KEY
     else:
         env_path = settings.RAG_PIPELINE_ROOT / ".env"
         if env_path.exists():
             for line in env_path.read_text().splitlines():
                 if line.startswith("ANTHROPIC_API_KEY="):
-                    os.environ["ANTHROPIC_API_KEY"] = (
-                        line.split("=", 1)[1].strip().strip('"')
-                    )
+                    _api_key = line.split("=", 1)[1].strip().strip('"')
                     break
+if _api_key:
+    os.environ["ANTHROPIC_API_KEY"] = _api_key
 
 
 # =====================================================================
@@ -59,12 +79,20 @@ def init_engine():
         from src.collections import BiomarkerCollectionManager
         from src.biological_age import BiologicalAgeCalculator
         from src.disease_trajectory import DiseaseTrajectoryAnalyzer
+        from src.critical_values import CriticalValueEngine
+        from src.discordance_detector import DiscordanceDetector
+        from src.lab_range_interpreter import LabRangeInterpreter
+        from src.pharmacogenomics import PharmacogenomicMapper
 
         manager = BiomarkerCollectionManager()
         manager.connect()
 
         bio_age_calc = BiologicalAgeCalculator()
         disease_analyzer = DiseaseTrajectoryAnalyzer()
+        critical_engine = CriticalValueEngine()
+        discordance_engine = DiscordanceDetector()
+        lab_range_engine = LabRangeInterpreter()
+        pgx_mapper = PharmacogenomicMapper()
 
         try:
             from sentence_transformers import SentenceTransformer
@@ -132,6 +160,10 @@ def init_engine():
             "manager": manager,
             "bio_age_calc": bio_age_calc,
             "disease_analyzer": disease_analyzer,
+            "critical_engine": critical_engine,
+            "discordance_engine": discordance_engine,
+            "lab_range_engine": lab_range_engine,
+            "pgx_mapper": pgx_mapper,
             "embedder": embedder,
             "llm_client": llm_client,
         }
@@ -144,15 +176,9 @@ engine = init_engine()
 
 
 # =====================================================================
-# PAGE CONFIG
+# PAGE HEADER
 # =====================================================================
 
-st.set_page_config(
-    page_title="Biomarker Intelligence Agent -- HCLS AI Factory",
-    page_icon="\U0001fa78",
-    layout="wide",
-    initial_sidebar_state="expanded",
-)
 st.caption("⚕️ Research Use Only — Not for clinical decision-making without healthcare provider review.")
 
 # =====================================================================
@@ -271,7 +297,8 @@ with st.sidebar:
     st.sidebar.markdown("### \U0001f3af Demo Mode")
     if st.sidebar.button("Load Demo Patient", key="load_demo"):
         import sys as _sys
-        _sys.path.insert(0, "/home/adam/projects/hcls-ai-factory/lib")
+        _lib_path = os.environ.get("HCLS_LIB_PATH", "/app/lib")
+        _sys.path.insert(0, _lib_path)
         from hcls_common.demo_data import (
             DEMO_PATIENT_ID, DEMO_PATIENT_AGE, DEMO_PATIENT_SEX,
             DEMO_BIOMARKERS, DEMO_GENOTYPES, DEMO_STAR_ALLELES,
@@ -388,7 +415,7 @@ PGX_DRUG_MAP = {
 st.markdown("# Biomarker Intelligence Agent")
 st.caption("Genotype-aware biomarker interpretation | HCLS AI Factory")
 
-tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs(
+tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs(
     [
         "\U0001f52c Biomarker Analysis",
         "\U0001f9ec Biological Age",
@@ -397,6 +424,7 @@ tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs(
         "\U0001f50d Evidence Explorer",
         "\U0001f4cb Reports",
         "\U0001f310 Patient 360",
+        "\U0001f4c8 Longitudinal",
     ]
 )
 
@@ -406,10 +434,8 @@ tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs(
 # =====================================================================
 
 with tab1:
-    # Auto-run demo analysis if triggered
+    # Auto-run demo analysis if triggered (flag consumed at line ~705 via pop)
     if st.session_state.get("auto_run_demo"):
-        st.session_state["auto_run_demo"] = False
-        # Trigger the analysis automatically
         st.toast("🚀 Auto-running demo analysis...", icon="⚡")
 
     st.markdown("## Full Patient Biomarker Analysis")
@@ -418,13 +444,79 @@ with tab1:
         "a comprehensive precision medicine analysis."
     )
 
-    patient_id = st.text_input("Patient ID", value="PATIENT-001", key="t1_patient_id")
+    # Sample Patient Quick Load
+    st.markdown("#### Quick Start: Load Sample Patient")
+    sample_col1, sample_col2 = st.columns(2)
+
+    _sample_patients_path = PROJECT_ROOT / "data" / "reference" / "biomarker_sample_patients.json"
+    if _sample_patients_path.exists():
+        _sample_data = json.loads(_sample_patients_path.read_text())
+        def _load_sample_patient(patient_data):
+            """Load sample patient biomarkers, genotypes, and star alleles into session state."""
+            st.session_state["demo_patient"] = patient_data
+            # Map biomarker values to widget session state keys
+            _bio_key_map = {
+                "wbc": "t1_wbc", "lymphocyte_pct": "t1_lymph", "rdw": "t1_rdw",
+                "mcv": "t1_mcv", "platelets": "t1_plt",
+                "albumin": "t1_alb", "creatinine": "t1_cr", "glucose": "t1_glu",
+                "alt": "t1_alt", "ast": "t1_ast", "alkaline_phosphatase": "t1_alp",
+                "total_cholesterol": "t1_tc", "ldl_c": "t1_ldl", "hdl_c": "t1_hdl",
+                "triglycerides": "t1_trig", "lpa": "t1_lpa",
+                "tsh": "t1_tsh", "free_t4": "t1_ft4", "free_t3": "t1_ft3",
+                "ferritin": "t1_ferr", "transferrin_saturation": "t1_tsat",
+                "hs_crp": "t1_crp",
+                "hba1c": "t1_hba1c", "fasting_insulin": "t1_ins", "homa_ir": "t1_homa",
+                "vitamin_d": "t1_vitd", "vitamin_b12": "t1_b12", "folate": "t1_fol",
+                "omega3_index": "t1_o3", "magnesium": "t1_mag", "zinc": "t1_zinc",
+            }
+            for src_key, widget_key in _bio_key_map.items():
+                val = patient_data.get("biomarkers", {}).get(src_key)
+                if val is not None:
+                    st.session_state[widget_key] = float(val)
+            # Load genotypes
+            for gt_key, gt_val in patient_data.get("genotypes", {}).items():
+                widget_key = f"t1_{gt_key.lower().replace('_rs', '_rs').split('_')[0]}"
+                # Map to known widget keys
+                _geno_key_map = {
+                    "APOE": "t1_apoe", "MTHFR_rs1801133": "t1_mthfr",
+                    "TCF7L2_rs7903146": "t1_tcf7l2", "PNPLA3_rs738409": "t1_pnpla3",
+                    "DIO2_rs225014": "t1_dio2", "HFE_rs1800562": "t1_hfe",
+                }
+                if gt_key in _geno_key_map:
+                    st.session_state[_geno_key_map[gt_key]] = gt_val
+
+        with sample_col1:
+            if st.button("Load Male Patient (HG002)", key="load_male"):
+                _load_sample_patient(_sample_data[0])
+                st.rerun()
+        with sample_col2:
+            if st.button("Load Female Patient", key="load_female"):
+                _load_sample_patient(_sample_data[1])
+                st.rerun()
+
+    st.markdown("---")
+
+    # Pre-fill from demo patient if loaded
+    _demo = st.session_state.get("demo_patient")
+    _default_pid = _demo["id"] if _demo else "PATIENT-001"
+    _default_age = _demo["demographics"]["age"] if _demo else 45
+    _default_sex_val = _demo["demographics"]["sex"] if _demo else "M"
+    # Map full sex name to M/F abbreviation used by selectbox
+    _sex_options = ["M", "F"]
+    if _default_sex_val in ("Male", "male"):
+        _default_sex_idx = 0
+    elif _default_sex_val in ("Female", "female"):
+        _default_sex_idx = 1
+    else:
+        _default_sex_idx = _sex_options.index(_default_sex_val) if _default_sex_val in _sex_options else 0
+
+    patient_id = st.text_input("Patient ID", value=_default_pid, key="t1_patient_id")
 
     col_info1, col_info2 = st.columns(2)
     with col_info1:
-        patient_age = st.number_input("Age", min_value=0, max_value=150, value=45, key="t1_age")
+        patient_age = st.number_input("Age", min_value=0, max_value=150, value=_default_age, key="t1_age")
     with col_info2:
-        patient_sex = st.selectbox("Sex", ["M", "F"], key="t1_sex")
+        patient_sex = st.selectbox("Sex", _sex_options, index=_default_sex_idx, key="t1_sex")
 
     # -- Biomarker value inputs --
     biomarkers = {}
@@ -686,6 +778,30 @@ with tab1:
                 except Exception as e:
                     st.warning(f"Disease trajectory error: {e}")
 
+                # Critical value checking
+                try:
+                    critical_alerts = engine["critical_engine"].check(biomarkers)
+                    results["critical_alerts"] = critical_alerts
+                except Exception as e:
+                    st.warning(f"Critical value check error: {e}")
+
+                # Discordance detection
+                try:
+                    discordance_findings = engine["discordance_engine"].check(biomarkers)
+                    results["discordance_findings"] = discordance_findings
+                except Exception as e:
+                    st.warning(f"Discordance detection error: {e}")
+
+                # Lab range interpretation
+                try:
+                    lab_sex = "Male" if patient_sex == "M" else "Female"
+                    lab_interpretations = engine["lab_range_engine"].interpret(biomarkers, sex=lab_sex)
+                    lab_discrepancies = engine["lab_range_engine"].get_discrepancies(biomarkers, sex=lab_sex)
+                    results["lab_interpretations"] = lab_interpretations
+                    results["lab_discrepancies"] = lab_discrepancies
+                except Exception as e:
+                    st.warning(f"Lab range interpretation error: {e}")
+
                 # Store results in session state
                 st.session_state["analysis_results"] = results
                 st.session_state["patient_info"] = {
@@ -728,6 +844,24 @@ with tab1:
                         with st.expander(f"Recommendations for {name}"):
                             for r in traj["recommendations"]:
                                 st.markdown(f"- {r}")
+
+            if results.get("critical_alerts"):
+                st.markdown("### Critical Value Alerts")
+                for alert in results["critical_alerts"]:
+                    if alert.severity.lower() == "critical":
+                        st.error(alert.to_alert_string())
+                    else:
+                        st.warning(alert.to_alert_string())
+
+            if results.get("discordance_findings"):
+                st.markdown("### Cross-Biomarker Discordance")
+                for finding in results["discordance_findings"]:
+                    st.warning(finding.to_alert_string())
+
+            if results.get("lab_discrepancies"):
+                st.markdown("### Lab Range Optimization Opportunities")
+                for comp in results["lab_discrepancies"]:
+                    st.info(comp.to_interpretation())
 
 
 # =====================================================================
@@ -789,7 +923,7 @@ with tab2:
 
             st.markdown("#### Top Aging Drivers")
             driver_data = []
-            for d in result.get("top_aging_drivers", []):
+            for d in result.get("phenoage", {}).get("top_aging_drivers", result.get("top_aging_drivers", [])):
                 driver_data.append({
                     "Biomarker": d["biomarker"],
                     "Value": d["value"],
@@ -1124,16 +1258,17 @@ with tab4:
         v = st.text_input("CYP2C9", placeholder="e.g., *1/*1", key="t4_cyp2c9")
         if v:
             t4_star_alleles["CYP2C9"] = v
+    t4_genotypes = {}
     with c2:
-        v = st.text_input("SLCO1B1", placeholder="e.g., *5/*5", key="t4_slco1b1")
+        v = st.text_input("SLCO1B1 rs4149056", placeholder="e.g., TC", key="t4_slco1b1")
         if v:
-            t4_star_alleles["SLCO1B1"] = v
-        v = st.text_input("VKORC1", placeholder="e.g., A/A", key="t4_vkorc1")
+            t4_genotypes["SLCO1B1_rs4149056"] = v
+        v = st.text_input("VKORC1 rs9923231", placeholder="e.g., AG", key="t4_vkorc1")
         if v:
-            t4_star_alleles["VKORC1"] = v
-        v = st.text_input("MTHFR", placeholder="e.g., TT", key="t4_mthfr")
+            t4_genotypes["VKORC1_rs9923231"] = v
+        v = st.text_input("MTHFR rs1801133", placeholder="e.g., CT", key="t4_mthfr")
         if v:
-            t4_star_alleles["MTHFR"] = v
+            t4_genotypes["MTHFR_rs1801133"] = v
     with c3:
         v = st.text_input("TPMT", placeholder="e.g., *3A/*3A", key="t4_tpmt")
         if v:
@@ -1141,47 +1276,92 @@ with tab4:
         t4_hla = st.checkbox("HLA-B*57:01 Positive", key="t4_hla")
 
     if st.button("Map Drug Interactions", type="primary", key="t4_run"):
-        if not t4_star_alleles and not t4_hla:
-            st.warning("Please enter at least one star allele or check HLA-B*57:01.")
+        if not t4_star_alleles and not t4_genotypes and not t4_hla:
+            st.warning("Please enter at least one gene or check HLA-B*57:01.")
         else:
             st.markdown("### Drug Interaction Map")
 
             table_data = []
             critical_alerts = []
+            used_mapper = False
 
-            for gene, alleles in t4_star_alleles.items():
-                pheno_info = get_pgx_phenotype(gene, alleles)
-                drugs = PGX_DRUG_MAP.get(gene, [])
+            # Try the proper PharmacogenomicMapper first
+            mapper = engine.get("pgx_mapper") if engine else None
+            if mapper is not None:
+                try:
+                    genotypes_for_mapper = dict(t4_genotypes)
+                    if t4_hla:
+                        genotypes_for_mapper["HLA_B5701"] = "positive"
+                    mapper_result = mapper.map_all(
+                        star_alleles=t4_star_alleles,
+                        genotypes=genotypes_for_mapper,
+                    )
+                    used_mapper = True
 
-                for drug_info in drugs:
-                    phenotype = pheno_info["phenotype"]
-                    if "Poor" in phenotype:
-                        rec = drug_info.get("poor", "Standard dosing")
-                    elif "Ultra" in phenotype:
-                        rec = drug_info.get("ultra_rapid", "Standard dosing")
-                    else:
-                        rec = drug_info.get("normal", "Standard dosing")
+                    for gene_res in mapper_result.get("gene_results", []):
+                        gene = gene_res.get("gene", "")
+                        phenotype = gene_res.get("phenotype") or "Unknown"
+                        star_al = gene_res.get("star_alleles") or gene_res.get("genotype") or ""
+                        for drug_rec in gene_res.get("affected_drugs", []):
+                            table_data.append({
+                                "Gene": gene,
+                                "Star Alleles": star_al,
+                                "Phenotype": phenotype,
+                                "Drug": drug_rec["drug"],
+                                "Action": drug_rec.get("action", ""),
+                                "Recommendation": drug_rec["recommendation"],
+                            })
 
-                    if "AVOID" in rec:
-                        critical_alerts.append(f"{gene} {alleles} + {drug_info['drug']}: {rec}")
+                    for alert in mapper_result.get("critical_alerts", []):
+                        if isinstance(alert, dict):
+                            msg = alert.get("message", str(alert))
+                            gene = alert.get("gene", "")
+                            drug = alert.get("drug", "")
+                            critical_alerts.append(f"{gene} + {drug}: {msg}" if gene else msg)
+                        else:
+                            critical_alerts.append(str(alert))
 
+                except Exception as e:
+                    st.warning(f"PharmacogenomicMapper error, falling back to simplified logic: {e}")
+                    used_mapper = False
+                    table_data = []
+                    critical_alerts = []
+
+            # Fallback: simplified local logic
+            if not used_mapper:
+                for gene, alleles in t4_star_alleles.items():
+                    pheno_info = get_pgx_phenotype(gene, alleles)
+                    drugs = PGX_DRUG_MAP.get(gene, [])
+
+                    for drug_info in drugs:
+                        phenotype = pheno_info["phenotype"]
+                        if "Poor" in phenotype:
+                            rec = drug_info.get("poor", "Standard dosing")
+                        elif "Ultra" in phenotype:
+                            rec = drug_info.get("ultra_rapid", "Standard dosing")
+                        else:
+                            rec = drug_info.get("normal", "Standard dosing")
+
+                        if "AVOID" in rec:
+                            critical_alerts.append(f"{gene} {alleles} + {drug_info['drug']}: {rec}")
+
+                        table_data.append({
+                            "Gene": gene,
+                            "Star Alleles": alleles,
+                            "Phenotype": phenotype,
+                            "Drug": drug_info["drug"],
+                            "Recommendation": rec,
+                        })
+
+                if t4_hla:
+                    critical_alerts.append("HLA-B*57:01 Positive + Abacavir: CONTRAINDICATED")
                     table_data.append({
-                        "Gene": gene,
-                        "Star Alleles": alleles,
-                        "Phenotype": phenotype,
-                        "Drug": drug_info["drug"],
-                        "Recommendation": rec,
+                        "Gene": "HLA-B",
+                        "Star Alleles": "*57:01",
+                        "Phenotype": "Positive",
+                        "Drug": "Abacavir",
+                        "Recommendation": "CONTRAINDICATED - risk of hypersensitivity reaction",
                     })
-
-            if t4_hla:
-                critical_alerts.append("HLA-B*57:01 Positive + Abacavir: CONTRAINDICATED")
-                table_data.append({
-                    "Gene": "HLA-B",
-                    "Star Alleles": "*57:01",
-                    "Phenotype": "Positive",
-                    "Drug": "Abacavir",
-                    "Recommendation": "CONTRAINDICATED - risk of hypersensitivity reaction",
-                })
 
             if critical_alerts:
                 st.markdown("#### Critical Alerts")
@@ -1212,6 +1392,9 @@ with tab5:
         "biomarker_aging_markers",
         "biomarker_genotype_adjustments",
         "biomarker_monitoring",
+        "biomarker_critical_values",
+        "biomarker_discordance_rules",
+        "biomarker_aj_carrier_screening",
     ]
 
     with st.expander("Collection Filters", expanded=False):
@@ -1364,7 +1547,7 @@ with tab6:
                     biological_age=float(pheno.get("biological_age", patient["age"])),
                     age_acceleration=float(pheno.get("age_acceleration", 0)),
                     phenoage_score=float(pheno.get("phenoage_score",
-                                                    pheno.get("mortality_risk", 0))),
+                                                    pheno.get("mortality_score", 0))),
                     grimage_score=pheno.get("grimage_score"),
                     mortality_risk=float(pheno.get("mortality_risk", 0)),
                     aging_drivers=pheno.get("aging_drivers",
@@ -1444,7 +1627,7 @@ with tab6:
                     disease_trajectories=disease_trajectories,
                     pgx_results=pgx_results,
                     genotype_adjustments=genotype_adjustments,
-                    critical_alerts=results.get("critical_alerts", []),
+                    critical_alerts=[a.to_alert_string() if hasattr(a, 'to_alert_string') else str(a) for a in results.get("critical_alerts", [])],
                 )
 
                 # Generate the full 12-section report
@@ -1478,6 +1661,10 @@ with tab6:
                 )
 
             with c2:
+                try:
+                    import reportlab  # noqa: F401
+                except ImportError:
+                    st.warning("reportlab not installed — PDF will be plain text")
                 from src.export import export_pdf
                 pdf_bytes = export_pdf(st.session_state["full_report"])
                 st.download_button(
@@ -1579,3 +1766,106 @@ with tab7:
         if st.button("\U0001f3af Load Demo Patient 360", key="demo_360"):
             from patient_360 import render_demo_patient_360
             render_demo_patient_360()
+
+# =====================================================================
+# TAB 8: LONGITUDINAL TRACKING
+# =====================================================================
+
+with tab8:
+    st.header("Longitudinal Biomarker Tracking")
+    st.markdown("Track biomarker trends across multiple visits to identify improving, stable, and crisis patterns.")
+
+    _long_path = PROJECT_ROOT / "data" / "reference" / "biomarker_longitudinal_tracking.json"
+    if _long_path.exists():
+        _long_data = json.loads(_long_path.read_text())
+
+        _long_patient_id = _long_data.get("patient_id", "Unknown")
+        visits = _long_data.get("visits", [])
+        tracked = _long_data.get("tracked_biomarkers", [])
+
+        st.subheader(f"Patient: {_long_patient_id}")
+
+        # Visit timeline
+        visit_cols = st.columns(len(visits))
+        for i, visit in enumerate(visits):
+            with visit_cols[i]:
+                st.metric(visit.get("label", f"Visit {i+1}"), visit.get("date", ""))
+
+        st.markdown("---")
+
+        # Trend filter
+        trend_filter = st.selectbox(
+            "Filter by trend",
+            ["All", "Improving", "Crisis", "Stable"],
+            key="trend_filter",
+        )
+
+        # Filter biomarkers by trend
+        if trend_filter != "All":
+            filtered = [b for b in tracked if b.get("trend", "").lower() == trend_filter.lower()]
+        else:
+            filtered = tracked
+
+        # Summary metrics
+        improving = len([b for b in tracked if b.get("trend") == "improving"])
+        crisis = len([b for b in tracked if b.get("trend") == "crisis"])
+        stable = len([b for b in tracked if b.get("trend") == "stable"])
+
+        m1, m2, m3, m4 = st.columns(4)
+        m1.metric("Total Tracked", len(tracked))
+        m2.metric("Improving", improving)
+        m3.metric("Crisis", crisis)
+        m4.metric("Stable", stable)
+
+        st.markdown("---")
+
+        # Display biomarkers as expandable cards
+        for bio in filtered:
+            name = bio.get("biomarker", "Unknown")
+            trend = bio.get("trend", "unknown")
+            values = bio.get("values", [])
+            unit = bio.get("unit", "")
+            pct_change = bio.get("pct_change_total", 0)
+            note = bio.get("clinical_note", "")
+
+            # Color-code by trend
+            if trend == "improving":
+                icon = "arrow_down_small" if pct_change < 0 else "arrow_up_small"
+                color = "green"
+            elif trend == "crisis":
+                icon = "warning"
+                color = "red"
+            else:
+                icon = "heavy_minus_sign"
+                color = "gray"
+
+            _expander_label = (
+                f"{'🟢' if trend == 'improving' else '🔴' if trend == 'crisis' else '⚪'} "
+                f"{name} — {trend.upper()} ({pct_change:+.1f}%)"
+                if pct_change
+                else f"{'🟢' if trend == 'improving' else '🔴' if trend == 'crisis' else '⚪'} "
+                     f"{name} — {trend.upper()}"
+            )
+
+            with st.expander(_expander_label):
+                # Sparkline using st.line_chart
+                if len(values) >= 2:
+                    import pandas as pd
+                    visit_labels = [v.get("label", f"V{i+1}") for i, v in enumerate(visits)]
+                    # Handle None values
+                    chart_values = [v if v is not None else 0 for v in values[:len(visit_labels)]]
+                    df = pd.DataFrame({"Visit": visit_labels[:len(chart_values)], name: chart_values})
+                    df = df.set_index("Visit")
+                    st.line_chart(df)
+
+                col1, col2, col3 = st.columns(3)
+                for i, visit in enumerate(visits):
+                    if i < len(values):
+                        val = values[i]
+                        label = visit.get("label", f"Visit {i+1}")
+                        [col1, col2, col3][i].metric(label, f"{val} {unit}" if val is not None else "N/A")
+
+                if note:
+                    st.info(note)
+    else:
+        st.warning("Longitudinal tracking data not found. Run the data generation scripts first.")

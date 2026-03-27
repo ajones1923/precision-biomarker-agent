@@ -66,8 +66,8 @@ def mock_collection_manager():
     """Return a MagicMock collection manager with sane defaults.
 
     - search()      -> empty list
-    - search_all()  -> empty dict of lists for all 11 collections
-    - get_collection_stats() -> dummy counts for all 11 collections
+    - search_all()  -> empty dict of lists for all 14 collections
+    - get_collection_stats() -> dummy counts for all 14 collections
     - connect() / disconnect() -> no-ops
     """
     manager = MagicMock()
@@ -85,6 +85,9 @@ def mock_collection_manager():
         "biomarker_aging_markers",
         "biomarker_genotype_adjustments",
         "biomarker_monitoring",
+        "biomarker_critical_values",
+        "biomarker_discordance_rules",
+        "biomarker_aj_carrier_screening",
         "genomic_evidence",
     ]
     manager.search_all.return_value = {name: [] for name in collection_names}

@@ -37,8 +37,11 @@ from pymilvus import (
 
 from src.models import (
     AgingMarker,
+    AJCarrierScreeningEntry,
     BiomarkerReference,
     ClinicalEvidence,
+    CriticalValue,
+    DiscordanceRule,
     DiseaseTrajectory,
     DrugInteraction,
     GeneticVariant,
@@ -161,7 +164,7 @@ GENETIC_VARIANTS_FIELDS = [
     FieldSchema(
         name="risk_allele",
         dtype=DataType.VARCHAR,
-        max_length=5,
+        max_length=20,
         description="Risk allele",
     ),
     FieldSchema(
@@ -173,7 +176,7 @@ GENETIC_VARIANTS_FIELDS = [
     FieldSchema(
         name="effect_size",
         dtype=DataType.VARCHAR,
-        max_length=100,
+        max_length=250,
         description="Effect size description",
     ),
     FieldSchema(
@@ -703,6 +706,253 @@ MONITORING_SCHEMA = CollectionSchema(
     description="Condition-specific biomarker monitoring protocols",
 )
 
+# ── biomarker_critical_values ──────────────────────────────────────
+
+CRITICAL_VALUES_FIELDS = [
+    FieldSchema(
+        name="id",
+        dtype=DataType.VARCHAR,
+        is_primary=True,
+        max_length=100,
+        description="Unique critical value identifier",
+    ),
+    FieldSchema(
+        name="embedding",
+        dtype=DataType.FLOAT_VECTOR,
+        dim=EMBEDDING_DIM,
+        description="BGE-small-en-v1.5 text embedding",
+    ),
+    FieldSchema(
+        name="biomarker",
+        dtype=DataType.VARCHAR,
+        max_length=100,
+        description="Biomarker name",
+    ),
+    FieldSchema(
+        name="loinc_code",
+        dtype=DataType.VARCHAR,
+        max_length=20,
+        description="LOINC code",
+    ),
+    FieldSchema(
+        name="critical_low",
+        dtype=DataType.FLOAT,
+        description="Critical low threshold",
+    ),
+    FieldSchema(
+        name="critical_high",
+        dtype=DataType.FLOAT,
+        description="Critical high threshold",
+    ),
+    FieldSchema(
+        name="severity",
+        dtype=DataType.VARCHAR,
+        max_length=20,
+        description="Severity level (critical/urgent/warning)",
+    ),
+    FieldSchema(
+        name="escalation_target",
+        dtype=DataType.VARCHAR,
+        max_length=100,
+        description="Escalation target",
+    ),
+    FieldSchema(
+        name="clinical_action",
+        dtype=DataType.VARCHAR,
+        max_length=2000,
+        description="Clinical action to take",
+    ),
+    FieldSchema(
+        name="cross_checks",
+        dtype=DataType.VARCHAR,
+        max_length=500,
+        description="Comma-separated cross-check biomarkers",
+    ),
+    FieldSchema(
+        name="text_chunk",
+        dtype=DataType.VARCHAR,
+        max_length=3000,
+        description="Text chunk used for embedding",
+    ),
+]
+
+CRITICAL_VALUES_SCHEMA = CollectionSchema(
+    fields=CRITICAL_VALUES_FIELDS,
+    description="Critical biomarker value thresholds and escalation rules",
+)
+
+# ── biomarker_discordance_rules ───────────────────────────────────
+
+DISCORDANCE_RULES_FIELDS = [
+    FieldSchema(
+        name="id",
+        dtype=DataType.VARCHAR,
+        is_primary=True,
+        max_length=100,
+        description="Unique discordance rule identifier",
+    ),
+    FieldSchema(
+        name="embedding",
+        dtype=DataType.FLOAT_VECTOR,
+        dim=EMBEDDING_DIM,
+        description="BGE-small-en-v1.5 text embedding",
+    ),
+    FieldSchema(
+        name="name",
+        dtype=DataType.VARCHAR,
+        max_length=200,
+        description="Discordance rule name",
+    ),
+    FieldSchema(
+        name="biomarker_a",
+        dtype=DataType.VARCHAR,
+        max_length=100,
+        description="First biomarker in discordance pair",
+    ),
+    FieldSchema(
+        name="biomarker_b",
+        dtype=DataType.VARCHAR,
+        max_length=100,
+        description="Second biomarker in discordance pair",
+    ),
+    FieldSchema(
+        name="condition",
+        dtype=DataType.VARCHAR,
+        max_length=500,
+        description="Discordance condition pattern",
+    ),
+    FieldSchema(
+        name="expected_relationship",
+        dtype=DataType.VARCHAR,
+        max_length=1000,
+        description="Expected relationship between the biomarkers",
+    ),
+    FieldSchema(
+        name="differential_diagnosis",
+        dtype=DataType.VARCHAR,
+        max_length=2000,
+        description="Comma-separated differential diagnoses",
+    ),
+    FieldSchema(
+        name="agent_handoff",
+        dtype=DataType.VARCHAR,
+        max_length=500,
+        description="Comma-separated agent names for handoff",
+    ),
+    FieldSchema(
+        name="priority",
+        dtype=DataType.VARCHAR,
+        max_length=10,
+        description="Priority level (high/medium/low)",
+    ),
+    FieldSchema(
+        name="text_chunk",
+        dtype=DataType.VARCHAR,
+        max_length=3000,
+        description="Text chunk used for embedding",
+    ),
+]
+
+DISCORDANCE_RULES_SCHEMA = CollectionSchema(
+    fields=DISCORDANCE_RULES_FIELDS,
+    description="Cross-biomarker discordance patterns and differential diagnoses",
+)
+
+# ── biomarker_aj_carrier_screening ────────────────────────────────
+
+AJ_CARRIER_SCREENING_FIELDS = [
+    FieldSchema(
+        name="id",
+        dtype=DataType.VARCHAR,
+        is_primary=True,
+        max_length=100,
+        description="Unique AJ carrier screening entry identifier",
+    ),
+    FieldSchema(
+        name="embedding",
+        dtype=DataType.FLOAT_VECTOR,
+        dim=EMBEDDING_DIM,
+        description="BGE-small-en-v1.5 text embedding",
+    ),
+    FieldSchema(
+        name="gene",
+        dtype=DataType.VARCHAR,
+        max_length=50,
+        description="Gene symbol",
+    ),
+    FieldSchema(
+        name="disease",
+        dtype=DataType.VARCHAR,
+        max_length=200,
+        description="Disease name",
+    ),
+    FieldSchema(
+        name="inheritance",
+        dtype=DataType.VARCHAR,
+        max_length=50,
+        description="Inheritance pattern",
+    ),
+    FieldSchema(
+        name="aj_carrier_frequency",
+        dtype=DataType.VARCHAR,
+        max_length=30,
+        description="AJ population carrier frequency",
+    ),
+    FieldSchema(
+        name="general_carrier_frequency",
+        dtype=DataType.VARCHAR,
+        max_length=30,
+        description="General population carrier frequency",
+    ),
+    FieldSchema(
+        name="common_mutations",
+        dtype=DataType.VARCHAR,
+        max_length=500,
+        description="Comma-separated common mutations",
+    ),
+    FieldSchema(
+        name="loinc_code",
+        dtype=DataType.VARCHAR,
+        max_length=20,
+        description="LOINC code",
+    ),
+    FieldSchema(
+        name="method",
+        dtype=DataType.VARCHAR,
+        max_length=500,
+        description="Testing method",
+    ),
+    FieldSchema(
+        name="clinical_significance",
+        dtype=DataType.VARCHAR,
+        max_length=2000,
+        description="Clinical significance",
+    ),
+    FieldSchema(
+        name="reproductive_implications",
+        dtype=DataType.VARCHAR,
+        max_length=2000,
+        description="Reproductive implications",
+    ),
+    FieldSchema(
+        name="compound_risks",
+        dtype=DataType.VARCHAR,
+        max_length=1000,
+        description="Comma-separated compound risks",
+    ),
+    FieldSchema(
+        name="text_chunk",
+        dtype=DataType.VARCHAR,
+        max_length=3000,
+        description="Text chunk used for embedding",
+    ),
+]
+
+AJ_CARRIER_SCREENING_SCHEMA = CollectionSchema(
+    fields=AJ_CARRIER_SCREENING_FIELDS,
+    description="Ashkenazi Jewish carrier screening genes and mutations",
+)
+
 # ── Genomic Evidence (read-only, created by rag-chat-pipeline) ──────
 
 GENOMIC_EVIDENCE_FIELDS = [
@@ -746,6 +996,9 @@ COLLECTION_SCHEMAS: Dict[str, CollectionSchema] = {
     "biomarker_aging_markers": AGING_MARKERS_SCHEMA,
     "biomarker_genotype_adjustments": GENOTYPE_ADJUSTMENTS_SCHEMA,
     "biomarker_monitoring": MONITORING_SCHEMA,
+    "biomarker_critical_values": CRITICAL_VALUES_SCHEMA,
+    "biomarker_discordance_rules": DISCORDANCE_RULES_SCHEMA,
+    "biomarker_aj_carrier_screening": AJ_CARRIER_SCREENING_SCHEMA,
     "genomic_evidence": GENOMIC_EVIDENCE_SCHEMA,
 }
 
@@ -762,6 +1015,9 @@ COLLECTION_MODELS: Dict[str, type] = {
     "biomarker_aging_markers": AgingMarker,
     "biomarker_genotype_adjustments": GenotypeAdjustment,
     "biomarker_monitoring": MonitoringProtocol,
+    "biomarker_critical_values": CriticalValue,
+    "biomarker_discordance_rules": DiscordanceRule,
+    "biomarker_aj_carrier_screening": AJCarrierScreeningEntry,
     "genomic_evidence": None,
 }
 
@@ -815,7 +1071,7 @@ class BiomarkerCollectionManager:
         self.port = port or int(os.environ.get("MILVUS_PORT", "19530"))
         self.embedding_dim = embedding_dim
         self._collections: Dict[str, Collection] = {}
-        self._executor = ThreadPoolExecutor(max_workers=11)
+        self._executor = ThreadPoolExecutor(max_workers=14)
 
     def connect(self) -> None:
         """Connect to the Milvus server."""

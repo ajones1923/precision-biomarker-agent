@@ -18,6 +18,8 @@ import re
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
+from loguru import logger
+
 from .models import (
     AnalysisResult,
     CrossCollectionResult,
@@ -810,9 +812,156 @@ def export_csv(analysis: AnalysisResult) -> bytes:
     return buf.getvalue().encode("utf-8")
 
 
+def validate_fhir_bundle(bundle: dict) -> List[str]:
+    """Validate that a FHIR R4 Bundle conforms to DiagnosticReport structure.
+
+    Performs lightweight structural validation without requiring external FHIR
+    validator libraries.  Checks resource types, required fields, and internal
+    reference integrity.
+
+    Args:
+        bundle: Parsed FHIR Bundle dictionary.
+
+    Returns:
+        List of validation error strings.  Empty list means valid.
+    """
+    errors: List[str] = []
+
+    # --- Top-level Bundle checks ---
+    if not isinstance(bundle, dict):
+        errors.append("Bundle must be a JSON object")
+        return errors
+
+    if bundle.get("resourceType") != "Bundle":
+        errors.append(
+            f"resourceType must be 'Bundle', got '{bundle.get('resourceType')}'"
+        )
+
+    entries = bundle.get("entry")
+    if not isinstance(entries, list):
+        errors.append("Bundle must contain an 'entry' list")
+        return errors  # nothing more to validate
+
+    # Collect all fullUrls and resource IDs so we can verify references
+    known_refs: set = set()
+    for idx, entry in enumerate(entries):
+        full_url = entry.get("fullUrl")
+        if full_url:
+            known_refs.add(full_url)
+        resource = entry.get("resource") if isinstance(entry, dict) else None
+        if resource and isinstance(resource, dict):
+            res_type = resource.get("resourceType", "")
+            res_id = resource.get("id", "")
+            if res_type and res_id:
+                known_refs.add(f"{res_type}/{res_id}")
+                known_refs.add(f"urn:uuid:{res_id}")
+
+    VALID_RESOURCE_TYPES = {
+        "DiagnosticReport", "Observation", "Patient", "Practitioner",
+        "Organization", "Specimen", "Condition", "MedicationStatement",
+        "ServiceRequest", "Bundle", "Composition",
+    }
+
+    # Required fields per resource type
+    DIAGNOSTIC_REPORT_REQUIRED = {"status", "code", "subject", "effectiveDateTime", "result"}
+    OBSERVATION_REQUIRED = {"status", "code"}
+    PATIENT_REQUIRED_CHECK = "identifier"
+
+    def _check_reference(ref_value: str, location: str) -> None:
+        """Verify that a reference string points to a known resource."""
+        if ref_value and ref_value not in known_refs:
+            errors.append(
+                f"{location}: reference '{ref_value}' does not match any "
+                f"fullUrl or resource id in the bundle"
+            )
+
+    def _collect_references(obj: Any, path: str) -> None:
+        """Recursively find all 'reference' fields and validate them."""
+        if isinstance(obj, dict):
+            if "reference" in obj and isinstance(obj["reference"], str):
+                _check_reference(obj["reference"], path)
+            for key, value in obj.items():
+                _collect_references(value, f"{path}.{key}")
+        elif isinstance(obj, list):
+            for i, item in enumerate(obj):
+                _collect_references(item, f"{path}[{i}]")
+
+    for idx, entry in enumerate(entries):
+        prefix = f"entry[{idx}]"
+
+        if not isinstance(entry, dict):
+            errors.append(f"{prefix}: entry must be a JSON object")
+            continue
+
+        resource = entry.get("resource")
+        if not isinstance(resource, dict):
+            errors.append(f"{prefix}: entry must contain a 'resource' object")
+            continue
+
+        res_type = resource.get("resourceType")
+        if not res_type:
+            errors.append(f"{prefix}: resource is missing 'resourceType'")
+            continue
+
+        if res_type not in VALID_RESOURCE_TYPES:
+            errors.append(
+                f"{prefix}: unknown resourceType '{res_type}'"
+            )
+
+        # --- DiagnosticReport checks ---
+        if res_type == "DiagnosticReport":
+            for field in DIAGNOSTIC_REPORT_REQUIRED:
+                if field not in resource:
+                    errors.append(
+                        f"{prefix} (DiagnosticReport): missing required field '{field}'"
+                    )
+            # subject must have reference
+            subject = resource.get("subject")
+            if isinstance(subject, dict) and "reference" not in subject:
+                errors.append(
+                    f"{prefix} (DiagnosticReport): 'subject' must contain a 'reference'"
+                )
+            # result must be a list
+            result = resource.get("result")
+            if result is not None and not isinstance(result, list):
+                errors.append(
+                    f"{prefix} (DiagnosticReport): 'result' must be a list"
+                )
+
+        # --- Observation checks ---
+        elif res_type == "Observation":
+            for field in OBSERVATION_REQUIRED:
+                if field not in resource:
+                    errors.append(
+                        f"{prefix} (Observation): missing required field '{field}'"
+                    )
+            # Must have valueQuantity or valueString
+            has_value = (
+                "valueQuantity" in resource
+                or "valueString" in resource
+            )
+            if not has_value:
+                errors.append(
+                    f"{prefix} (Observation): must have 'valueQuantity' or 'valueString'"
+                )
+
+        # --- Patient checks ---
+        elif res_type == "Patient":
+            if PATIENT_REQUIRED_CHECK not in resource:
+                errors.append(
+                    f"{prefix} (Patient): missing required field 'identifier'"
+                )
+
+        # --- Reference integrity for this entry ---
+        _collect_references(resource, prefix)
+
+    return errors
+
+
 def export_fhir_diagnostic_report(
     analysis: AnalysisResult,
     patient_profile: PatientProfile,
+    validate: bool = True,
 ) -> str:
     """Export analysis result as a FHIR R4 DiagnosticReport JSON bundle.
 
@@ -824,6 +973,9 @@ def export_fhir_diagnostic_report(
     Args:
         analysis: AnalysisResult from patient analysis.
         patient_profile: PatientProfile with patient demographics.
+        validate: If True (default), run lightweight FHIR R4 structural
+            validation on the generated bundle and log any warnings.
+            Validation issues are logged but never cause the export to fail.
 
     Returns:
         FHIR R4 JSON string (Bundle).
@@ -1082,6 +1234,26 @@ def export_fhir_diagnostic_report(
     )
     diagnostic_report["resource"]["conclusion"] = " | ".join(conclusion_parts)
 
+    # Patient resource (required for reference integrity)
+    patient_resource = {
+        "resource": {
+            "resourceType": "Patient",
+            "id": patient_profile.patient_id,
+            "identifier": [
+                {
+                    "system": "urn:hcls-ai-factory:patient-id",
+                    "value": patient_profile.patient_id,
+                }
+            ],
+            "gender": "male" if patient_profile.sex == "M" else "female",
+            "birthDate": str(
+                datetime.now().year - patient_profile.age
+            ) if patient_profile.age else None,
+        },
+        "fullUrl": f"urn:uuid:{patient_profile.patient_id}",
+    }
+    entries.append(patient_resource)
+
     # Insert DiagnosticReport as first entry
     entries.insert(0, diagnostic_report)
 
@@ -1096,6 +1268,17 @@ def export_fhir_diagnostic_report(
         "timestamp": timestamp,
         "entry": entries,
     }
+
+    # Optional FHIR R4 structural validation
+    if validate:
+        validation_errors = validate_fhir_bundle(bundle)
+        if validation_errors:
+            logger.warning(
+                "FHIR R4 validation found {} issue(s) in DiagnosticReport bundle:",
+                len(validation_errors),
+            )
+            for err in validation_errors:
+                logger.warning("  FHIR validation: {}", err)
 
     return json.dumps(bundle, indent=2, default=str)
 

@@ -167,7 +167,7 @@ class TestCollectionFiltering:
             query_embedding=[0.0] * 384,
             top_k_per_collection=5,
         )
-        assert len(results) == 11  # All 11 collections
+        assert len(results) == 14  # All 14 collections
 
     def test_filter_by_gene(self, mock_collection_manager):
         """Gene-specific filter expression should be passed to search."""

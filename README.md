@@ -1,5 +1,10 @@
 # Biomarker Intelligence Agent
 
+
+![Architecture Infographic](docs/images/infographic.jpg)
+
+*Source: [precision-biomarker-agent](https://github.com/ajones1923/precision-biomarker-agent)*
+
 **HCLS AI Factory** | Genotype-aware biomarker interpretation, biological age estimation, disease trajectory detection, and pharmacogenomic profiling.
 
 ## Quick Start

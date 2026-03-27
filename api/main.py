@@ -47,14 +47,20 @@ from pydantic import BaseModel, Field
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-# Load API key from rag-chat-pipeline .env if not already set
-if not os.environ.get("ANTHROPIC_API_KEY"):
+# Load API key: prefer env vars, then rag-chat-pipeline .env file
+_api_key = (
+    os.environ.get("ANTHROPIC_API_KEY")
+    or os.environ.get("BIOMARKER_ANTHROPIC_API_KEY")
+)
+if not _api_key:
     _env_path = PROJECT_ROOT.parent.parent / "rag-chat-pipeline" / ".env"
     if _env_path.exists():
         for _line in _env_path.read_text().splitlines():
             if _line.startswith("ANTHROPIC_API_KEY="):
-                os.environ["ANTHROPIC_API_KEY"] = _line.split("=", 1)[1].strip().strip('"')
+                _api_key = _line.split("=", 1)[1].strip().strip('"')
                 break
+if _api_key:
+    os.environ["ANTHROPIC_API_KEY"] = _api_key
 
 from config.settings import settings
 from src.biological_age import BiologicalAgeCalculator
@@ -354,7 +360,7 @@ async def health():
         logger.exception(f"Health check failed -- Milvus unavailable: {e}")
         with _metrics_lock:
             _metrics["errors_total"] += 1
-        raise HTTPException(status_code=503, detail=f"Milvus unavailable: {e}")
+        raise HTTPException(status_code=503, detail="Service temporarily unavailable")
 
 
 @app.get("/collections", response_model=CollectionsResponse, tags=["status"])
@@ -380,7 +386,7 @@ async def list_collections():
         logger.exception(f"Failed to fetch collection stats: {e}")
         with _metrics_lock:
             _metrics["errors_total"] += 1
-        raise HTTPException(status_code=500, detail=f"Failed to fetch collection stats: {e}")
+        raise HTTPException(status_code=500, detail="Internal processing error")
 
 
 @app.get("/knowledge/stats", response_model=KnowledgeStatsResponse, tags=["knowledge"])
@@ -396,7 +402,7 @@ async def knowledge_stats():
         logger.exception(f"Knowledge stats failed: {e}")
         with _metrics_lock:
             _metrics["errors_total"] += 1
-        raise HTTPException(status_code=500, detail=f"Knowledge stats failed: {e}")
+        raise HTTPException(status_code=500, detail="Internal processing error")
 
 
 @app.get("/metrics", response_class=PlainTextResponse, tags=["monitoring"])

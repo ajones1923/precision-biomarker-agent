@@ -1,6 +1,6 @@
 """Multi-collection RAG engine for Biomarker Intelligence Agent.
 
-Searches across all 11 collections simultaneously using parallel ThreadPoolExecutor,
+Searches across all 14 collections simultaneously using parallel ThreadPoolExecutor,
 synthesizes findings with full knowledge graph augmentation (biomarker domains, PGx,
 PhenoAge, cross-modal links), and generates grounded LLM responses.
 
@@ -42,6 +42,7 @@ BIOMARKER_SYSTEM_PROMPT = """You are a Biomarker Intelligence Agent with deep ex
 6. **Cardiovascular Risk Stratification** -- Lp(a), ApoB, APOE genotyping, PCSK9 variants, homocysteine/MTHFR
 7. **Liver Health Assessment** -- PNPLA3 I148M, TM6SF2, FIB-4 index, NAFLD/NASH risk stratification
 8. **Iron Metabolism** -- HFE C282Y/H63D genotyping, hereditary hemochromatosis, TMPRSS6 and iron-refractory anemia
+9. **Ashkenazi Jewish Carrier Screening** -- 10-gene AJ panel (BRCA1/2, GBA, HEXA, FANCC, ASPA, BLM, SMPD1, IKBKAP/ELP1, MCOLN1), compound risks (GBA+APOE E4 for Parkinson's), reproductive counseling
 
 You have access to evidence from MULTIPLE data sources spanning:
 - Biomarker reference databases
@@ -55,6 +56,7 @@ You have access to evidence from MULTIPLE data sources spanning:
 - Genotype-adjusted reference ranges
 - Monitoring protocols
 - Patient genomic evidence (shared VCF-derived collection)
+- AJ carrier screening genetic data
 
 When answering questions:
 - **Cite evidence using the collection labels** provided in the evidence, e.g. [BiomarkerRef:marker-id],
@@ -87,7 +89,10 @@ COLLECTION_CONFIG = {
     "biomarker_aging_markers":    {"weight": settings.WEIGHT_AGING_MARKERS,        "label": "AgingMarker",        "has_disease_area": False, "year_field": None},
     "biomarker_genotype_adjustments": {"weight": settings.WEIGHT_GENOTYPE_ADJUSTMENTS, "label": "GenotypeAdj",   "has_disease_area": False, "year_field": None},
     "biomarker_monitoring":       {"weight": settings.WEIGHT_MONITORING,            "label": "Monitoring",         "has_disease_area": False, "year_field": None},
-    "genomic_evidence":           {"weight": 0.10,                                 "label": "Genomic",            "has_disease_area": False, "year_field": None},
+    "biomarker_critical_values":     {"weight": settings.WEIGHT_CRITICAL_VALUES,     "label": "CriticalValue",    "has_disease_area": False, "year_field": None},
+    "biomarker_discordance_rules":   {"weight": settings.WEIGHT_DISCORDANCE_RULES,   "label": "DiscordanceRule",  "has_disease_area": False, "year_field": None},
+    "biomarker_aj_carrier_screening": {"weight": settings.WEIGHT_AJ_CARRIER_SCREENING, "label": "AJCarrierScreen", "has_disease_area": False, "year_field": None},
+    "genomic_evidence":           {"weight": settings.WEIGHT_GENOMIC_EVIDENCE,      "label": "Genomic",            "has_disease_area": False, "year_field": None},
 }
 
 # Maximum merged results returned after deduplication and ranking

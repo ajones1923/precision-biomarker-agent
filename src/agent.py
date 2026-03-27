@@ -30,10 +30,12 @@ from typing import Dict, List, Optional
 from loguru import logger
 
 from .biological_age import BiologicalAgeCalculator
+from .critical_values import CriticalValueEngine
+from .discordance_detector import DiscordanceDetector
 from .disease_trajectory import DiseaseTrajectoryAnalyzer
 from .pharmacogenomics import PharmacogenomicMapper
 from .genotype_adjustment import GenotypeAdjuster
-from .knowledge import BIOMARKER_DOMAINS, PGX_KNOWLEDGE, CROSS_MODAL_LINKS
+from .lab_range_interpreter import LabRangeInterpreter
 from .models import (
     AgentQuery,
     AgentResponse,
@@ -106,6 +108,9 @@ class PrecisionBiomarkerAgent:
         self.trajectory = trajectory_analyzer or DiseaseTrajectoryAnalyzer()
         self.pgx = pgx_mapper or PharmacogenomicMapper()
         self.adjuster = genotype_adjuster or GenotypeAdjuster()
+        self.critical_values = CriticalValueEngine()
+        self.discordance = DiscordanceDetector()
+        self.lab_ranges = LabRangeInterpreter()
 
     def run(self, question: str, patient_profile: Optional[PatientProfile] = None,
             **kwargs) -> AgentResponse:
@@ -135,6 +140,9 @@ class PrecisionBiomarkerAgent:
             patient_profile=patient_profile,
             include_genomic=kwargs.get("include_genomic", True),
         )
+        # NOTE: rag_engine.retrieve() accepts conversation_context for multi-turn
+        # support. Currently unused -- wire through when AgentQuery gains a
+        # conversation_context field or run() accepts conversation history.
         evidence = self.rag.retrieve(
             query,
             collections_filter=kwargs.get("collections_filter"),
@@ -172,6 +180,7 @@ class PrecisionBiomarkerAgent:
             disease_trajectories=analysis.disease_trajectories if analysis else None,
             pgx_results=analysis.pgx_results if analysis else None,
             genotype_adjustments=analysis.genotype_adjustments if analysis else None,
+            critical_alerts=analysis.critical_alerts if analysis else [],
         )
 
     def analyze_patient(self, profile: PatientProfile) -> AnalysisResult:
@@ -215,6 +224,14 @@ class PrecisionBiomarkerAgent:
         # Map disease_trajectory.py disease strings to DiseaseCategory enum values
         _disease_str_map = {
             "type2_diabetes": "diabetes",
+            "cardiovascular": "cardiovascular",
+            "liver": "liver",
+            "thyroid": "thyroid",
+            "iron": "iron",
+            "nutritional": "nutritional",
+            "kidney": "kidney",
+            "bone_health": "bone_health",
+            "cognitive": "cognitive",
         }
         trajectories: List[DiseaseTrajectoryResult] = []
         for td in trajectory_dicts:
@@ -287,6 +304,39 @@ class PrecisionBiomarkerAgent:
         critical_alerts = self._extract_critical_alerts(
             bio_age, trajectories, pgx_results,
         )
+
+        # 6. Critical value threshold checking
+        cv_alerts = self.critical_values.check(profile.biomarkers)
+        for cv in cv_alerts:
+            critical_alerts.append(cv.to_alert_string())
+
+        # 7. Cross-biomarker discordance detection
+        discordances = self.discordance.check(profile.biomarkers)
+        for disc in discordances:
+            critical_alerts.append(disc.to_alert_string())
+
+        # 8. Lab range optimization (standard vs optimal)
+        lab_comparisons = self.lab_ranges.get_discrepancies(
+            profile.biomarkers, sex=profile.sex,
+        )
+        if lab_comparisons:
+            for comp in lab_comparisons:
+                critical_alerts.append(
+                    f"OPTIMIZATION: {comp.to_interpretation()}"
+                )
+
+        # 9. Age-stratified reference range adjustments
+        age_adjustments = self.adjuster.apply_age_adjustments(
+            profile.biomarkers, profile.age, profile.sex,
+        )
+        for aa in age_adjustments:
+            if aa["flag"] != "NORMAL":
+                critical_alerts.append(
+                    f"AGE-ADJUSTED: {aa['biomarker'].upper()} {aa['value']} is {aa['flag']} "
+                    f"for age {profile.age} (age-adjusted range: "
+                    f"{aa['age_adjusted_range']['low']}-{aa['age_adjusted_range']['high']}). "
+                    f"{aa['note']}"
+                )
 
         return AnalysisResult(
             patient_profile=profile,

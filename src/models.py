@@ -420,6 +420,75 @@ class MonitoringProtocol(BaseModel):
         return " ".join(parts)
 
 
+class CriticalValue(BaseModel):
+    """Critical biomarker value threshold — maps to biomarker_critical_values collection."""
+    id: str = Field(..., max_length=100)
+    biomarker: str = Field(..., max_length=100)
+    loinc_code: str = Field("", max_length=20)
+    critical_low: float = Field(0.0)
+    critical_high: float = Field(0.0)
+    severity: str = Field("", max_length=20, description="critical/urgent/warning")
+    escalation_target: str = Field("", max_length=100)
+    clinical_action: str = Field("", max_length=2000)
+    cross_checks: str = Field("", max_length=500, description="Comma-separated cross-check biomarkers")
+    text_chunk: str = Field(..., max_length=3000)
+
+    def to_embedding_text(self) -> str:
+        parts = [f"Critical value: {self.biomarker} ({self.severity})"]
+        if self.text_chunk:
+            parts.append(self.text_chunk)
+        if self.clinical_action:
+            parts.append(f"Action: {self.clinical_action}")
+        return " ".join(parts)
+
+
+class DiscordanceRule(BaseModel):
+    """Cross-biomarker discordance pattern — maps to biomarker_discordance_rules collection."""
+    id: str = Field(..., max_length=100)
+    name: str = Field(..., max_length=200)
+    biomarker_a: str = Field(..., max_length=100)
+    biomarker_b: str = Field(..., max_length=100)
+    condition: str = Field("", max_length=500)
+    expected_relationship: str = Field("", max_length=1000)
+    differential_diagnosis: str = Field("", max_length=2000, description="Comma-separated differentials")
+    agent_handoff: str = Field("", max_length=500, description="Comma-separated agent names")
+    priority: str = Field("", max_length=10, description="high/medium/low")
+    text_chunk: str = Field(..., max_length=3000)
+
+    def to_embedding_text(self) -> str:
+        parts = [f"Discordance: {self.name} — {self.biomarker_a} vs {self.biomarker_b}"]
+        if self.text_chunk:
+            parts.append(self.text_chunk)
+        if self.condition:
+            parts.append(f"Pattern: {self.condition}")
+        return " ".join(parts)
+
+
+class AJCarrierScreeningEntry(BaseModel):
+    """AJ carrier screening gene — maps to biomarker_aj_carrier_screening collection."""
+    id: str = Field(..., max_length=100)
+    gene: str = Field(..., max_length=50)
+    disease: str = Field(..., max_length=200)
+    inheritance: str = Field("", max_length=50)
+    aj_carrier_frequency: str = Field("", max_length=30)
+    general_carrier_frequency: str = Field("", max_length=30)
+    common_mutations: str = Field("", max_length=500, description="Comma-separated mutations")
+    loinc_code: str = Field("", max_length=20)
+    method: str = Field("", max_length=500)
+    clinical_significance: str = Field("", max_length=2000)
+    reproductive_implications: str = Field("", max_length=2000)
+    compound_risks: str = Field("", max_length=1000, description="Comma-separated compound risks")
+    text_chunk: str = Field(..., max_length=3000)
+
+    def to_embedding_text(self) -> str:
+        parts = [f"AJ Carrier Screening: {self.gene} — {self.disease}"]
+        if self.text_chunk:
+            parts.append(self.text_chunk)
+        if self.clinical_significance:
+            parts.append(f"Significance: {self.clinical_significance}")
+        return " ".join(parts)
+
+
 # ═══════════════════════════════════════════════════════════════════════
 # PATIENT & ANALYSIS MODELS
 # ═══════════════════════════════════════════════════════════════════════
@@ -594,6 +663,10 @@ class AgentResponse(BaseModel):
     disease_trajectories: Optional[List[DiseaseTrajectoryResult]] = None
     pgx_results: Optional[List[PGxResult]] = None
     genotype_adjustments: Optional[List[GenotypeAdjustmentResult]] = None
+    critical_alerts: List[str] = Field(
+        default_factory=list,
+        description="Critical findings requiring immediate attention",
+    )
     timestamp: str = Field(
         default_factory=lambda: datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
     )

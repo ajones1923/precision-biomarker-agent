@@ -3,6 +3,7 @@
 Follows the same Pydantic BaseSettings pattern as cart_intelligence_agent/config/settings.py.
 """
 
+import os
 from pathlib import Path
 from typing import Optional
 
@@ -21,14 +22,14 @@ class PrecisionBiomarkerSettings(BaseSettings):
 
     # ── RAG Pipeline (reuse existing) ──
     RAG_PIPELINE_ROOT: Path = Path(
-        "/home/adam/projects/hcls-ai-factory/rag-chat-pipeline"
+        os.environ.get("BIOMARKER_RAG_PIPELINE_ROOT", "/app/rag-chat-pipeline")
     )
 
     # ── Milvus ──
     MILVUS_HOST: str = "localhost"
     MILVUS_PORT: int = 19530
 
-    # Collection names (10 biomarker-specific + 1 read-only genomic)
+    # Collection names (13 biomarker-specific + 1 read-only genomic)
     COLLECTION_BIOMARKER_REF: str = "biomarker_reference"
     COLLECTION_GENETIC_VARIANTS: str = "biomarker_genetic_variants"
     COLLECTION_PGX_RULES: str = "biomarker_pgx_rules"
@@ -39,6 +40,9 @@ class PrecisionBiomarkerSettings(BaseSettings):
     COLLECTION_AGING_MARKERS: str = "biomarker_aging_markers"
     COLLECTION_GENOTYPE_ADJUSTMENTS: str = "biomarker_genotype_adjustments"
     COLLECTION_MONITORING: str = "biomarker_monitoring"
+    COLLECTION_CRITICAL_VALUES: str = "biomarker_critical_values"
+    COLLECTION_DISCORDANCE_RULES: str = "biomarker_discordance_rules"
+    COLLECTION_AJ_CARRIER_SCREENING: str = "biomarker_aj_carrier_screening"
     COLLECTION_GENOMIC: str = "genomic_evidence"  # Existing shared collection
 
     # ── Embeddings ──
@@ -48,7 +52,7 @@ class PrecisionBiomarkerSettings(BaseSettings):
 
     # ── LLM ──
     LLM_PROVIDER: str = "anthropic"
-    LLM_MODEL: str = "claude-sonnet-4-20250514"
+    LLM_MODEL: str = "claude-sonnet-4-6"
     ANTHROPIC_API_KEY: Optional[str] = None
 
     # ── RAG Search ──
@@ -56,16 +60,20 @@ class PrecisionBiomarkerSettings(BaseSettings):
     SCORE_THRESHOLD: float = 0.4
 
     # Collection search weights (must sum to ~1.0)
-    WEIGHT_BIOMARKER_REF: float = 0.15
-    WEIGHT_GENETIC_VARIANTS: float = 0.15
-    WEIGHT_PGX_RULES: float = 0.12
-    WEIGHT_DISEASE_TRAJECTORIES: float = 0.12
-    WEIGHT_CLINICAL_EVIDENCE: float = 0.12
-    WEIGHT_NUTRITION: float = 0.08
-    WEIGHT_DRUG_INTERACTIONS: float = 0.08
-    WEIGHT_AGING_MARKERS: float = 0.08
+    WEIGHT_BIOMARKER_REF: float = 0.12
+    WEIGHT_GENETIC_VARIANTS: float = 0.11
+    WEIGHT_PGX_RULES: float = 0.10
+    WEIGHT_DISEASE_TRAJECTORIES: float = 0.10
+    WEIGHT_CLINICAL_EVIDENCE: float = 0.09
+    WEIGHT_NUTRITION: float = 0.05
+    WEIGHT_DRUG_INTERACTIONS: float = 0.07
+    WEIGHT_AGING_MARKERS: float = 0.07
     WEIGHT_GENOTYPE_ADJUSTMENTS: float = 0.05
     WEIGHT_MONITORING: float = 0.05
+    WEIGHT_CRITICAL_VALUES: float = 0.04
+    WEIGHT_DISCORDANCE_RULES: float = 0.04
+    WEIGHT_AJ_CARRIER_SCREENING: float = 0.03
+    WEIGHT_GENOMIC_EVIDENCE: float = 0.08
 
     # ── Timeouts ──
     REQUEST_TIMEOUT_SECONDS: int = 60
@@ -81,6 +89,9 @@ class PrecisionBiomarkerSettings(BaseSettings):
             self.WEIGHT_CLINICAL_EVIDENCE, self.WEIGHT_NUTRITION,
             self.WEIGHT_DRUG_INTERACTIONS, self.WEIGHT_AGING_MARKERS,
             self.WEIGHT_GENOTYPE_ADJUSTMENTS, self.WEIGHT_MONITORING,
+            self.WEIGHT_CRITICAL_VALUES, self.WEIGHT_DISCORDANCE_RULES,
+            self.WEIGHT_AJ_CARRIER_SCREENING,
+            self.WEIGHT_GENOMIC_EVIDENCE,
         ]
         total = sum(weights)
         if abs(total - 1.0) > 0.05:
@@ -93,7 +104,7 @@ class PrecisionBiomarkerSettings(BaseSettings):
     API_PORT: int = 8529
 
     # ── Streamlit ──
-    STREAMLIT_PORT: int = 8528
+    STREAMLIT_PORT: int = 8533
 
     # ── Prometheus Metrics ──
     METRICS_ENABLED: bool = True
@@ -105,6 +116,14 @@ class PrecisionBiomarkerSettings(BaseSettings):
     CITATION_HIGH_THRESHOLD: float = 0.75
     CITATION_MEDIUM_THRESHOLD: float = 0.60
 
+    # ── Cross-Agent Integration ──
+    ONCOLOGY_AGENT_URL: str = "http://localhost:8527"
+    CART_AGENT_URL: str = "http://localhost:8522"
+    PGX_AGENT_URL: str = "http://localhost:8107"
+    CARDIOLOGY_AGENT_URL: str = "http://localhost:8126"
+    TRIAL_AGENT_URL: str = "http://localhost:8538"
+    CROSS_AGENT_TIMEOUT: int = 30
+
     # ── CORS ──
     CORS_ORIGINS: str = "http://localhost:8080,http://localhost:8528,http://localhost:8529"
 
@@ -112,6 +131,10 @@ class PrecisionBiomarkerSettings(BaseSettings):
     MAX_REQUEST_SIZE_MB: int = 10
 
     # ── Authentication ──
+    # WARNING: Empty API_KEY disables authentication entirely. In production
+    # deployments handling patient health data (PHI/PII), always set
+    # BIOMARKER_API_KEY to a strong secret to enforce request authentication
+    # and comply with HIPAA / data-security requirements.
     API_KEY: str = ""  # Optional API key; empty = no auth required
 
     model_config = SettingsConfigDict(

@@ -15,6 +15,7 @@ Date: March 2026
 from __future__ import annotations
 
 import json
+import os
 import time
 
 from loguru import logger
@@ -27,6 +28,59 @@ from pydantic import BaseModel, Field, model_validator
 from src.audit import audit_log, AuditAction
 
 router = APIRouter(prefix="/v1", tags=["analysis"])
+
+
+# =====================================================================
+# Cross-Agent Integration Endpoint
+# =====================================================================
+
+@router.post("/biomarker/integrated-assessment")
+async def integrated_assessment(request: dict, req: Request):
+    """Multi-agent integrated assessment combining insights from across the HCLS AI Factory.
+
+    Queries oncology, CAR-T, pharmacogenomics, and clinical trial agents
+    for a comprehensive biomarker-driven assessment.
+    """
+    try:
+        from src.cross_modal import (
+            query_oncology_agent,
+            query_cart_agent,
+            query_pgx_agent,
+            query_trial_agent,
+            integrate_cross_agent_results,
+        )
+
+        biomarker_panel = request.get("biomarker_panel", {})
+        target_antigens = request.get("target_antigens", {})
+        drug_list = request.get("drug_list", {})
+
+        results = []
+
+        # Query oncology agent for tumor-biomarker correlation
+        if biomarker_panel:
+            results.append(query_oncology_agent(biomarker_panel))
+
+        # Query CAR-T agent for target validation
+        if target_antigens:
+            results.append(query_cart_agent(target_antigens))
+
+        # Query PGx agent for drug-gene interactions
+        if drug_list:
+            results.append(query_pgx_agent(drug_list))
+
+        # Query trial agent for biomarker-driven trials
+        if biomarker_panel:
+            results.append(query_trial_agent(biomarker_panel))
+
+        integrated = integrate_cross_agent_results(results)
+        return {
+            "status": "completed",
+            "assessment": integrated,
+            "agents_consulted": integrated.get("agents_consulted", []),
+        }
+    except Exception as exc:
+        logger.error(f"Integrated assessment failed: {exc}")
+        return {"status": "partial", "assessment": {}, "error": "Cross-agent integration unavailable"}
 
 
 # =====================================================================
@@ -200,7 +254,8 @@ def full_analysis(request: PatientProfileRequest, req: Request):
         # Publish cross-agent events
         try:
             import sys
-            sys.path.insert(0, "/home/adam/projects/hcls-ai-factory/lib")
+            _lib_path = os.environ.get("HCLS_LIB_PATH", "/app/lib")
+            sys.path.insert(0, _lib_path)
             from hcls_common.event_bus import publish_event, EventType, EventPriority, PipelineStage
 
             publish_event(
@@ -275,7 +330,8 @@ def biological_age(request: BiologicalAgeRequest, req: Request):
         # Publish cross-agent event
         try:
             import sys
-            sys.path.insert(0, "/home/adam/projects/hcls-ai-factory/lib")
+            _lib_path = os.environ.get("HCLS_LIB_PATH", "/app/lib")
+            sys.path.insert(0, _lib_path)
             from hcls_common.event_bus import publish_event, EventType, PipelineStage
             publish_event(
                 EventType.BIOLOGICAL_AGE_COMPUTED,
@@ -324,7 +380,8 @@ def disease_risk(request: DiseaseRiskRequest, req: Request):
         # Publish cross-agent event for critical disease trajectories
         try:
             import sys
-            sys.path.insert(0, "/home/adam/projects/hcls-ai-factory/lib")
+            _lib_path = os.environ.get("HCLS_LIB_PATH", "/app/lib")
+            sys.path.insert(0, _lib_path)
             from hcls_common.event_bus import publish_event, EventType, EventPriority, PipelineStage
             critical_trajectories = []
             for t in trajectories:

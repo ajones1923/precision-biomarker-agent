@@ -38,6 +38,10 @@ SEED_FILES = {
     "biomarker_aging_markers": "biomarker_aging_markers.json",
     "biomarker_genotype_adjustments": "biomarker_genotype_adjustments.json",
     "biomarker_monitoring": "biomarker_monitoring.json",
+    "biomarker_critical_values": "biomarker_critical_values.json",
+    "biomarker_discordance_rules": "biomarker_discordance_rules.json",
+    "biomarker_aj_carrier_screening": "biomarker_aj_carrier_screening.json",
+    "genomic_evidence": "biomarker_genomic_evidence.json",
 }
 
 
@@ -95,6 +99,12 @@ def embed_and_insert(
     for i in tqdm(range(0, len(records), batch_size), desc=f"  {collection_name}"):
         batch = records[i : i + batch_size]
 
+        # Pre-process: convert list fields to comma-separated strings for Milvus VARCHAR
+        for rec in batch:
+            for key, val in list(rec.items()):
+                if isinstance(val, list):
+                    rec[key] = ", ".join(str(v) for v in val)
+
         # Extract text for embedding
         texts = []
         for rec in batch:
@@ -117,7 +127,7 @@ def embed_and_insert(
         for j, rec in enumerate(batch):
             insert_rec = {"embedding": embeddings[j]}
             for field_name in field_names:
-                if field_name in rec:
+                if field_name in rec and rec[field_name] is not None:
                     insert_rec[field_name] = rec[field_name]
                 elif field_name == "id":
                     insert_rec["id"] = rec.get("id", f"{collection_name}_{i + j}")

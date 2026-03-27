@@ -4,16 +4,14 @@ Adjusts standard biomarker reference ranges based on individual genotype,
 enabling earlier detection of clinically meaningful deviations. Pure
 computation — no LLM or database calls.
 
-NOTE: Reference ranges are currently static and do not account for
-age-specific variations. Population-level norms may differ by age group
-(e.g., pediatric vs. geriatric). Age-stratified adjustments should be
-layered in future versions.
+Age-stratified reference range adjustments are implemented via
+get_age_adjusted_range() and apply_age_adjustments() using clinically
+validated age brackets (0-17, 18-39, 40-59, 60-79, 80+). Sources include
+NHANES, Framingham, and major society guidelines.
 
 Ancestry-aware adjustments are implemented via apply_ancestry_adjustments()
 using the ANCESTRY_ADJUSTMENTS knowledge base (NHANES III, UK Biobank, MESA).
 See PMID:31504418 (ESC/EAS guidelines) and PMID:30586774 (ACC/AHA).
-
-TODO: Implement age-stratified reference range adjustments.
 
 Author: Adam Jones
 Date: March 2026
@@ -36,6 +34,193 @@ def _get_age_bracket(age: int) -> str:
         return "50-69"
     else:
         return "70+"
+
+
+def _get_age_stratified_bracket(age: int) -> str:
+    """Map age to the finer-grained age-stratified bracket string."""
+    if age < 18:
+        return "0-17"
+    elif age <= 39:
+        return "18-39"
+    elif age <= 59:
+        return "40-59"
+    elif age <= 79:
+        return "60-79"
+    else:
+        return "80+"
+
+
+# ---------------------------------------------------------------------------
+# Age-stratified reference ranges
+# ---------------------------------------------------------------------------
+# Clinically meaningful reference ranges stratified by age bracket and sex.
+# Sources: NHANES III, Framingham Heart Study, major society guidelines
+# (KDIGO 2012, ATA 2017, ADA 2024, ACC/AHA 2019, Endocrine Society).
+#
+# Structure: biomarker -> { bracket -> { sex -> { low, high, note } } }
+# Sex key "A" means the range applies to all sexes.
+
+AGE_STRATIFIED_RANGES: Dict[str, Dict[str, Dict[str, Dict[str, Any]]]] = {
+    # Kidney Disease: Improving Global Outcomes (KDIGO) 2012; PMID:22890468
+    "creatinine": {
+        "0-17": {
+            "M": {"low": 0.3, "high": 0.7, "note": "Pediatric range; lower muscle mass."},
+            "F": {"low": 0.3, "high": 0.7, "note": "Pediatric range; lower muscle mass."},
+        },
+        "18-39": {
+            "M": {"low": 0.7, "high": 1.2, "note": "Standard adult male range."},
+            "F": {"low": 0.5, "high": 1.0, "note": "Standard adult female range."},
+        },
+        "40-59": {
+            "M": {"low": 0.7, "high": 1.3, "note": "Mild increase with age-related muscle changes."},
+            "F": {"low": 0.5, "high": 1.1, "note": "Mild increase with age-related muscle changes."},
+        },
+        "60-79": {
+            "M": {"low": 0.8, "high": 1.4, "note": "Higher normal range; age-related GFR decline."},
+            "F": {"low": 0.6, "high": 1.2, "note": "Higher normal range; age-related GFR decline."},
+        },
+        "80+": {
+            "M": {"low": 0.9, "high": 1.5, "note": "Elderly range; reduced muscle mass may mask renal decline."},
+            "F": {"low": 0.7, "high": 1.3, "note": "Elderly range; reduced muscle mass may mask renal decline."},
+        },
+    },
+    # KDIGO 2012 CKD Guideline PMID:22890468; Glassock & Winearls 2009 PMID:19414839
+    "egfr": {
+        "0-17": {
+            "A": {"low": 90, "high": 150, "note": "Pediatric eGFR typically higher than adults."},
+        },
+        "18-39": {
+            "A": {"low": 90, "high": 120, "note": "Normal adult eGFR."},
+        },
+        "40-59": {
+            "A": {"low": 80, "high": 120, "note": "Mild age-dependent decline expected (~1 mL/min/1.73m2/year after 40)."},
+        },
+        "60-79": {
+            "A": {"low": 60, "high": 110, "note": "eGFR 60-89 may be normal for age; clinical context required."},
+        },
+        "80+": {
+            "A": {"low": 45, "high": 100, "note": "eGFR 45-59 common in healthy elderly; avoid over-diagnosis of CKD."},
+        },
+    },
+    # ATA 2017 Guidelines PMID:28056690; Surks & Hollowell 2007 PMID:17609353
+    "tsh": {
+        "0-17": {
+            "A": {"low": 0.5, "high": 4.5, "note": "Pediatric TSH range; neonatal values much higher."},
+        },
+        "18-39": {
+            "A": {"low": 0.4, "high": 4.0, "note": "Standard adult TSH range."},
+        },
+        "40-59": {
+            "A": {"low": 0.4, "high": 4.5, "note": "Slight upward shift in TSH distribution."},
+        },
+        "60-79": {
+            "A": {"low": 0.4, "high": 5.5, "note": "Higher TSH normal for elderly; avoid overtreatment of subclinical hypothyroidism."},
+        },
+        "80+": {
+            "A": {"low": 0.4, "high": 7.0, "note": "TSH up to 7.0 may be physiological in the very elderly (Surks & Hollowell 2007)."},
+        },
+    },
+    # ADA Standards of Care 2024 PMID:38078589
+    "fasting_glucose": {
+        "0-17": {
+            "A": {"low": 60, "high": 100, "note": "Pediatric fasting glucose range."},
+        },
+        "18-39": {
+            "A": {"low": 70, "high": 100, "note": "Standard adult fasting glucose."},
+        },
+        "40-59": {
+            "A": {"low": 70, "high": 105, "note": "Slight increase in fasting glucose with age is common."},
+        },
+        "60-79": {
+            "A": {"low": 70, "high": 110, "note": "Fasting glucose 100-110 may be age-appropriate; assess with HbA1c."},
+        },
+        "80+": {
+            "A": {"low": 70, "high": 115, "note": "Relaxed threshold for frail elderly; hypoglycemia avoidance is priority."},
+        },
+    },
+    # ACC/AHA 2019 Cholesterol Guideline PMID:30586774; Framingham Heart Study
+    "total_cholesterol": {
+        "0-17": {
+            "A": {"low": 120, "high": 200, "note": "Pediatric target; >200 warrants lipid panel in children."},
+        },
+        "18-39": {
+            "A": {"low": 125, "high": 200, "note": "Desirable <200 mg/dL per ACC/AHA."},
+        },
+        "40-59": {
+            "A": {"low": 125, "high": 220, "note": "Total cholesterol naturally rises with age; assess with full lipid panel."},
+        },
+        "60-79": {
+            "A": {"low": 130, "high": 240, "note": "Higher total cholesterol common; focus on LDL-C and non-HDL-C targets."},
+        },
+        "80+": {
+            "A": {"low": 130, "high": 250, "note": "Very low cholesterol (<150) in elderly may indicate malnutrition or frailty."},
+        },
+    },
+    # AACE 2020; Schiele et al. 1998 PMID:9521925
+    "alkaline_phosphatase": {
+        "0-17": {
+            "M": {"low": 100, "high": 500, "note": "Elevated ALP normal in growing children/adolescents due to bone growth."},
+            "F": {"low": 100, "high": 500, "note": "Elevated ALP normal in growing children/adolescents due to bone growth."},
+        },
+        "18-39": {
+            "M": {"low": 40, "high": 130, "note": "Standard adult male ALP range."},
+            "F": {"low": 35, "high": 105, "note": "Standard adult female ALP range."},
+        },
+        "40-59": {
+            "M": {"low": 40, "high": 130, "note": "Stable adult range."},
+            "F": {"low": 35, "high": 130, "note": "Perimenopausal increase in bone-derived ALP."},
+        },
+        "60-79": {
+            "M": {"low": 40, "high": 150, "note": "Mild increase with age; rule out Paget's if >2x ULN."},
+            "F": {"low": 40, "high": 160, "note": "Postmenopausal bone turnover raises ALP; correlate with bone density."},
+        },
+        "80+": {
+            "M": {"low": 40, "high": 165, "note": "Elderly range; higher ALP may reflect bone turnover or hepatobiliary changes."},
+            "F": {"low": 45, "high": 170, "note": "Elderly range; higher ALP common; evaluate with GGT to distinguish bone vs liver source."},
+        },
+    },
+    # WHO Ferritin Guidelines 2020; Knovich et al. 2009 PMID:18635399
+    "ferritin": {
+        "0-17": {
+            "M": {"low": 10, "high": 150, "note": "Pediatric range; iron deficiency common in adolescents."},
+            "F": {"low": 10, "high": 150, "note": "Pediatric range; iron deficiency common in adolescent females."},
+        },
+        "18-39": {
+            "M": {"low": 30, "high": 300, "note": "Standard adult male ferritin range."},
+            "F": {"low": 15, "high": 150, "note": "Lower range in menstruating females; <15 indicates deficiency."},
+        },
+        "40-59": {
+            "M": {"low": 30, "high": 350, "note": "Ferritin increases with age in males."},
+            "F": {"low": 15, "high": 200, "note": "Perimenopausal; ferritin begins to rise as menstrual losses decrease."},
+        },
+        "60-79": {
+            "M": {"low": 30, "high": 400, "note": "Higher ferritin normal for elderly males."},
+            "F": {"low": 20, "high": 300, "note": "Postmenopausal females approach male ranges; low ferritin warrants GI evaluation."},
+        },
+        "80+": {
+            "M": {"low": 20, "high": 400, "note": "Elderly range; very low ferritin may indicate chronic disease or malabsorption."},
+            "F": {"low": 20, "high": 350, "note": "Elderly range; ferritin >500 in either sex warrants iron overload evaluation."},
+        },
+    },
+    # AUA 2023 PSA Guidelines; Oesterling et al. 1993 PMID:7507875
+    "psa": {
+        "0-17": {
+            "M": {"low": 0.0, "high": 0.5, "note": "PSA negligible pre-puberty."},
+        },
+        "18-39": {
+            "M": {"low": 0.0, "high": 2.0, "note": "PSA <2.0 ng/mL normal for young males."},
+        },
+        "40-59": {
+            "M": {"low": 0.0, "high": 2.5, "note": "PSA screening threshold; >2.5 warrants monitoring."},
+        },
+        "60-79": {
+            "M": {"low": 0.0, "high": 4.0, "note": "Age-adjusted PSA; 4.0 traditionally used as biopsy threshold."},
+        },
+        "80+": {
+            "M": {"low": 0.0, "high": 5.5, "note": "Higher PSA common in elderly; clinical significance depends on life expectancy."},
+        },
+    },
+}
 
 
 # ---------------------------------------------------------------------------
@@ -874,6 +1059,100 @@ class GenotypeAdjuster:
                         "sex": sex,
                         "status": status,
                     })
+
+        return results
+
+    def get_age_adjusted_range(
+        self,
+        biomarker: str,
+        age: int,
+        sex: str = "M",
+    ) -> Optional[Dict[str, Any]]:
+        """Return age-stratified reference range for a given biomarker.
+
+        Args:
+            biomarker: Biomarker name (e.g., 'creatinine', 'tsh', 'psa').
+            age: Patient age in years.
+            sex: Patient sex ('M' or 'F').
+
+        Returns:
+            Dict with 'low', 'high', and 'note' keys, or None if no
+            age-stratified range is defined for the biomarker/age/sex.
+        """
+        ranges = AGE_STRATIFIED_RANGES.get(biomarker)
+        if not ranges:
+            return None
+
+        bracket = _get_age_stratified_bracket(age)
+        bracket_data = ranges.get(bracket)
+        if not bracket_data:
+            return None
+
+        # Try sex-specific first, then fall back to "A" (all)
+        sex_key = sex.upper()
+        entry = bracket_data.get(sex_key) or bracket_data.get("A")
+        if not entry:
+            return None
+
+        return {"low": entry["low"], "high": entry["high"], "note": entry["note"]}
+
+    def apply_age_adjustments(
+        self,
+        biomarkers: Dict[str, float],
+        age: int,
+        sex: str = "M",
+    ) -> List[Dict[str, Any]]:
+        """Check biomarkers against age-stratified reference ranges.
+
+        For each biomarker that has an age-stratified range, compares the
+        measured value against both the standard (young-adult) range and the
+        age-adjusted range.  Returns a list of adjustment records for every
+        biomarker that has an applicable age-stratified range.
+
+        Args:
+            biomarkers: Dict of biomarker name -> measured value.
+            age: Patient age in years.
+            sex: Patient sex ('M' or 'F').
+
+        Returns:
+            List of dicts with keys: biomarker, value, standard_range,
+            age_adjusted_range, flag, note.
+        """
+        results: List[Dict[str, Any]] = []
+
+        for biomarker, value in biomarkers.items():
+            age_range = self.get_age_adjusted_range(biomarker, age, sex)
+            if age_range is None:
+                continue
+
+            # Derive the "standard" (18-39) range for comparison
+            std_range = self.get_age_adjusted_range(biomarker, 25, sex)
+            if std_range is None:
+                std_range = age_range  # fallback
+
+            # Determine flag
+            low, high = age_range["low"], age_range["high"]
+            if value < low:
+                flag = "LOW"
+            elif value > high:
+                flag = "HIGH"
+            else:
+                flag = "NORMAL"
+
+            results.append({
+                "biomarker": biomarker,
+                "value": value,
+                "standard_range": {"low": std_range["low"], "high": std_range["high"]},
+                "age_adjusted_range": {"low": low, "high": high},
+                "flag": flag,
+                "note": age_range["note"],
+            })
+
+        logger.info(
+            f"Age adjustment complete for age={age}, sex={sex}: "
+            f"{len(results)} biomarkers checked, "
+            f"{sum(1 for r in results if r['flag'] != 'NORMAL')} flagged"
+        )
 
         return results
 

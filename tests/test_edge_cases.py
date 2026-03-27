@@ -545,6 +545,9 @@ class TestSettingsValidation:
             s.WEIGHT_AGING_MARKERS,
             s.WEIGHT_GENOTYPE_ADJUSTMENTS,
             s.WEIGHT_MONITORING,
+            s.WEIGHT_CRITICAL_VALUES,
+            s.WEIGHT_DISCORDANCE_RULES,
+            s.WEIGHT_AJ_CARRIER_SCREENING,
         ]
         total = sum(weights)
         assert abs(total - 1.0) <= 0.1, (

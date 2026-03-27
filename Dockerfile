@@ -54,6 +54,7 @@ ENV PATH="/opt/venv/bin:$PATH"
 # Copy application source
 COPY config/       /app/config/
 COPY src/           /app/src/
+COPY api/           /app/api/
 COPY app/           /app/app/
 COPY scripts/       /app/scripts/
 COPY data/          /app/data/

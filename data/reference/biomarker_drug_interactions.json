@@ -322,5 +322,140 @@
     "severity": "major",
     "alternative": "Dose reduction per DPYD genotype; alternative chemotherapy regimens if fully deficient",
     "text_chunk": "Capecitabine is an oral prodrug of 5-FU, undergoing three enzymatic conversion steps before generating active 5-FU in tumor tissue. DPD (DPYD) deficiency affects capecitabine identically to IV 5-FU since the active metabolite is the same. DPYD *2A (rs3918290) causes complete DPD loss and is contraindicated. DPYD rs67376798 and HapB3 cause partial deficiency, requiring 25-50% dose reduction. The EMA now mandates DPYD testing before all fluoropyrimidine prescriptions in the EU. Pre-treatment testing prevents approximately 30% of severe fluoropyrimidine toxicities."
+  },
+  {
+    "id": "dxi_atorvastatin_biomarker_effects",
+    "drug": "Atorvastatin",
+    "gene": "SLCO1B1/HMGCR",
+    "interaction_type": "biomarker_effect",
+    "severity": "moderate",
+    "alternative": "Monitor LDL, CK, CoQ10, GGT; supplement CoQ10 if depleted; consider SLCO1B1 genotyping for myopathy risk",
+    "text_chunk": "Atorvastatin affects multiple biomarkers: it lowers LDL and Total Cholesterol (primary therapeutic effect) but depletes CoQ10 by inhibiting the mevalonate pathway (shared with cholesterol synthesis). CoQ10 depletion may contribute to statin myopathy, detectable by CK elevation. GGT may be mildly elevated due to hepatic enzyme induction. SLCO1B1 genotype (rs4149056) significantly affects statin myopathy risk, with *5 carriers having higher systemic exposure and 17x increased myopathy risk for simvastatin. CoQ10 supplementation (100-200 mg/day) may mitigate muscle symptoms."
+  },
+  {
+    "id": "dxi_lisinopril_biomarker_effects",
+    "drug": "Lisinopril",
+    "gene": "ACE/REN",
+    "interaction_type": "biomarker_effect",
+    "severity": "moderate",
+    "alternative": "Monitor potassium, creatinine, BUN regularly; ARB (losartan) if ACE inhibitor cough develops",
+    "text_chunk": "Lisinopril (ACE inhibitor) affects multiple renal and electrolyte biomarkers. It raises serum potassium by reducing aldosterone-mediated potassium excretion, creating hyperkalemia risk especially with renal impairment, potassium supplements, or potassium-sparing diuretics. Creatinine may increase initially (up to 30%) due to reduced efferent arteriolar tone; this is expected and usually stabilizes. BUN may rise proportionally. ACE genotype (I/D polymorphism) may influence blood pressure response magnitude. Regular monitoring of potassium, creatinine, and BUN is essential, particularly in patients with CKD."
+  },
+  {
+    "id": "dxi_fish_oil_biomarker_effects",
+    "drug": "Fish Oil (Omega-3)",
+    "gene": "FADS1/FADS2",
+    "interaction_type": "biomarker_effect",
+    "severity": "minor",
+    "alternative": "Monitor INR if on anticoagulants; adjust dose based on omega-3 index and triglyceride response",
+    "text_chunk": "Fish oil (omega-3 fatty acids, EPA/DHA) affects several biomarkers. It lowers triglycerides by 15-30% at therapeutic doses (2-4 g/day) by reducing hepatic VLDL production. LDL may slightly increase (especially with DHA-predominant formulations). Fish oil inhibits platelet aggregation and may prolong bleeding time, increasing INR when combined with anticoagulants (warfarin, aspirin). It raises the omega-3 index toward cardioprotective levels (>8%). FADS1 genotype affects endogenous omega-3 synthesis and supplementation requirements. Platelet function should be monitored in patients on dual antiplatelet or anticoagulant therapy."
+  },
+  {
+    "id": "dxi_l_methylfolate_biomarker_effects",
+    "drug": "L-Methylfolate",
+    "gene": "MTHFR",
+    "interaction_type": "biomarker_effect",
+    "severity": "minor",
+    "alternative": "Standard folic acid for MTHFR wild-type; monitor homocysteine response",
+    "text_chunk": "L-Methylfolate (5-MTHF) is the bioactive form of folate that bypasses the MTHFR enzyme. It directly lowers homocysteine by serving as the methyl donor for methionine synthase-mediated homocysteine remethylation. Serum folate levels increase with supplementation. L-Methylfolate is particularly important for MTHFR C677T TT homozygotes (70% reduced enzyme activity) who cannot efficiently convert folic acid to active 5-MTHF. Homocysteine reduction of 20-30% is expected with adequate methylfolate supplementation. It also supports SAMe-dependent methylation reactions relevant to DNA repair, neurotransmitter synthesis, and epigenetic regulation."
+  },
+  {
+    "id": "dxi_vitamin_d3_biomarker_effects",
+    "drug": "Vitamin D3 Supplementation",
+    "gene": "VDR/GC",
+    "interaction_type": "biomarker_effect",
+    "severity": "minor",
+    "alternative": "Adjust dose based on 25-OH Vitamin D levels and VDR/GC genotype; monitor calcium",
+    "text_chunk": "Vitamin D3 (cholecalciferol) supplementation raises 25-OH Vitamin D levels, the primary biomarker for vitamin D status. It can elevate serum calcium through enhanced intestinal calcium absorption, particularly at high doses (>4000 IU/day) or in patients with granulomatous diseases. Vitamin D3 suppresses PTH by normalizing calcium-vitamin D axis feedback. VDR genotype (rs2228570) affects biological response to circulating vitamin D. GC genotype (rs2282679) affects vitamin D binding protein levels and measured 25-OH Vitamin D. Monitoring calcium, 25-OH Vitamin D, and PTH is recommended during supplementation."
+  },
+  {
+    "id": "dxi_coq10_biomarker_effects",
+    "drug": "CoQ10 Supplementation",
+    "gene": "COQ2/HMGCR",
+    "interaction_type": "biomarker_effect",
+    "severity": "minor",
+    "alternative": "Ubiquinol form for better absorption; standard dose 100-200 mg/day with statin therapy",
+    "text_chunk": "CoQ10 (ubiquinone/ubiquinol) supplementation restores CoQ10 levels depleted by statin therapy. Statins inhibit HMG-CoA reductase, reducing mevalonate pathway flux needed for both cholesterol and CoQ10 synthesis. CoQ10 supplementation at 100-200 mg/day may reduce statin-associated myalgia and CK elevation. It may provide modest blood pressure reduction (3-5 mmHg systolic) through improved endothelial function. CoQ10 supports mitochondrial electron transport chain function. Ubiquinol form has superior bioavailability compared to ubiquinone, particularly in older adults."
+  },
+  {
+    "id": "dxi_oral_contraceptives_biomarker_effects",
+    "drug": "Oral Contraceptives (Ethinyl Estradiol/Norgestimate)",
+    "gene": "F5/F2/SERPINE1",
+    "interaction_type": "biomarker_effect",
+    "severity": "major",
+    "alternative": "Progestin-only methods or non-hormonal contraception for high VTE risk; IUD for Factor V Leiden carriers",
+    "text_chunk": "Oral contraceptives containing ethinyl estradiol have widespread biomarker effects. They increase SHBG (2-3x), raising total hormone levels while decreasing free testosterone. TBG rises, increasing total T4 (but not free T4, which remains normal). Triglycerides increase by 30-50% through hepatic VLDL stimulation. Fibrinogen and clotting factors (VII, VIII, X) increase, elevating VTE risk 3-5x (higher with Factor V Leiden or Prothrombin G20210A). CRP may rise due to hepatic acute-phase protein induction. Free testosterone decreases, which is therapeutic for PCOS/acne but may cause low libido."
+  },
+  {
+    "id": "dxi_iron_bisglycinate_biomarker_effects",
+    "drug": "Iron Bisglycinate",
+    "gene": "HFE/TMPRSS6",
+    "interaction_type": "biomarker_effect",
+    "severity": "minor",
+    "alternative": "IV iron (ferric carboxymaltose) for malabsorption or intolerance; monitor ferritin and TSAT",
+    "text_chunk": "Iron bisglycinate supplementation raises ferritin (the primary iron storage biomarker) and transferrin saturation (TSAT). It supports hemoglobin synthesis in iron-deficiency anemia. Bisglycinate chelate form has superior absorption and GI tolerability compared to ferrous sulfate. HFE genotype should be checked before supplementation in patients with unexplained elevated ferritin, as C282Y carriers risk iron overload. Target ferritin is typically 50-100 ng/mL for iron-replete status. Over-supplementation can cause ferritin >200 ng/mL with potential oxidative stress. TMPRSS6 variants affect hepcidin regulation and iron absorption efficiency."
+  },
+  {
+    "id": "dxi_prenatal_dha_biomarker_effects",
+    "drug": "Prenatal DHA",
+    "gene": "FADS1/FADS2",
+    "interaction_type": "biomarker_effect",
+    "severity": "minor",
+    "alternative": "Algal DHA for vegetarian/vegan patients; adjust dose based on omega-3 index",
+    "text_chunk": "Prenatal DHA supplementation (200-600 mg/day) increases the omega-3 index and DHA levels specifically. DHA is the predominant omega-3 fatty acid in fetal brain and retinal tissue, essential for neural development. Maternal DHA status directly affects fetal neural development through placental transfer. FADS1/FADS2 genotype affects endogenous DHA synthesis from shorter-chain precursors; carriers of low-activity alleles require more preformed DHA. Prenatal DHA may slightly increase LDL-C (a known DHA-specific effect). Adequate maternal DHA (omega-3 index >8%) is associated with reduced preterm birth risk."
+  },
+  {
+    "id": "dxi_tacrolimus_cyp3a5",
+    "drug": "Tacrolimus",
+    "gene": "CYP3A5",
+    "interaction_type": "substrate",
+    "severity": "major",
+    "alternative": "Genotype-guided dosing: CYP3A5 expressors (*1/*1, *1/*3) need 1.5-2x standard dose; non-expressors (*3/*3) use standard dose",
+    "text_chunk": "Tacrolimus is a calcineurin inhibitor immunosuppressant critical for transplant rejection prevention, primarily metabolized by CYP3A5 (and CYP3A4). CYP3A5 expressors (*1/*1, *1/*3) have significantly higher tacrolimus clearance, requiring 1.5-2x higher doses to achieve therapeutic trough levels (5-15 ng/mL). Non-expressors (*3/*3) need standard or lower doses. CYP3A5*1 is more prevalent in African Americans (~60%) versus Europeans (~15%), contributing to racial disparities in transplant dosing. CPIC provides genotype-guided dosing recommendations. Therapeutic drug monitoring (TDM) is essential regardless of genotype."
+  },
+  {
+    "id": "dxi_phenytoin_cyp2c9",
+    "drug": "Phenytoin",
+    "gene": "CYP2C9",
+    "interaction_type": "substrate",
+    "severity": "major",
+    "alternative": "Levetiracetam or valproic acid (non-CYP2C9 anticonvulsants); CYP2C9 PM requires 25-50% dose reduction",
+    "text_chunk": "Phenytoin is a narrow therapeutic index anticonvulsant (10-20 mcg/mL) primarily metabolized by CYP2C9 (with minor CYP2C19 contribution). CYP2C9 poor metabolizers (*2/*2, *2/*3, *3/*3) have dramatically reduced phenytoin clearance with nonlinear accumulation kinetics, leading to toxicity: ataxia, nystagmus, diplopia, cognitive impairment, and potentially fatal cardiovascular collapse. CPIC recommends 25-50% dose reduction for CYP2C9 PMs with intensive TDM. HLA-B*15:02 testing is also required before initiation in Southeast Asian populations to prevent Stevens-Johnson syndrome."
+  },
+  {
+    "id": "dxi_aripiprazole_cyp2d6",
+    "drug": "Aripiprazole",
+    "gene": "CYP2D6",
+    "interaction_type": "substrate",
+    "severity": "moderate",
+    "alternative": "Reduce dose by 50-67% for CYP2D6 poor metabolizers; consider quetiapine or ziprasidone as alternatives",
+    "text_chunk": "Aripiprazole is an atypical antipsychotic metabolized by CYP2D6 (and CYP3A4) to its active metabolite dehydro-aripiprazole. CYP2D6 poor metabolizers have approximately 80% higher aripiprazole exposure, increasing risk of akathisia, extrapyramidal symptoms, somnolence, and QTc prolongation. FDA labeling recommends 50-67% dose reduction for known CYP2D6 PMs (e.g., 5-10 mg instead of 15-30 mg). Concurrent use of strong CYP2D6 inhibitors (paroxetine, fluoxetine, quinidine) phenocopies poor metabolizer status and requires similar dose reduction."
+  },
+  {
+    "id": "dxi_carvedilol_cyp2d6",
+    "drug": "Carvedilol",
+    "gene": "CYP2D6",
+    "interaction_type": "substrate",
+    "severity": "moderate",
+    "alternative": "Start at lower dose for CYP2D6 PMs; bisoprolol or nebivolol as CYP2D6-independent alternatives",
+    "text_chunk": "Carvedilol is a non-selective beta-blocker with alpha-1 blocking activity, metabolized primarily by CYP2D6 (and CYP2C9). CYP2D6 poor metabolizers have 2-3x higher plasma concentrations, increasing risk of hypotension, bradycardia, dizziness, and fatigue. DPWG recommends starting at the lowest available dose in CYP2D6 PMs with careful uptitration and monitoring of heart rate and blood pressure. Bisoprolol (renally cleared) is a CYP2D6-independent beta-blocker alternative. Carvedilol is widely used in heart failure, making genotype-guided dosing particularly important for this vulnerable population."
+  },
+  {
+    "id": "dxi_losartan_cyp2c9",
+    "drug": "Losartan",
+    "gene": "CYP2C9",
+    "interaction_type": "substrate",
+    "severity": "moderate",
+    "alternative": "Valsartan, irbesartan, or candesartan (ARBs less dependent on CYP2C9 activation)",
+    "text_chunk": "Losartan is a prodrug requiring CYP2C9-mediated oxidation to its active metabolite E-3174 (EXP 3174), which has 10-40x greater AT1 receptor affinity. CYP2C9 poor metabolizers (*2/*3, *3/*3) have reduced conversion to the active metabolite, potentially resulting in suboptimal blood pressure control and reduced renal protective effects. CYP2C9 *3 carriers show approximately 50% lower active metabolite levels. Alternative ARBs (valsartan, candesartan, irbesartan) are active drugs that do not require CYP2C9 bioactivation and may be preferred for CYP2C9 PMs."
+  },
+  {
+    "id": "dxi_lamotrigine_ugt1a4",
+    "drug": "Lamotrigine",
+    "gene": "UGT1A4",
+    "interaction_type": "substrate",
+    "severity": "moderate",
+    "alternative": "Dose adjustment with OCP co-administration; TDM recommended; levetiracetam as alternative anticonvulsant",
+    "text_chunk": "Lamotrigine is an anticonvulsant and mood stabilizer primarily cleared by UGT1A4 glucuronidation. UGT1A4 variants (*2, *3) affect glucuronidation efficiency and lamotrigine clearance. Critically, oral contraceptives (OCPs) containing ethinyl estradiol induce UGT1A4, reducing lamotrigine levels by approximately 50%, potentially causing seizure breakthrough. Conversely, OCP discontinuation can double lamotrigine levels, risking toxicity (dizziness, ataxia, Stevens-Johnson syndrome). Women on lamotrigine require dose adjustment when starting or stopping OCPs, with therapeutic drug monitoring to maintain levels of 3-14 mcg/mL."
   }
 ]
