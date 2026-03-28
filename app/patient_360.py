@@ -408,7 +408,7 @@ def render_footer():
     st.markdown(
         f"<div class='nvidia-footer'>"
         f"HCLS AI Factory | Patient DNA → Drug Candidates in &lt;5 hours | "
-        f"NVIDIA DGX Spark ($3,999) | Apache 2.0"
+        f"NVIDIA DGX Spark ($4,699) | Apache 2.0"
         f"</div>",
         unsafe_allow_html=True,
     )

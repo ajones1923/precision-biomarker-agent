@@ -54,7 +54,7 @@ within the HCLS AI Factory Precision Intelligence Network -- one of three
 GPU-accelerated engines (Genomic Foundation Engine, Precision Intelligence
 Network, Therapeutic Discovery Engine) -- delivering a complete Patient DNA
 to Drug Candidates pipeline in under 5 hours on a single NVIDIA DGX Spark
-desktop workstation ($3,999).
+desktop workstation ($4,699).
 
 ### Platform Positioning
 
@@ -186,7 +186,7 @@ Patient Profile
 | System RAM        | 128 GB unified memory                |
 | Storage           | 4 TB NVMe SSD                        |
 | CUDA              | 12.x                                 |
-| Price             | $3,999                               |
+| Price             | $4,699                               |
 | Power             | ~250 W (desktop form factor)         |
 
 The biomarker agent runs alongside Milvus, embedding model, and the other four
