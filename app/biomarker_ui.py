@@ -1134,9 +1134,9 @@ with tab3:
 
                 # Center: Patient
                 nodes.append("Patient")
-                node_x.append(0.5); node_y.append(0.5)
+                node_x.append(0.5); node_y.append(0.5)  # noqa: E702
                 node_text.append(f"Patient {st.session_state.get('t1_patient_id', '')}")
-                node_color.append("#76B900"); node_size.append(30)
+                node_color.append("#76B900"); node_size.append(30)  # noqa: E702
 
                 # Disease nodes in a circle around center
                 import math
@@ -1157,7 +1157,7 @@ with tab3:
                     y = 0.5 + 0.35 * math.sin(angle)
 
                     nodes.append(disease)
-                    node_x.append(x); node_y.append(y)
+                    node_x.append(x); node_y.append(y)  # noqa: E702
 
                     # Get risk level
                     risk = "UNKNOWN"
@@ -1196,7 +1196,7 @@ with tab3:
                         y = 0.5 + 0.18 * math.sin(angle)
 
                         nodes.append(label)
-                        node_x.append(x); node_y.append(y)
+                        node_x.append(x); node_y.append(y)  # noqa: E702
                         node_text.append(f"{label}: {val}")
                         node_color.append("#3b82f6")
                         node_size.append(14)
