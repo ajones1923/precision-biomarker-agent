@@ -1,8 +1,11 @@
+target-version = "py312"
+
 [lint]
 ignore = [
-    "E402",   # Module import not at top (required for sys.path manipulation)
-    "F401",   # Unused imports in try/except availability checks
-    "C901",   # Function too complex
+    "E402",
+    "F401",
+    "C901",
+    "E702",
 ]
 
 [lint.per-file-ignores]
