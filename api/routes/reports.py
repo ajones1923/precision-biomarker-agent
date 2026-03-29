@@ -16,17 +16,16 @@ import json
 import re
 import threading
 import time
-
-from loguru import logger
 import uuid
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 
 from fastapi import APIRouter, HTTPException, Request
-from fastapi.responses import JSONResponse, PlainTextResponse, StreamingResponse
+from fastapi.responses import JSONResponse, StreamingResponse
+from loguru import logger
 from pydantic import BaseModel, Field
 
-from src.audit import audit_log, AuditAction
+from src.audit import AuditAction, audit_log
 
 router = APIRouter(prefix="/v1/report", tags=["reports"])
 
@@ -256,8 +255,8 @@ def export_fhir(request: FHIRExportRequest, req: Request):
         raise HTTPException(status_code=503, detail="Agent not initialized")
 
     try:
-        from src.models import PatientProfile
         from src.export import export_fhir_diagnostic_report
+        from src.models import PatientProfile
 
         profile = PatientProfile(
             patient_id=request.patient_profile.patient_id,

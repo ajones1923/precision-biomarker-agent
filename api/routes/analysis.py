@@ -17,15 +17,14 @@ from __future__ import annotations
 import json
 import os
 import time
-
-from loguru import logger
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException, Request
-from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.responses import StreamingResponse
+from loguru import logger
 from pydantic import BaseModel, Field, model_validator
 
-from src.audit import audit_log, AuditAction
+from src.audit import AuditAction, audit_log
 
 router = APIRouter(prefix="/v1", tags=["analysis"])
 
@@ -43,11 +42,11 @@ async def integrated_assessment(request: dict, req: Request):
     """
     try:
         from src.cross_modal import (
-            query_oncology_agent,
+            integrate_cross_agent_results,
             query_cart_agent,
+            query_oncology_agent,
             query_pgx_agent,
             query_trial_agent,
-            integrate_cross_agent_results,
         )
 
         biomarker_panel = request.get("biomarker_panel", {})
@@ -256,7 +255,7 @@ def full_analysis(request: PatientProfileRequest, req: Request):
             import sys
             _lib_path = os.environ.get("HCLS_LIB_PATH", "/app/lib")
             sys.path.insert(0, _lib_path)
-            from hcls_common.event_bus import publish_event, EventType, EventPriority, PipelineStage
+            from hcls_common.event_bus import EventPriority, EventType, PipelineStage, publish_event
 
             publish_event(
                 EventType.BIOLOGICAL_AGE_COMPUTED,
@@ -332,7 +331,7 @@ def biological_age(request: BiologicalAgeRequest, req: Request):
             import sys
             _lib_path = os.environ.get("HCLS_LIB_PATH", "/app/lib")
             sys.path.insert(0, _lib_path)
-            from hcls_common.event_bus import publish_event, EventType, PipelineStage
+            from hcls_common.event_bus import EventType, PipelineStage, publish_event
             publish_event(
                 EventType.BIOLOGICAL_AGE_COMPUTED,
                 source_stage=PipelineStage.ANNOTATION,
@@ -382,7 +381,7 @@ def disease_risk(request: DiseaseRiskRequest, req: Request):
             import sys
             _lib_path = os.environ.get("HCLS_LIB_PATH", "/app/lib")
             sys.path.insert(0, _lib_path)
-            from hcls_common.event_bus import publish_event, EventType, EventPriority, PipelineStage
+            from hcls_common.event_bus import EventPriority, EventType, PipelineStage, publish_event
             critical_trajectories = []
             for t in trajectories:
                 risk = t.risk_level if hasattr(t, "risk_level") else t.get("risk_level") if isinstance(t, dict) else None

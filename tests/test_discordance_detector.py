@@ -9,11 +9,11 @@ Date: March 2026
 """
 
 import json
-import pytest
 from unittest.mock import patch
 
-from src.discordance_detector import DiscordanceFinding, DiscordanceDetector
+import pytest
 
+from src.discordance_detector import DiscordanceDetector, DiscordanceFinding
 
 # =====================================================================
 # FIXTURES

@@ -422,11 +422,10 @@ class BiomarkerRAGEngine:
             return ""
 
         from .knowledge import (
+            PGX_KNOWLEDGE,
+            get_biomarker_context,
             get_domain_context,
             get_pgx_context,
-            get_biomarker_context,
-            BIOMARKER_DOMAINS,
-            PGX_KNOWLEDGE,
         )
 
         context_parts = []

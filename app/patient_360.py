@@ -13,12 +13,9 @@ Date: March 2026
 
 from __future__ import annotations
 
-import json
-import time
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import streamlit as st
-
 
 # ══════════════════════════════════════════════════════════════════════
 # NVIDIA-branded styling (consistent across all agents)
@@ -406,10 +403,10 @@ def render_concordance_matrix(concordance: dict[str, float]):
 def render_footer():
     """Render the NVIDIA-branded footer."""
     st.markdown(
-        f"<div class='nvidia-footer'>"
-        f"HCLS AI Factory | Patient DNA → Drug Candidates in &lt;5 hours | "
-        f"NVIDIA DGX Spark ($4,699) | Apache 2.0"
-        f"</div>",
+        "<div class='nvidia-footer'>"
+        "HCLS AI Factory | Patient DNA → Drug Candidates in &lt;5 hours | "
+        "NVIDIA DGX Spark ($4,699) | Apache 2.0"
+        "</div>",
         unsafe_allow_html=True,
     )
 

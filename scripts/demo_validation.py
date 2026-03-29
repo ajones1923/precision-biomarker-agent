@@ -199,8 +199,9 @@ check("Female PGx returns results", len(pgx_f.get("gene_results", [])) > 0)
 print("\n═══ TAB 5: Evidence Explorer (RAG) ═══")
 
 try:
-    from src.collections import BiomarkerCollectionManager
     from sentence_transformers import SentenceTransformer
+
+    from src.collections import BiomarkerCollectionManager
     from src.rag_engine import BiomarkerRAGEngine
 
     embedder = SentenceTransformer("BAAI/bge-small-en-v1.5")
@@ -221,7 +222,7 @@ except Exception as e:
 print("\n═══ TAB 6: Export ═══")
 
 from src.export import export_fhir_diagnostic_report, validate_fhir_bundle
-from src.models import PatientProfile, AnalysisResult, BiologicalAgeResult
+from src.models import AnalysisResult, BiologicalAgeResult, PatientProfile
 
 # Build minimal patient profile
 profile = PatientProfile(

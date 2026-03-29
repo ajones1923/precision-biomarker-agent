@@ -35,9 +35,9 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 from fastapi import FastAPI, HTTPException, Request
-from loguru import logger
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, PlainTextResponse
+from loguru import logger
 from pydantic import BaseModel, Field
 
 # =====================================================================
@@ -62,6 +62,10 @@ if not _api_key:
 if _api_key:
     os.environ["ANTHROPIC_API_KEY"] = _api_key
 
+# Route modules
+from api.routes.analysis import router as analysis_router
+from api.routes.events import router as events_router
+from api.routes.reports import router as reports_router
 from config.settings import settings
 from src.biological_age import BiologicalAgeCalculator
 from src.disease_trajectory import DiseaseTrajectoryAnalyzer
@@ -69,11 +73,6 @@ from src.genotype_adjustment import GenotypeAdjuster
 from src.knowledge import get_knowledge_stats
 from src.pharmacogenomics import PharmacogenomicMapper
 from src.rag_engine import BiomarkerRAGEngine
-
-# Route modules
-from api.routes.analysis import router as analysis_router
-from api.routes.reports import router as reports_router
-from api.routes.events import router as events_router
 
 # =====================================================================
 # Module-level state (populated during lifespan startup)

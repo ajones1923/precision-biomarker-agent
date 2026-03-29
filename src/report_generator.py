@@ -23,14 +23,11 @@ Date: March 2026
 """
 
 from datetime import datetime, timezone
-from typing import Dict, List, Optional
+from typing import Optional
 
 from .models import (
     AnalysisResult,
-    DiseaseTrajectoryResult,
-    GenotypeAdjustmentResult,
     PatientProfile,
-    PGxResult,
     RiskLevel,
 )
 

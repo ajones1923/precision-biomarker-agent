@@ -569,7 +569,7 @@ def main():
         json.dump(existing, f, indent=2)
 
     categories = sorted(set(e['category'] for e in existing))
-    print(f"Biomarker reference expansion complete:")
+    print("Biomarker reference expansion complete:")
     print(f"  Added: {added} new biomarkers")
     print(f"  Skipped: {skipped} (already existed)")
     print(f"  Total: {len(existing)} biomarkers")

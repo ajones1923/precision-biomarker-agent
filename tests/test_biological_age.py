@@ -12,13 +12,9 @@ import math
 import pytest
 
 from src.biological_age import (
-    BiologicalAgeCalculator,
-    PHENOAGE_COEFFICIENTS,
-    PHENOAGE_INTERCEPT,
     PHENOAGE_SE_FULL,
     PHENOAGE_SE_PARTIAL,
-    GRIMAGE_MARKERS,
-    GRIMAGE_VALIDATION,
+    BiologicalAgeCalculator,
 )
 
 

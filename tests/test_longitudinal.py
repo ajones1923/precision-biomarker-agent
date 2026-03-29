@@ -1,8 +1,9 @@
 """Tests for longitudinal tracking, wearable models, and translation."""
 
 import pytest
-from src.models import PatientHistory, BiomarkerPanel, WearableData
-from src.translation import translate_term, translate_report_headers, get_supported_languages, SUPPORTED_LANGUAGES
+
+from src.models import BiomarkerPanel, PatientHistory, WearableData
+from src.translation import get_supported_languages, translate_report_headers, translate_term
 
 
 class TestPatientHistory:

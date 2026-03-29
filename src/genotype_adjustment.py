@@ -17,7 +17,7 @@ Author: Adam Jones
 Date: March 2026
 """
 
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 from loguru import logger
 
@@ -1219,7 +1219,7 @@ class GenotypeAdjuster:
                     "biomarker": biomarker,
                     "risk_allele": rule["risk_allele"],
                     "genotype_options": genotype_options,
-                    "sex_stratified": f"adjustments_male" in config,
+                    "sex_stratified": "adjustments_male" in config,
                 })
 
         return supported

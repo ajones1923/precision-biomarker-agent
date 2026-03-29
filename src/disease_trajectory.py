@@ -15,7 +15,6 @@ from loguru import logger
 
 from src.knowledge import GENOTYPE_THRESHOLDS
 
-
 # ---------------------------------------------------------------------------
 # Disease configuration: biomarkers, genetic modifiers, thresholds, stages
 # ---------------------------------------------------------------------------

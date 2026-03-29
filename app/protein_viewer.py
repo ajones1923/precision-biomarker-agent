@@ -153,7 +153,7 @@ def render_protein_viewer(pdb_id: str = "5FTK", show_controls: bool = True):
         with cols[4]:
             st.metric("Year", info["year"])
 
-    st.markdown(f"""
+    st.markdown("""
     **VCP/p97 (Valosin-containing protein)** — AAA+ ATPase critical for protein quality control.
     Mutations at R155 cause multisystem proteinopathy including frontotemporal dementia (FTD),
     inclusion body myopathy (IBM), and Paget disease of bone.

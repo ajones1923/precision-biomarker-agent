@@ -9,8 +9,7 @@ Date: March 2026
 
 import pytest
 
-from src.models import AgentQuery, CrossCollectionResult, SearchHit
-
+from src.models import CrossCollectionResult, SearchHit
 
 # =====================================================================
 # FIXTURES

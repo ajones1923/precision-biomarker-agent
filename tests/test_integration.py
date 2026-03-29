@@ -11,24 +11,28 @@ Author: Adam Jones
 Date: March 2026
 """
 
-import pytest
-import math
 import json
-from unittest.mock import MagicMock
+
+import pytest
 
 from src.biological_age import BiologicalAgeCalculator, validate_biomarker_ranges
 from src.disease_trajectory import DiseaseTrajectoryAnalyzer
-from src.pharmacogenomics import PharmacogenomicMapper
+from src.export import export_csv, export_fhir_diagnostic_report, export_json, export_markdown, export_pdf
 from src.genotype_adjustment import GenotypeAdjuster
-from src.report_generator import ReportGenerator
-from src.export import export_markdown, export_json, export_pdf, export_csv, export_fhir_diagnostic_report
+from src.knowledge import BIOMARKER_PLAUSIBLE_RANGES, GENOTYPE_THRESHOLDS, KNOWLEDGE_VERSION
 from src.models import (
-    PatientProfile, AnalysisResult, BiologicalAgeResult,
-    DiseaseTrajectoryResult, PGxResult, GenotypeAdjustmentResult,
-    RiskLevel, DiseaseCategory, MetabolizerPhenotype,
+    AnalysisResult,
+    BiologicalAgeResult,
+    DiseaseCategory,
+    DiseaseTrajectoryResult,
+    GenotypeAdjustmentResult,
+    MetabolizerPhenotype,
+    PatientProfile,
+    PGxResult,
+    RiskLevel,
 )
-from src.knowledge import KNOWLEDGE_VERSION, GENOTYPE_THRESHOLDS, BIOMARKER_PLAUSIBLE_RANGES
-
+from src.pharmacogenomics import PharmacogenomicMapper
+from src.report_generator import ReportGenerator
 
 # =====================================================================
 # Realistic patient profiles for testing
@@ -308,7 +312,7 @@ class TestFullPipelineIntegration:
         # Multiple disease trajectories should be elevated
         trajs = self.trajectory.analyze_all(p.biomarkers, p.genotypes, p.age, p.sex)
         elevated = [t for t in trajs if t.get("risk_level") in ("CRITICAL", "HIGH", "MODERATE")]
-        assert len(elevated) >= 2, f"High-risk patient should have multiple elevated trajectories"
+        assert len(elevated) >= 2, "High-risk patient should have multiple elevated trajectories"
 
         # Multiple PGx poor metabolizers
         pgx = self.pgx.map_all(star_alleles=p.star_alleles, genotypes=p.genotypes)
@@ -523,13 +527,13 @@ class TestAuditIntegration:
     """Test audit logging integrates correctly."""
 
     def test_audit_all_action_types(self):
-        from src.audit import audit_log, AuditAction
+        from src.audit import AuditAction, audit_log
         for action in AuditAction:
             event_id = audit_log(action, patient_id="AUDIT-TEST")
             assert len(event_id) == 16
 
     def test_audit_with_details(self):
-        from src.audit import audit_log, AuditAction
+        from src.audit import AuditAction, audit_log
         event_id = audit_log(
             AuditAction.PATIENT_ANALYSIS,
             patient_id="AUDIT-DETAIL",

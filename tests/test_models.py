@@ -10,38 +10,32 @@ Date: March 2026
 import pytest
 
 from src.models import (
+    AgentQuery,
+    AgingMarker,
+    # Patient / Analysis models
+    AnalysisResult,
+    BiologicalAgeResult,
+    BiomarkerReference,
+    ClinicalEvidence,
     # Enums
     ClockType,
     CPICLevel,
+    # Result models
+    CrossCollectionResult,
     DiseaseCategory,
-    MetabolizerPhenotype,
-    RiskLevel,
-    Zygosity,
-    # Collection models
-    AgingMarker,
-    BiomarkerReference,
-    ClinicalEvidence,
     DiseaseTrajectory,
     DrugInteraction,
     GeneticVariant,
     GenotypeAdjustment,
+    MetabolizerPhenotype,
     MonitoringProtocol,
     NutritionGuideline,
-    PGxRule,
-    # Patient / Analysis models
-    AnalysisResult,
-    AgentQuery,
-    AgentResponse,
-    BiologicalAgeResult,
-    DiseaseTrajectoryResult,
-    GenotypeAdjustmentResult,
     PatientProfile,
-    PGxResult,
-    # Result models
-    CrossCollectionResult,
+    PGxRule,
+    RiskLevel,
     SearchHit,
+    Zygosity,
 )
-
 
 # =====================================================================
 # COLLECTION MODEL CREATION

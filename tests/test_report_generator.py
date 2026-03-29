@@ -16,12 +16,10 @@ from src.models import (
     DiseaseTrajectoryResult,
     GenotypeAdjustmentResult,
     MetabolizerPhenotype,
-    PatientProfile,
     PGxResult,
     RiskLevel,
 )
 from src.report_generator import ReportGenerator
-
 
 # =====================================================================
 # FIXTURES

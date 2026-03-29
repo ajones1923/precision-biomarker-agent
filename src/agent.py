@@ -24,8 +24,7 @@ Date: March 2026
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from typing import Dict, List, Optional
+from typing import List, Optional
 
 from loguru import logger
 
@@ -33,7 +32,6 @@ from .biological_age import BiologicalAgeCalculator
 from .critical_values import CriticalValueEngine
 from .discordance_detector import DiscordanceDetector
 from .disease_trajectory import DiseaseTrajectoryAnalyzer
-from .pharmacogenomics import PharmacogenomicMapper
 from .genotype_adjustment import GenotypeAdjuster
 from .lab_range_interpreter import LabRangeInterpreter
 from .models import (
@@ -50,6 +48,7 @@ from .models import (
     PGxResult,
     RiskLevel,
 )
+from .pharmacogenomics import PharmacogenomicMapper
 from .rag_engine import BIOMARKER_SYSTEM_PROMPT
 
 

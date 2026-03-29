@@ -9,11 +9,11 @@ Date: March 2026
 """
 
 import json
-import pytest
 from unittest.mock import patch
 
-from src.lab_range_interpreter import RangeComparison, LabRangeInterpreter
+import pytest
 
+from src.lab_range_interpreter import LabRangeInterpreter, RangeComparison
 
 # =====================================================================
 # FIXTURES

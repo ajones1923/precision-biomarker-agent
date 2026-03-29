@@ -11,11 +11,9 @@ Author: Adam Jones
 Date: March 2026
 """
 
-import pytest
 
 from src.models import MetabolizerPhenotype, PGxResult
 from src.pharmacogenomics import PharmacogenomicMapper
-
 
 # =====================================================================
 # Shared mapper instance used by all test classes
@@ -359,7 +357,7 @@ class TestGuidelineVersions:
 
     def test_all_genes_have_versions(self):
         from src.pharmacogenomics import CPIC_GUIDELINE_VERSIONS, PharmacogenomicMapper
-        mapper = PharmacogenomicMapper()
+        PharmacogenomicMapper()
         # Every gene in PGX_GENE_CONFIGS should have a version entry
         from src.pharmacogenomics import PGX_GENE_CONFIGS
         for gene in PGX_GENE_CONFIGS:

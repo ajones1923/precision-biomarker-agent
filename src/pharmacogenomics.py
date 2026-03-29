@@ -11,7 +11,6 @@ from typing import Any, Dict, List, Optional
 
 from loguru import logger
 
-
 # CPIC guideline versions used for each gene
 # Update when new CPIC publications change recommendations
 CPIC_GUIDELINE_VERSIONS = {

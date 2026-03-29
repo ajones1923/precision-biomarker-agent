@@ -14,7 +14,6 @@ from unittest.mock import MagicMock, patch
 import pytest
 from fastapi.testclient import TestClient
 
-
 # =====================================================================
 # FIXTURES
 # =====================================================================
@@ -199,8 +198,8 @@ def client(
     and Anthropic) with a no-op so that the TestClient can start without any
     external services.
     """
-    from api.main import app
     import api.main as main_module
+    from api.main import app
 
     # Replace lifespan with a no-op so TestClient does not run the real startup
     @asynccontextmanager

@@ -209,14 +209,14 @@ def _create_bio_age_gauge(chronological_age: float, biological_age: float) -> Op
     try:
         import matplotlib
         matplotlib.use('Agg')
-        import matplotlib.pyplot as plt
-        import matplotlib.patches as patches
         import io
+
+        import matplotlib.patches as patches
+        import matplotlib.pyplot as plt
 
         fig, ax = plt.subplots(figsize=(5, 2.5))
 
         # Draw gauge background
-        theta_range = 180
         colors_zones = [('#22c55e', 'Younger'), ('#76B900', 'Healthy'), ('#f59e0b', 'Accelerated'), ('#ef4444', 'High Risk')]
         for i, (color, label) in enumerate(colors_zones):
             start = i * 45
@@ -261,9 +261,10 @@ def _create_disease_risk_radar(trajectories: list) -> Optional[bytes]:
     try:
         import matplotlib
         matplotlib.use('Agg')
+        import io
+
         import matplotlib.pyplot as plt
         import numpy as np
-        import io
 
         # Extract disease names and risk scores
         diseases = []
@@ -325,8 +326,9 @@ def _create_pgx_bar_chart(pgx_results: list) -> Optional[bytes]:
     try:
         import matplotlib
         matplotlib.use('Agg')
-        import matplotlib.pyplot as plt
         import io
+
+        import matplotlib.pyplot as plt
 
         genes = []
         phenotype_scores = []
@@ -404,7 +406,7 @@ def export_pdf(report_markdown: str, analysis: Optional[AnalysisResult] = None) 
     """
     try:
         from reportlab.lib import colors
-        from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_JUSTIFY
+        from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY, TA_LEFT
         from reportlab.lib.pagesizes import letter
         from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
         from reportlab.lib.units import inch
@@ -666,8 +668,9 @@ def export_pdf(report_markdown: str, analysis: Optional[AnalysisResult] = None) 
 
         # -- Embed charts if analysis data is available --------------------
         if analysis is not None:
-            from reportlab.platypus import Image as RLImage
             import io as _io
+
+            from reportlab.platypus import Image as RLImage
 
             # Biological age gauge
             if hasattr(analysis, 'biological_age'):

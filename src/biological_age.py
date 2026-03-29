@@ -16,10 +16,9 @@ Date: March 2026
 """
 
 import math
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from loguru import logger
-
 
 # PhenoAge coefficients (Levine et al., Aging 2018; dayoonkwon/BioAge R package)
 # IMPORTANT: These coefficients expect SI units internally:

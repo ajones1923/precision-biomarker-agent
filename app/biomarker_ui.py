@@ -76,11 +76,11 @@ if _api_key:
 def init_engine():
     """Initialize the Biomarker Intelligence analysis engine (cached across reruns)."""
     try:
-        from src.collections import BiomarkerCollectionManager
         from src.biological_age import BiologicalAgeCalculator
-        from src.disease_trajectory import DiseaseTrajectoryAnalyzer
+        from src.collections import BiomarkerCollectionManager
         from src.critical_values import CriticalValueEngine
         from src.discordance_detector import DiscordanceDetector
+        from src.disease_trajectory import DiseaseTrajectoryAnalyzer
         from src.lab_range_interpreter import LabRangeInterpreter
         from src.pharmacogenomics import PharmacogenomicMapper
 
@@ -113,6 +113,7 @@ def init_engine():
 
         try:
             import anthropic
+
             from config.settings import settings as cfg
 
             class SimpleLLMClient:
@@ -300,8 +301,10 @@ with st.sidebar:
         _lib_path = os.environ.get("HCLS_LIB_PATH", "/app/lib")
         _sys.path.insert(0, _lib_path)
         from hcls_common.demo_data import (
-            DEMO_PATIENT_ID, DEMO_PATIENT_AGE, DEMO_PATIENT_SEX,
-            DEMO_BIOMARKERS, DEMO_GENOTYPES, DEMO_STAR_ALLELES,
+            DEMO_BIOMARKERS,
+            DEMO_PATIENT_AGE,
+            DEMO_PATIENT_ID,
+            DEMO_PATIENT_SEX,
         )
         st.session_state["t1_patient_id"] = DEMO_PATIENT_ID
         st.session_state["t1_age"] = DEMO_PATIENT_AGE
@@ -1511,6 +1514,11 @@ with tab6:
     else:
         if st.button("Generate Full Report", type="primary", key="t6_gen"):
             with st.spinner("Generating 12-section report..."):
+                from src.export import (
+                    export_csv,
+                    export_fhir_diagnostic_report,
+                    export_pdf,
+                )
                 from src.models import (
                     AnalysisResult,
                     BiologicalAgeResult,
@@ -1523,11 +1531,6 @@ with tab6:
                     RiskLevel,
                 )
                 from src.report_generator import ReportGenerator
-                from src.export import (
-                    export_csv,
-                    export_fhir_diagnostic_report,
-                    export_pdf,
-                )
 
                 # Build PatientProfile model from session state
                 profile = PatientProfile(
@@ -1714,12 +1717,14 @@ with tab7:
 
     if _analysis and _patient:
         from patient_360 import (
-            render_header,
-            render_pipeline_status,
             render_biomarker_panel as render_360_biomarker_panel,
+        )
+        from patient_360 import (
+            render_concordance_matrix,
             render_drug_candidates,
             render_evidence_chain,
-            render_concordance_matrix,
+            render_header,
+            render_pipeline_status,
         )
 
         _pid = _patient.get("patient_id", "UNKNOWN")

@@ -9,7 +9,7 @@ Date: March 2026
 
 import pytest
 
-from src.disease_trajectory import DiseaseTrajectoryAnalyzer, DISEASE_CONFIGS
+from src.disease_trajectory import DiseaseTrajectoryAnalyzer
 
 
 @pytest.fixture

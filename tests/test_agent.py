@@ -7,23 +7,19 @@ Author: Adam Jones
 Date: March 2026
 """
 
+
 import pytest
-from unittest.mock import MagicMock, patch
 
 from src.biological_age import BiologicalAgeCalculator
 from src.disease_trajectory import DiseaseTrajectoryAnalyzer
 from src.models import (
     AnalysisResult,
-    AgentQuery,
     BiologicalAgeResult,
+    DiseaseCategory,
     DiseaseTrajectoryResult,
     PatientProfile,
-    PGxResult,
     RiskLevel,
-    DiseaseCategory,
-    MetabolizerPhenotype,
 )
-
 
 # =====================================================================
 # FIXTURES
@@ -126,7 +122,7 @@ class TestFullPipeline:
 
     def test_pipeline_handles_empty_biomarkers(self, mock_agent_engine):
         """Pipeline handles a patient with no biomarkers gracefully."""
-        patient = PatientProfile(patient_id="EMPTY", age=30, sex="F")
+        PatientProfile(patient_id="EMPTY", age=30, sex="F")
         calc = mock_agent_engine["bio_age_calc"]
         # Should still produce a result, even if missing biomarkers
         result = calc.calculate_phenoage(30.0, {})

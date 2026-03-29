@@ -9,11 +9,11 @@ Date: March 2026
 """
 
 import json
+from unittest.mock import patch
+
 import pytest
-from unittest.mock import patch, MagicMock
 
 from src.critical_values import CriticalValueAlert, CriticalValueEngine
-
 
 # =====================================================================
 # FIXTURES

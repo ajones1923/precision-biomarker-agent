@@ -23,8 +23,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 from loguru import logger
 from tqdm import tqdm
 
-from src.collections import BiomarkerCollectionManager, COLLECTION_MODELS, COLLECTION_SCHEMAS
-
+from src.collections import COLLECTION_MODELS, COLLECTION_SCHEMAS, BiomarkerCollectionManager
 
 # Mapping of collection names to their JSON seed filenames
 SEED_FILES = {

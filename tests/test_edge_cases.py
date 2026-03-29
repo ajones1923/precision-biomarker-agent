@@ -10,22 +10,20 @@ Date: March 2026
 
 import math
 import re
-from unittest.mock import MagicMock
 
 import pytest
 
+from config.settings import PrecisionBiomarkerSettings
 from src.biological_age import BiologicalAgeCalculator
 from src.disease_trajectory import DiseaseTrajectoryAnalyzer
+from src.export import generate_filename
 from src.models import (
-    BiomarkerReference,
     BiologicalAgeResult,
+    BiomarkerReference,
     SearchHit,
 )
 from src.pharmacogenomics import PharmacogenomicMapper
 from src.rag_engine import BiomarkerRAGEngine
-from src.export import generate_filename
-from config.settings import PrecisionBiomarkerSettings
-
 
 # =====================================================================
 # 1. BIOLOGICAL AGE EDGE CASES
@@ -946,21 +944,22 @@ class TestAuditLogging:
     """Test HIPAA audit logging."""
 
     def test_audit_log_returns_event_id(self):
-        from src.audit import audit_log, AuditAction
+        from src.audit import AuditAction, audit_log
         event_id = audit_log(AuditAction.PATIENT_ANALYSIS, patient_id="P001")
         assert isinstance(event_id, str)
         assert len(event_id) == 16
 
     def test_audit_log_hashes_patient_id(self):
-        from src.audit import audit_log, AuditAction
         import hashlib
+
+        from src.audit import AuditAction, audit_log
         event_id = audit_log(AuditAction.BIOLOGICAL_AGE, patient_id="P001")
         # Verify the patient_id is not stored in plain text
-        expected_hash = hashlib.sha256("P001".encode()).hexdigest()[:12]
+        hashlib.sha256("P001".encode()).hexdigest()[:12]
         assert isinstance(event_id, str)
 
     def test_audit_log_without_patient_id(self):
-        from src.audit import audit_log, AuditAction
+        from src.audit import AuditAction, audit_log
         event_id = audit_log(AuditAction.RAG_QUERY)
         assert isinstance(event_id, str)
 

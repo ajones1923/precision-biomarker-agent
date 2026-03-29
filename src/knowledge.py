@@ -16,8 +16,7 @@ Author: Adam Jones
 Date: March 2026
 """
 
-from typing import Any, Dict, List, Optional
-
+from typing import Any, Dict
 
 # Knowledge base version tracking
 # Update these dates when clinical guidelines or thresholds change
