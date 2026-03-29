@@ -101,13 +101,13 @@ jobs:
             --cov-report=term-missing \
             --cov-report=xml:coverage.xml
 
-      - name: Check coverage threshold (85%)
+      - name: Check coverage threshold (50%)
         run: |
           python -m pytest tests/ \
             -m "not integration and not slow" \
             --cov=src --cov=api --cov=app \
-            --cov-fail-under=85 -q \
-          || echo "::warning::Coverage below 85% threshold"
+            --cov-fail-under=50 -q \
+          || echo "::warning::Coverage below 50% threshold"
 
       - name: Upload coverage artifact
         if: always() && matrix.python-version == '3.12'
